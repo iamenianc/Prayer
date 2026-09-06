@@ -237,14 +237,14 @@ graph TD
 ### 1.5 UI Interaction & Devotional Engine Mechanics
 
 - **Home Screen Presentation**:
-  - A clean, blank canvas with two centered text buttons:
+  - A pristine, blank canvas partitioned into contiguous flat tiles with strictly two centered action buttons:
     1. `Start praying`
     2. `Log prayer points`
-  - Swiping left triggers the structural directory branch (`People`, `Groups`, `General`).
+  - Strictly zero explanatory sub-text, onboarding tips, or tutorial labels. Swiping left triggers the structural directory branch (`People`, `Groups`, `General`).
 - **Passive Prayer Engine ("Start Praying")**:
   - Direct queue instantiation with zero pre-filters.
-  - Full-screen card focus with user-configurable batch sizes: **1, 2, 3, 4, or 5 prayer items visible at a time**.
-  - **100% Read-Only**: No buttons, checkmarks, or editing controls. Swiping past an item automatically commits an updated `last_prayed_at` timestamp to local SQLite.
+  - Full-screen contiguous card focus with user-configurable batch sizes: **1, 2, 3, 4, or 5 prayer items visible at a time**.
+  - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer. Viewing an item silently updates its `last_prayed_at` timestamp in local SQLite.
   - **Self-Paced & Open-Ended**: Each screen is a separate prayer. Users proceed at their own pace and exit whenever they wish.
 - **Logging Engine ("Log Prayer Points")**:
   - Two discrete paths:
@@ -255,9 +255,12 @@ graph TD
   - `surface_elevation`: Flat tiles (`elevation: 0`, `box-shadow: none`). Zero skeuomorphic depth, gradients, or drop shadows.
   - `layout_pattern`: Contiguous planar tessellation (`grid_gap: 0px`, `margin: 0px`). Zero visible gaps or gutters between elements. All on-screen components, cards, and buttons are directly adjacent to each other, abutting and sharing 1px crisp hairline borders (`#333333` in Quiet Night, `#E0E0E0` in Morning Light) to form a seamless, interlocking rectilinear grid across the entire display.
   - `edge_style`: Pure orthogonal rectangles (100% rectilinear geometry).
-- **Settings & Dialect Preferences**:
-  - Provides instant toggles for theme mode, card batch size (1–5 items), blending historic prayers into the daily queue, and locale/dialect selection.
-  - Defaults to **English (Australian / UK)**, with a dedicated config option for **US English**. Modifying this option switches client string tables immediately and prefixes distillation requests with the user's dialect setting.
+- **Austere Copy & Zero Explanatory Text Standard**:
+  - The UI strictly forbids instructional sub-captions, introductory prompts, or descriptive tooltips under buttons or headers.
+  - Controls feature strictly functional, stark terminology (e.g., *Start praying*, *Log prayer points*, *Save*, *Cancel*, *Ledger*, *Settings*).
+- **Sequestered Settings Architecture (`APP_CONFIG`)**:
+  - Zero settings, display switches, batch selectors, or configuration toggles are permitted on the home screen or active prayer interface.
+  - All configurable parameters (`locale_dialect`, `theme_mode`, `batch_size`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the directory ledger.
 
 ---
 

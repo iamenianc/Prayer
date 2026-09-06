@@ -17,6 +17,8 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 - **Strictly Passive Contemplation**: When praying, the screen is 100% read-only. Prayer is not a productivity checklist. There are no check-off buttons, editing controls, or administrative interruptions while in prayer.
 - **Zero-Gap Contiguous Geometry**: Every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
 - **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
+- **Austere Simplicity (Zero Explanatory / Tutorial Text)**: As an unyielding design principle, the application shall never display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or instructional crutches.
+- **Sequestered Configuration (Zero Clutter)**: The interface is never cluttered with configuration, settings, batch selectors, or display options. All user preferences reside in a dedicated Settings panel navigated to only when needed from the directory ledger, preserving an austere, quiet devotional space.
 - **Zero Emojis & Zero Gamification**: Emojis, streak counters, celebration popups, badges, and animations are strictly excluded to preserve dignity and respect.
 - **Uncompromised Privacy**: Zero accounts, zero login, zero public feeds, and zero telemetry. All prayer data resides exclusively on the user's physical device.
 
@@ -65,7 +67,7 @@ graph TD
 ```
 
 ### 3.1 The Blank Entry Screen
-Upon launch, the user meets an uncluttered canvas with strictly two centered options:
+Upon launch, the user meets an uncluttered, contiguous canvas featuring strictly two centered flat action tiles with unadorned labels and zero explanatory sub-text:
 1. **Start praying**
 2. **Log prayer points**
 

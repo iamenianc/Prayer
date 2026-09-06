@@ -32,7 +32,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 ### 2.2 Core In-Scope Features (MVP)
 
 1. **Pristine Home Screen & Gestural Navigation**:
-   - The app launches to an uncluttered blank canvas featuring strictly two centered flat geometric tile options with sharp 90-degree right angles, zero curved edges, and zero visible gaps between them (directly abutting tiles sharing a 1px boundary):
+   - The app launches to an uncluttered blank canvas featuring strictly two centered flat geometric tile options with sharp 90-degree right angles, zero curved edges, zero visible gaps (directly abutting tiles sharing a 1px boundary), and strictly zero explanatory, tutorial, or descriptive sub-text:
      1. **Start praying**
      2. **Log prayer points**
    - A **swipe-left gesture** reveals the structural directory and ledger.
@@ -73,6 +73,10 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - A dedicated configuration option in settings allows selecting **US English** (`en-US`).
    - The dialect preference applies across all application copy and informs the AI suggestion engine to produce questions and candidate prayer points in the configured dialect.
 
+8. **Sequestered Settings & Hidden Preferences**:
+   - The active interface is strictly free from settings, display switches, batch selectors, or configuration controls.
+   - All user preferences (Quiet Night vs. Morning Light, card batch sizes 1–5, dialect selection, and historic prayer blending) are sequestered in a dedicated Settings panel reached exclusively via intentional navigation from the directory ledger.
+
 ### 2.3 Post-MVP / Future Milestones
 - Native iOS client release.
 - Encrypted local file export and restore (`.prayerbackup`).
@@ -109,6 +113,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
   - *Omission of Fillers*: Stripping grammatically necessary but low-information words like articles (*a*, *an*, *the*), auxiliary verbs (*is*, *are*), and loose connectives.
   - *Telegraphic Style*: Punchy phrases focused strictly on core nouns and verbs.
 - **Geometric & Contiguous Tessellated UI Architecture (Zero Gaps & Zero Curved Edges)**: The user interface is strictly composed of flat, non-skeuomorphic, planar tiles with sharp 90-degree right angles. Rounded corners, curved pill buttons, bubble cards, drop shadows, and circular frames are strictly forbidden. Crucially, the design eliminates all visible gaps, margins, and gutters between UI elements; all tiles and components are directly adjacent and contiguous to each other, sharing 1px hairline boundary seams across the entire viewport to form a unified architectural plane.
+- **Principle of Austere UI & Zero Explanatory / Config Clutter**: As an unyielding principle, the application shall **never** display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or explanatory commentary. Furthermore, the devotional interface shall never be cluttered with configuration controls, display options, batch toggles, or theme switchers; all preferences are sequestered into a dedicated Settings view accessible exclusively via deliberate navigation from the directory ledger.
 - **Dialect & Orthography Standards**: System copy, preloaded historic prayers, and AI outputs adhere to **English (Australian / UK)** by default, switching consistently to **US English** when configured by the user.
 - **Modular Prompt Deployment**: To comply with serverless execution constraints (e.g., Cloudflare Workers 5.1 kB text binding ceiling) while optimizing attention primacy, prompt directives are decomposed into fine modules assembled in sequence: `PROMPT_PERSONA` (identity & First Principle), `PROMPT_INQUIRY_FLOW` (control loop & inquiry), `PROMPT_THEOLOGY` (doctrinal & comfort boundaries), `PROMPT_TAXONOMY_PRIVACY` (root mapping & entity masking), `PROMPT_CARD_STYLE` (card brevity & shorthand), and `PROMPT_OUTPUT_SCHEMA` (JSON structure).
 - **Benchmarked Stress-Testing Battery**: The suggestion engine is subjected to a standardized 100-request evaluation suite ([`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json)) spanning all wordiness tiers (5–253 words), diverse perspectives, theological boundaries, and root categories to guarantee mobile card brevity and confessional fidelity under stress, with comprehensive evaluation recorded in [`test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/BENCHMARK_RESULTS.md) and detailed linguistic analysis in [`test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/AI_GENERATED_TEXT_REPORT.md).
