@@ -73,6 +73,7 @@ erDiagram
   - Encrypted key-value or single-row table in SQLite storing local preferences:
     - `locale_dialect`: `"EN_AU_UK"` (Default) | `"EN_US"`. Governs application copy, liturgical texts, date nuances, and prompt dialect instructions.
     - `theme_mode`: `"MORNING_LIGHT"` (Default) | `"QUIET_NIGHT"`.
+    - `text_scale`: `"LARGE"` (Default) | `"REGULAR"` | `"COMPACT"`.
     - `blend_historic_prayers`: Boolean (Default: `false`).
 
 ---
@@ -279,7 +280,7 @@ graph TD
   - Controls feature strictly functional, stark terminology (e.g., *Start praying*, *Open Journal*, *Log prayer points*, *Save*, *Cancel*, *Journal*, *Settings*).
 - **Sequestered Settings Architecture (`APP_CONFIG`)**:
   - Zero settings, display switches, or configuration toggles are permitted on the home screen or active prayer interface.
-  - All configurable parameters (`locale_dialect`, `theme_mode`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the Journal.
+  - All configurable parameters (`locale_dialect`, `theme_mode`, `text_scale`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the Journal.
 
 ---
 

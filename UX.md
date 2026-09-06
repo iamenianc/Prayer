@@ -180,7 +180,8 @@ Tapping **Open Journal** (or swiping left from the home screen) opens the comple
 3. **Editing & Archiving**:
    - Update titles, adjust notes, or archive points no longer held in active prayer.
 4. **Settings Access**:
-   - Theme toggle (*Quiet Night* vs. *Morning Light*).
+   - Theme toggle (*Morning Light* [Default] vs. *Quiet Night*).
+   - **Text Scaling**: Dedicated three-tier selector (**Large** *(Default)*, **Regular**, and **Compact**), dynamically scaling typography across cards, titles, body descriptions, and lists to ensure effortless reading without eye fatigue.
    - **Language / Dialect configuration**: Dedicated selector between **English (Australian / UK)** *(Default)* and **US English**. Switching immediately adjusts UI copy, prayer collects, and distillation orthography.
    - Historic Reformed prayers rotation toggle (blend into daily rotation vs. library-only).
    - Local encrypted database backup and export.

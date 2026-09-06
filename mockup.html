@@ -34,6 +34,53 @@
       --text-dim: #a0a0a0;
       --action-bg: #000000;
       --action-text: #ffffff;
+
+      /* Text Scaling: Default is Largest (Large) */
+      --font-scale: 1.15;
+      --fs-hero: 22px;
+      --fs-home-btn: 23px;
+      --fs-card-title: 18px;
+      --fs-card-body: 15px;
+      --fs-card-domain: 10px;
+      --fs-header-title: 17px;
+      --fs-header-meta: 11px;
+      --fs-row-title: 15px;
+      --fs-row-meta: 12px;
+      --fs-input: 16px;
+      --fs-action-btn: 12px;
+      --fs-nav-label: 11px;
+    }
+
+    body.text-size-regular {
+      --font-scale: 1.0;
+      --fs-hero: 20px;
+      --fs-home-btn: 20px;
+      --fs-card-title: 16px;
+      --fs-card-body: 13px;
+      --fs-card-domain: 9px;
+      --fs-header-title: 15px;
+      --fs-header-meta: 10px;
+      --fs-row-title: 14px;
+      --fs-row-meta: 11px;
+      --fs-input: 14px;
+      --fs-action-btn: 11px;
+      --fs-nav-label: 11px;
+    }
+
+    body.text-size-compact {
+      --font-scale: 0.88;
+      --fs-hero: 17px;
+      --fs-home-btn: 17px;
+      --fs-card-title: 14px;
+      --fs-card-body: 11.5px;
+      --fs-card-domain: 8.5px;
+      --fs-header-title: 13px;
+      --fs-header-meta: 9px;
+      --fs-row-title: 12.5px;
+      --fs-row-meta: 10px;
+      --fs-input: 13px;
+      --fs-action-btn: 10px;
+      --fs-nav-label: 10px;
     }
 
     body.theme-night {
@@ -168,7 +215,7 @@
       justify-content: center;
     }
     .home-hero-wordmark {
-      font-size: 20px;
+      font-size: var(--fs-hero);
       font-weight: 300;
       text-transform: uppercase;
       letter-spacing: 0.35em;
@@ -195,7 +242,7 @@
       background: var(--surface-active);
     }
     .home-tile-title {
-      font-size: 22px;
+      font-size: var(--fs-home-btn);
       font-weight: 500;
       color: var(--text);
       letter-spacing: -0.01em;
@@ -209,7 +256,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 24px;
-      font-size: 11px;
+      font-size: var(--fs-nav-label);
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.12em;
@@ -248,13 +295,13 @@
       flex-shrink: 0;
     }
     .topic-screen-title {
-      font-size: 16px;
+      font-size: var(--fs-header-title);
       font-weight: 600;
       color: var(--text);
       letter-spacing: 0.02em;
     }
     .topic-screen-meta {
-      font-size: 10px;
+      font-size: var(--fs-header-meta);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.12em;
@@ -281,7 +328,7 @@
     }
 
     .card-domain {
-      font-size: 9px;
+      font-size: var(--fs-card-domain);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.14em;
@@ -289,7 +336,7 @@
       margin-bottom: 8px;
     }
     .card-headline {
-      font-size: 16px;
+      font-size: var(--fs-card-title);
       font-weight: 600;
       color: var(--text);
       line-height: 1.35;
@@ -297,7 +344,7 @@
       letter-spacing: -0.01em;
     }
     .card-body {
-      font-size: 13px;
+      font-size: var(--fs-card-body);
       line-height: 1.6;
       color: var(--text-muted);
     }
@@ -563,7 +610,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
-      font-size: 14px;
+      font-size: var(--fs-row-title);
       font-weight: 500;
       color: var(--text);
       cursor: pointer;
@@ -574,7 +621,7 @@
     }
 
     .entity-meta-count {
-      font-size: 11px;
+      font-size: var(--fs-row-meta);
       color: var(--text-muted);
       font-weight: normal;
       letter-spacing: 0.05em;
@@ -588,7 +635,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
-      font-size: 11px;
+      font-size: var(--fs-nav-label);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -620,13 +667,13 @@
       padding: 0 20px;
     }
     .entity-header-name {
-      font-size: 15px;
+      font-size: var(--fs-header-title);
       font-weight: 600;
       color: var(--text);
       letter-spacing: -0.01em;
     }
     .entity-header-count {
-      font-size: 11px;
+      font-size: var(--fs-header-meta);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-muted);
@@ -663,18 +710,18 @@
     .point-item-meta {
       display: flex;
       justify-content: space-between;
-      font-size: 10px;
+      font-size: var(--fs-card-domain);
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-dim);
     }
     .point-item-title {
-      font-size: 15px;
+      font-size: var(--fs-card-title);
       font-weight: 600;
       color: var(--text);
     }
     .point-item-body {
-      font-size: 13px;
+      font-size: var(--fs-card-body);
       line-height: 1.5;
       color: var(--text-muted);
     }
@@ -882,6 +929,15 @@
             <div class="segment-picker">
               <button class="segment-btn" id="btn-theme-night" onclick="applyTheme('night')">Quiet Night</button>
               <button class="segment-btn active" id="btn-theme-morning" onclick="applyTheme('morning')">Morning Light</button>
+            </div>
+          </div>
+
+          <div class="setting-item-tile">
+            <span class="setting-label">Text size</span>
+            <div class="segment-picker">
+              <button class="segment-btn active" id="btn-text-large" onclick="applyTextSize('large')">Large</button>
+              <button class="segment-btn" id="btn-text-regular" onclick="applyTextSize('regular')">Regular</button>
+              <button class="segment-btn" id="btn-text-compact" onclick="applyTextSize('compact')">Compact</button>
             </div>
           </div>
 
@@ -1323,6 +1379,7 @@
     let topicQueue = [];
     let topicIndex = 0;
     let userTheme = 'morning';
+    let userTextSize = 'large'; // 'large' (default), 'regular', 'compact'
     let userDialect = 'uk';
     let userBlendHistoric = false;
     let answeredExpanded = {};
@@ -1694,6 +1751,20 @@
         document.getElementById('btn-theme-morning').classList.add('active');
         document.getElementById('btn-theme-night').classList.remove('active');
       }
+    }
+
+    function applyTextSize(size) {
+      userTextSize = size;
+      document.body.classList.remove('text-size-regular', 'text-size-compact');
+      if (size === 'regular') {
+        document.body.classList.add('text-size-regular');
+      } else if (size === 'compact') {
+        document.body.classList.add('text-size-compact');
+      }
+      // 'large' is default on root
+      document.getElementById('btn-text-large').classList.toggle('active', size === 'large');
+      document.getElementById('btn-text-regular').classList.toggle('active', size === 'regular');
+      document.getElementById('btn-text-compact').classList.toggle('active', size === 'compact');
     }
 
     function applyDialect(dialect) {
