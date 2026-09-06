@@ -250,6 +250,11 @@ graph TD
   - Two discrete paths:
     1. `Record a prayer point` (direct capture with intelligent AI filing: immediate empty text pad for known petitions; uses AI to classify and infer the target root category—`People`, `Groups`, or `General`—and optional group context for one-tap confirmation without multi-turn questioning; entity names are masked on-device and bound locally without AI entity suggestions, falling back to manual picker if offline).
     2. `"Guide me"` (structured 3-step articulation pipeline: Prompt $\rightarrow$ Open-ended distillation $\rightarrow$ Candidate review displaying strictly 2 candidate points per turn with *Save*, *Suggest 2 more* [one-time action], *Back*, and *Cancel*). The user may skip any question the app asks at any point, resulting in no further questions being asked for that session and proceeding immediately to candidate prayer point review; entity names are masked on-device and bound locally.
+- **Surface & Geometry Token Specifications**:
+  - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners.
+  - `surface_elevation`: Flat tiles (`elevation: 0`, `box-shadow: none`). Zero skeuomorphic depth, gradients, or drop shadows.
+  - `layout_pattern`: Planar tessellation. Adjacent items (e.g., batched prayer cards 1–5, suggestion pairs, or directory entries) abut directly along 1px crisp hairline borders (`#333333` in Quiet Night, `#E0E0E0` in Morning Light), forming an interlocking geometric mosaic.
+  - `edge_style`: Pure orthogonal rectangles (100% rectilinear geometry).
 - **Settings & Dialect Preferences**:
   - Provides instant toggles for theme mode, card batch size (1–5 items), blending historic prayers into the daily queue, and locale/dialect selection.
   - Defaults to **English (Australian / UK)**, with a dedicated config option for **US English**. Modifying this option switches client string tables immediately and prefixes distillation requests with the user's dialect setting.

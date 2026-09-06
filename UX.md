@@ -15,22 +15,29 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 ### 1.1 Core Experience Pillars
 - **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly two options: **Start praying** and **Log prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
 - **Strictly Passive Contemplation**: When praying, the screen is 100% read-only. Prayer is not a productivity checklist. There are no check-off buttons, editing controls, or administrative interruptions while in prayer.
-- **Reverent & Solemn**: The interface feels like opening a fine linen notebook or journal. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
+- **Geometric Orthogonality & Tessellated Tiles**: Every surface, card, button, and container is rendered as a flat geometric tile with sharp 90-degree right angles. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited. Adjacent components tessellate seamlessly along crisp hairline dividing seams.
+- **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
 - **Zero Emojis & Zero Gamification**: Emojis, streak counters, celebration popups, badges, and animations are strictly excluded to preserve dignity and respect.
 - **Uncompromised Privacy**: Zero accounts, zero login, zero public feeds, and zero telemetry. All prayer data resides exclusively on the user's physical device.
 
 ---
 
-## 2. Visual Identity: High-Contrast Monochrome
+## 2. Visual Identity: High-Contrast Monochrome & Geometric Tessellation
 
-The product uses a pure black-and-white visual identity that reflects dignity, simplicity, and focus.
+The product uses a pure black-and-white visual identity that reflects dignity, simplicity, architectural order, and liturgical focus.
 
 ### 2.1 The Two Visual Modes
 Users can toggle between two high-contrast modes depending on environment and preference:
 1. **Quiet Night (Black & White)**: Pure black canvas with crisp white typography and subtle charcoal dividers. Tailored for evening devotions, bedside prayer, and low-light environments.
 2. **Morning Light (White & Black)**: Clean white canvas with stark black lettering and soft gray card outlines. Tailored for daytime journaling and bright reading conditions.
 
-### 2.2 Styling & Typography Rules
+### 2.2 Geometric, Tessellated Flat Tiles (Strictly Zero Curved Edges)
+- **Strict Orthogonality**: Every card, button, input box, dialog, sheet, and container adheres to sharp 90-degree right angles (`border-radius: 0`). Curved edges, rounded corners, and pill buttons are strictly forbidden.
+- **Planar Flat Tiles**: Surfaces are rendered as completely flat, zero-elevation rectangular tiles (`elevation: 0`, zero drop shadows, zero gradient bevels).
+- **Tessellated Grid Architecture**: Multiple on-screen elements (e.g., batched prayer cards 1–5, candidate suggestion pairs, or directory lists) seamlessly abut and lock together along 1px hairline dividing seams, forming a unified, non-overlapping geometric mosaic.
+- **Architectural & Liturgical Gravity**: The unyielding rectilinear geometry reinforces solemnity, permanence, and reverence, eschewing the casual, bubbly aesthetics of consumer social apps.
+
+### 2.3 Styling & Typography Rules
 - **No Decorative Icons**: Pure typographic hierarchy and delicate hairline rules.
 - **Subdued Answered State**: In the ledger, when a prayer is answered, the text softens with a subtle strikethrough, visually signaling gratitude and completion while preserving the historical record.
 
@@ -84,9 +91,9 @@ graph LR
 ```
 
 1. **Immediate Immersion**: Tapping **Start praying** instantly displays the first prayer card. There are no configuration popups, filters, or setup steps required prior to praying.
-2. **Card Focus & Configurable Batch Size**:
-   - By default, each prayer point occupies the screen as an individual, focused card.
-   - Users can configure their display preference in settings to show **1, 2, 3, 4, or 5 items** simultaneously.
+2. **Card Focus & Configurable Batch Size (Flat Tessellated Tiles)**:
+   - Each prayer point occupies the screen as a completely flat rectangular tile with sharp 90-degree right angles and strictly zero curved edges (`border-radius: 0`).
+   - Users can configure their display preference in settings to show **1, 2, 3, 4, or 5 items** simultaneously. When multi-card batches (2–5) are displayed, the tiles tessellate seamlessly across the screen along hairline dividing rules without gaps or rounded corners.
 3. **Strictly Passive / Read-Only Prayer Experience**:
    - The prayer screen contains **zero interactive buttons, checkboxes, or edit fields**.
    - The user cannot mark items as answered, edit text, or check off tasks during prayer.
@@ -142,8 +149,9 @@ Designed for when thoughts are tangled, heavy, or difficult to articulate:
   - **Skip Question Binary**: While a clarifying inquiry is default-mandatory, the engine evaluates a `skip_question` binary flag, advancing directly to Step 3 suggestions only when initial input is already exceptionally comprehensive and unambiguous.
   - **Unconditional Question Skipping**: The user can skip any question the app asks at any point. Skipping immediately guarantees that no more questions will be asked during that session; the flow bypasses all remaining inquiry and transitions directly to Step 3 (Review & Action).
   - **Bounded Interaction**: Hard ceiling of **maximum 2 question turns**. A prominent **"Skip" / "Skip to Suggestions"** action is always provided on every question.
-- **Step 3 (Review & Action — Category Suggestion Bypass)**:
-  - Presents strictly and exactly **2 concise candidate prayer points** (never 1, never 3). Grounded strictly in facts provided by the user; the assistant never presumes or fabricates illnesses, cancer, or medical crises.
+- **Step 3 (Review & Action — Flat Tessellated Candidate Tiles)**:
+  - Presents strictly and exactly **2 concise candidate prayer points** (never 1, never 3), rendered as flat, geometric rectangular tiles with sharp 90-degree right angles, zero curved edges, and zero drop shadows.
+  - Grounded strictly in facts provided by the user; the assistant never presumes or fabricates illnesses, cancer, or medical crises.
   - **Contextual Pre-specification Bypass**: When `root` (and optional `group`) was already prespecified upon entry, category suggestions are omitted entirely ("suggestion isn't needed"). The cards directly reflect the pre-selected context without asking the user to confirm or re-categorize. When entry was uncontextualized, suggested root categories (`People`, `Groups`, `General`) are presented.
   - Entity name suggestions are strictly not required and omitted for privacy; target entity assignment is performed locally on-device.
   - **Objective Petitions, Never Scripted Prayers**: Candidate cards show discrete, telegraphic petitions and burdens—never pre-written prayers addressing God directly (no "Father God...", "Lord...", or second-person prayer prose). The user does the praying; the cards organize the petitions.
