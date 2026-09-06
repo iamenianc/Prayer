@@ -440,6 +440,109 @@
       font-weight: 600;
     }
 
+    /* Entity Selection & Creation Step (Step 0) */
+    .log-step-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .entity-create-bar {
+      display: flex;
+      flex-direction: column;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      gap: 10px;
+    }
+    .entity-create-row {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+    }
+    .entity-create-input {
+      flex: 1;
+      height: 44px;
+      background: transparent;
+      border: none;
+      padding: 0 16px;
+      color: var(--text);
+      font-size: var(--fs-row-title);
+      font-family: inherit;
+      outline: none;
+    }
+    .entity-create-btn {
+      height: 44px;
+      padding: 0 20px;
+      background: var(--action-bg);
+      color: var(--action-text);
+      border: none;
+      font-size: var(--fs-action-btn);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .entity-create-roots {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 34px;
+      border: 1px solid var(--border);
+    }
+    .root-toggle-btn {
+      background: var(--surface-2);
+      border: none;
+      border-right: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: var(--fs-nav-label);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .root-toggle-btn:last-child {
+      border-right: none;
+    }
+    .root-toggle-btn.active {
+      background: var(--surface-1);
+      color: var(--text);
+    }
+
+    /* Target Banner (When Target Entity is Locked) */
+    .log-target-banner {
+      height: 52px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+    }
+    .log-target-name {
+      font-size: var(--fs-row-title);
+      font-weight: 600;
+      color: var(--text);
+    }
+    .log-target-change-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--fs-nav-label);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .log-target-change-btn:hover {
+      color: var(--text);
+    }
+
     /* Direct Form */
     .log-pane-direct {
       flex: 1;
@@ -454,7 +557,7 @@
       padding: 24px;
       color: var(--text);
       font-family: inherit;
-      font-size: 15px;
+      font-size: var(--fs-input);
       line-height: 1.6;
       resize: none;
       outline: none;
@@ -467,7 +570,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
-      font-size: 11px;
+      font-size: var(--fs-nav-label);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-muted);
@@ -839,54 +942,100 @@
 
       <!-- ================= 3. LOG PRAYER POINTS ================= -->
       <div class="view-screen" id="screen-log">
-        <div class="log-path-bar">
-          <button class="log-path-btn active" id="tab-direct-btn" onclick="setLogTab('direct')">Direct</button>
-          <button class="log-path-btn" id="tab-guide-btn" onclick="setLogTab('guide')">Guided</button>
-        </div>
+        
+        <!-- STEP 0: SELECT OR CREATE TARGET ENTITY (PERSON / GROUP) -->
+        <div class="log-step-view" id="log-step-pick-entity">
+          <div class="section-head-tile">
+            <span>New Person / Group</span>
+            <span>&bull;</span>
+          </div>
 
-        <!-- Direct Form -->
-        <div class="log-pane-direct" id="log-direct-pane">
-          <textarea class="raw-textarea" id="direct-prayer-input" placeholder="Enter prayer point..."></textarea>
-          
-          <div class="filing-bar">
-            <span>Filing</span>
-            <span class="filing-tag">People / Sarah</span>
+          <div class="entity-create-bar">
+            <div class="entity-create-roots">
+              <button class="root-toggle-btn active" id="btn-create-root-people" onclick="setCreateRoot('People')">Person</button>
+              <button class="root-toggle-btn" id="btn-create-root-groups" onclick="setCreateRoot('Groups')">Group</button>
+            </div>
+            <div class="entity-create-row">
+              <input type="text" class="entity-create-input" id="new-entity-name-input" placeholder="Name (e.g. David, Parish Council)..." />
+              <button class="entity-create-btn" onclick="createAndSelectEntity()">Add</button>
+            </div>
+          </div>
+
+          <div class="section-head-tile">
+            <span>Select Target</span>
+            <span id="log-entity-count">0</span>
+          </div>
+
+          <div class="ledger-list" id="log-entities-picker-list" style="flex: 1;">
+            <!-- Populated dynamically with selectable People & Groups -->
           </div>
 
           <div class="action-dock">
             <button class="action-dock-btn" onclick="showScreen('screen-home')">Cancel</button>
-            <button class="action-dock-btn primary" onclick="saveDirectPrayer()">Save</button>
+            <button class="action-dock-btn primary" onclick="showScreen('screen-ledger')">Journal</button>
           </div>
         </div>
 
-        <!-- Guided Flow -->
-        <div class="log-pane-guide" id="log-guide-pane">
-          <div class="guide-box">
-            <span class="guide-tag">Reflection</span>
-            <div class="guide-text">&ldquo;Feeling heavy and anxious about my father's failing health and recent heart diagnosis.&rdquo;</div>
-          </div>
-
-          <div class="guide-box">
-            <span class="guide-tag">Inquiry</span>
-            <div class="guide-text">&ldquo;What is happening with his treatment that you would like to pray about?&rdquo;</div>
-          </div>
-
-          <div class="candidates-stack">
-            <div class="candidate-tile selected" onclick="selectCandidate(this)">
-              <div class="candidate-title">Father's Heart Health</div>
-              <div class="candidate-desc">Physical strength during cardiology review; comfort in Christ's ownership; peace resting in Father's care.</div>
+        <!-- STEP 1: CAPTURE PETITIONS FOR LOCKED TARGET ENTITY -->
+        <div class="log-step-view" id="log-step-capture" style="display: none;">
+          <div class="log-target-banner">
+            <div>
+              <span style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em;">Logging for</span>
+              <div class="log-target-name" id="log-target-display-name">Sarah (People)</div>
             </div>
-            <div class="candidate-tile" onclick="selectCandidate(this)">
-              <div class="candidate-title">Family Steadfastness</div>
-              <div class="candidate-desc">Wisdom for physicians managing care; patience in waiting; submission to God's sovereign will.</div>
+            <button class="log-target-change-btn" onclick="changeLogTarget()">Change</button>
+          </div>
+
+          <div class="log-path-bar">
+            <button class="log-path-btn active" id="tab-direct-btn" onclick="setLogTab('direct')">Direct</button>
+            <button class="log-path-btn" id="tab-guide-btn" onclick="setLogTab('guide')">Guided</button>
+          </div>
+
+          <!-- Direct Form -->
+          <div class="log-pane-direct" id="log-direct-pane">
+            <textarea class="raw-textarea" id="direct-prayer-input" placeholder="Enter petition directly..."></textarea>
+            
+            <div class="filing-bar">
+              <span>Target Topic</span>
+              <span class="filing-tag" id="direct-filing-tag">People / Sarah</span>
+            </div>
+
+            <div class="action-dock">
+              <button class="action-dock-btn" onclick="changeLogTarget()">Back</button>
+              <button class="action-dock-btn primary" onclick="saveDirectPrayer()">Save</button>
             </div>
           </div>
 
-          <div class="action-dock">
-            <button class="action-dock-btn" onclick="alert('Requesting 2 additional suggestions from Cloudflare proxy...');">Suggest 2 More</button>
-            <button class="action-dock-btn primary" onclick="showScreen('screen-home')">Save</button>
+          <!-- Guided Flow -->
+          <div class="log-pane-guide" id="log-guide-pane">
+            <div class="guide-box">
+              <span class="guide-tag">Reflection</span>
+              <div class="guide-text" id="guided-reflection-text">&ldquo;Seeking wisdom and patience as we navigate upcoming family challenges.&rdquo;</div>
+            </div>
+
+            <div class="guide-box">
+              <span class="guide-tag">Inquiry</span>
+              <div class="guide-text">&ldquo;What specific burden is pressing most heavily right now?&rdquo;</div>
+            </div>
+
+            <div class="candidates-stack">
+              <div class="candidate-tile selected" onclick="selectCandidate(this)">
+                <div class="candidate-title" id="candidate-1-title">Family Steadfastness</div>
+                <div class="candidate-desc" id="candidate-1-desc">Patience in difficult conversations; joy in trials; steadfast trust in Christ's sovereign guidance.</div>
+              </div>
+              <div class="candidate-tile" onclick="selectCandidate(this)">
+                <div class="candidate-title" id="candidate-2-title">Preserving Unity</div>
+                <div class="candidate-desc" id="candidate-2-desc">Spirit of gentleness; mutual forbearance; honoring God in word and deed.</div>
+              </div>
+            </div>
+
+            <div class="action-dock">
+              <button class="action-dock-btn" onclick="changeLogTarget()">Back</button>
+              <button class="action-dock-btn primary" onclick="saveGuidedPrayer()">Save</button>
+            </div>
           </div>
         </div>
+
       </div>
 
       <!-- ================= 4. DIRECTORY & JOURNAL ================= -->
@@ -912,8 +1061,9 @@
           <!-- Populated dynamically with the 5-10 points of selected entity -->
         </div>
 
-        <div class="action-dock">
+        <div class="action-dock" style="grid-template-columns: 1fr 1.2fr 1fr;">
           <button class="action-dock-btn" onclick="showScreen('screen-ledger')">Journal</button>
+          <button class="action-dock-btn" onclick="logForSelectedEntity()">Log Point</button>
           <button class="action-dock-btn primary" onclick="praySelectedEntity()">Pray Topic</button>
         </div>
       </div>
@@ -1376,6 +1526,8 @@
     // Local State
     let currentScreen = 'screen-home';
     let selectedEntityId = null;
+    let logTargetEntityId = null; // Entity currently locked for logging
+    let createRootChoice = 'People'; // 'People' or 'Groups'
     let topicQueue = [];
     let topicIndex = 0;
     let userTheme = 'morning';
@@ -1454,6 +1606,11 @@
     function praySelectedEntity() {
       buildTopicQueue(selectedEntityId);
       showScreen('screen-pray');
+    }
+
+    function logForSelectedEntity() {
+      logTargetEntityId = selectedEntityId;
+      showScreen('screen-log');
     }
 
     /* Render Active Topic Screen in Contemplation Flow */
@@ -1663,6 +1820,7 @@
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
         rightBtn.textContent = 'Journal';
+        renderLogFlow();
       } else if (id === 'screen-ledger') {
         label.textContent = 'Journal';
         leftBtn.style.visibility = 'visible';
@@ -1702,7 +1860,101 @@
       }
     }
 
-    /* Logging */
+    /* =========================================================
+       LOGGING FLOW (STEP 0: SELECT/CREATE ENTITY -> STEP 1: CAPTURE)
+       ========================================================= */
+    function setCreateRoot(root) {
+      createRootChoice = root;
+      document.getElementById('btn-create-root-people').classList.toggle('active', root === 'People');
+      document.getElementById('btn-create-root-groups').classList.toggle('active', root === 'Groups');
+    }
+
+    function createAndSelectEntity() {
+      const input = document.getElementById('new-entity-name-input');
+      const name = input.value.trim();
+      if (!name) return;
+
+      const newId = 'ent-' + Date.now();
+      const newEntity = {
+        id: newId,
+        name: name,
+        root: createRootChoice,
+        relation: createRootChoice === 'People' ? 'Personal' : 'Community',
+        interactedCount: 0,
+        lastInteractedAt: null,
+        points: []
+      };
+
+      database.unshift(newEntity);
+      input.value = '';
+      selectLogEntity(newId);
+    }
+
+    function selectLogEntity(entityId) {
+      logTargetEntityId = entityId;
+      renderLogFlow();
+    }
+
+    function changeLogTarget() {
+      logTargetEntityId = null;
+      renderLogFlow();
+    }
+
+    function renderLogFlow() {
+      const pickView = document.getElementById('log-step-pick-entity');
+      const captureView = document.getElementById('log-step-capture');
+
+      if (!logTargetEntityId) {
+        // STEP 0: Show entity picker and creation bar
+        pickView.style.display = 'flex';
+        captureView.style.display = 'none';
+
+        const list = document.getElementById('log-entities-picker-list');
+        list.innerHTML = '';
+
+        const roots = ["People", "Groups", "General"];
+        let totalCount = 0;
+
+        roots.forEach(r => {
+          const matching = database.filter(e => e.root === r && !e.is_preloaded_historic);
+          if (matching.length === 0) return;
+          totalCount += matching.length;
+
+          const head = document.createElement('div');
+          head.className = 'section-head-tile';
+          head.innerHTML = `<span>${r}</span><span>${matching.length}</span>`;
+          list.appendChild(head);
+
+          matching.forEach(ent => {
+            const row = document.createElement('div');
+            row.className = 'entity-row-tile';
+            const activeCount = ent.points.filter(p => p.status === 'Active' || p.status === 'Historic').length;
+            row.innerHTML = `
+              <span>${ent.name}</span>
+              <span class="entity-meta-count">${activeCount} active &bull; Tap to Select &rarr;</span>
+            `;
+            row.onclick = () => selectLogEntity(ent.id);
+            list.appendChild(row);
+          });
+        });
+
+        document.getElementById('log-entity-count').textContent = totalCount;
+      } else {
+        // STEP 1: Target is locked. Show capture interface
+        pickView.style.display = 'none';
+        captureView.style.display = 'flex';
+
+        const ent = database.find(e => e.id === logTargetEntityId) || database[0];
+        document.getElementById('log-target-display-name').textContent = `${ent.name} (${ent.root})`;
+        document.getElementById('direct-filing-tag').textContent = `${ent.root} / ${ent.name}`;
+        document.getElementById('guided-reflection-text').textContent = `“Seeking steadfastness and grace as we bring ${ent.name} before the Lord.”`;
+        document.getElementById('candidate-1-title').textContent = `${ent.name} Steadfastness`;
+        document.getElementById('candidate-1-desc').textContent = `Grace to persevere in faith; peace resting in Christ's preserving power; joyful submission to God's will.`;
+        document.getElementById('candidate-2-title').textContent = `Spiritual Protection`;
+        document.getElementById('candidate-2-desc').textContent = `Defense against worldly distraction and despair; growth in wisdom; godly fruitfulness in all seasons.`;
+      }
+    }
+
     function setLogTab(tab) {
       if (tab === 'direct') {
         document.getElementById('log-direct-pane').style.display = 'flex';
@@ -1719,18 +1971,35 @@
 
     function saveDirectPrayer() {
       const text = document.getElementById('direct-prayer-input').value.trim();
-      if (text) {
-        // Append to Sarah
-        const sarah = database.find(e => e.id === "ent-sarah");
-        sarah.points.unshift({
-          id: "p-s" + (sarah.points.length + 1),
+      const ent = database.find(e => e.id === logTargetEntityId);
+      if (text && ent) {
+        ent.points.unshift({
+          id: 'p-' + Date.now(),
           title: text.length > 25 ? text.substring(0, 22) + "..." : text,
           desc: text,
           status: "Active"
         });
         document.getElementById('direct-prayer-input').value = '';
-        alert('Committed point to Sarah (People) in SQLite vault.');
+        alert(`Committed petition to ${ent.name} (${ent.root}) in local SQLite vault.`);
       }
+      logTargetEntityId = null;
+      showScreen('screen-home');
+    }
+
+    function saveGuidedPrayer() {
+      const ent = database.find(e => e.id === logTargetEntityId);
+      if (ent) {
+        const title = document.getElementById('candidate-1-title').textContent;
+        const desc = document.getElementById('candidate-1-desc').textContent;
+        ent.points.unshift({
+          id: 'p-' + Date.now(),
+          title: title,
+          desc: desc,
+          status: "Active"
+        });
+        alert(`Committed candidate point to ${ent.name} (${ent.root}) in local SQLite vault.`);
+      }
+      logTargetEntityId = null;
       showScreen('screen-home');
     }
 

@@ -119,36 +119,51 @@ graph LR
 
 ### 4.2 Journey 2: "Log Prayer Points" (Capture & Articulation)
 
-Tapping **Log prayer points** from the home screen presents two distinct pathways:
-1. **Record a prayer point**
-2. **"Guide me"**
+Tapping **Log prayer points** from the home screen initiates a structured, entity-first workflow. Because every prayer point in the application belongs to a relational entity (`INDIVIDUAL_ENTITY` under `People`, `Groups`, or `General`), **the initial step strictly requires selecting an existing person/group or creating a new one** before capturing petitions:
 
 ```mermaid
 graph TD
-    TapLog["Tap 'Log prayer points'"] --> PickPath{"Select Mode"}
+    TapLog["Tap 'Log prayer points'"] --> Step0["Initial Step: Select or Create Target<br/>(Person, Group, or General Concern)"]
     
-    PickPath -->|"Record a prayer point"| DirectPad["Empty Text Pad"]
-    DirectPad --> AIFiling["AI Suggests Filing Root<br/>(People / Groups / General)"]
-    AIFiling --> QuickSave["Local Entity Selection & Confirm<br/>(One-Tap Save to Vault)"]
+    Step0 -->|"Pick Existing Entity"| EntitySelected["Target Context Locked<br/>(e.g., Sarah / Parish Council)"]
+    Step0 -->|"Create New Entity"| CreateNew["Quick Create Entity Tile<br/>(Name + Root Selection)"]
+    CreateNew --> EntitySelected
+    
+    EntitySelected --> PickPath{"Select Capture Mode"}
+    
+    PickPath -->|"Direct Entry"| DirectPad["Empty Text Pad<br/>(Immediate petition entry)"]
+    DirectPad --> CommitDirect["Save Directly to Entity Vault"]
     
     PickPath -->|"'Guide me'"| Step1["Step 1: Open Heart<br/>'Who or what is on your heart?'"]
     Step1 --> Step2["Step 2: Neutral Distillation<br/>(1 open-ended question at a time; max 2 turns)"]
     Step2 -->|"Answer (up to 2 turns)"| Step2
-    Step2 -->|"Skip any question / Finished"| Step3["Step 3: Review Candidate Points<br/>(Controls: Save | Back | Cancel)"]
-    Step3 -->|"Save"| Commit["Committed to Local Database"]
+    Step2 -->|"Skip any question / Finished"| Step3["Step 3: Review Candidate Points<br/>(2 concise candidate points tailored to target)"]
+    Step3 -->|"Save"| CommitGuided["Committed to Target Entity Vault"]
 ```
 
-#### Pathway A: "Record a Prayer Point" (Direct Capture with Intelligent AI Filing)
-- Opens immediately to an empty text pad for users who already know their petition.
-- The user types their prayer point directly.
-- Upon entry, the client masks personal entity names on-device before communicating with the AI. The AI intelligently infers and suggests the root category (`People`, `Groups`, or `General`) and optional group context without multi-turn questioning.
-- **Privacy Gate**: Entity name suggestions from the AI are strictly not required and omitted. The user confirms or binds the local entity directly from their private on-device vault with a single tap.
-- **Offline Fallback**: If offline or if the user prefers, a direct manual folder/entity selector is available.
+#### Step 0: Mandatory Initial Step — Select or Create Person / Group
+Before drafting points, the user defines the destination topic:
+1. **Quick-Picker List**: An edge-to-edge list of recent and frequent entities grouped by root (`People`, `Groups`, `General`). Tapping an existing entity immediately binds the target context and advances to capture mode.
+2. **"New Person / Group" Creation Tile**: A contiguous hairline button at the top of the list allowing immediate creation:
+   - Enter name (e.g., *"David"*, *"Youth Ministry"*).
+   - Select root category (`People` or `Groups`).
+   - Instantly creates the entity in the local SQLite database and proceeds into logging.
+3. **Contextual In-Directory Entry**: When logging is initiated from within an existing entity detail view in the Journal, Step 0 is seamlessly pre-satisfied; the target person or group is already locked.
+
+---
+
+#### Step 1: Choosing Pathway (Direct vs. "Guide Me")
+Once the person or group is established, the user selects their preferred mode:
+
+#### Pathway A: "Direct Entry" (Direct Capture)
+- Opens immediately to an empty text pad pre-bound to the selected person or group.
+- The user writes their petition directly.
+- Tapping **Save** immediately commits the new prayer point into the local SQLite vault under that entity. Zero network transit or AI inference is required.
 
 #### Pathway B: "Guide Me" (Objective AI-Assisted Articulation)
-Designed for when thoughts are tangled, heavy, or difficult to articulate:
-- **App Auto-Conversion to JSON**: The mobile app transparently converts the user's reflection, pre-specified category context, and turn progression into a structured JSON payload sent across the wire.
-- **Step 1 (Open Heart & Contextual Entry)**: A clean, quiet prompt: *"Who or what is on your heart?"* with an open text area for raw thoughts, stream-of-consciousness writing, or voice dictation. If invoked from within an existing directory view (e.g. within a specific Person or Group folder), the destination `root` and `group` are pre-specified by the app.
+Designed for when thoughts regarding the selected person or group are tangled, heavy, or difficult to articulate:
+- **App Auto-Conversion to JSON**: The mobile app transparently packages the user's reflection, the pre-selected entity context (`root` and `group`), and turn progression into a structured JSON payload sent across the wire.
+- **Privacy Gate & Pre-Specified Root Bypass**: Because the entity is selected upfront, personal entity names are masked on-device prior to network transmission. The upstream model is explicitly instructed that the category context is pre-specified (`suggested_root: null`), tailoring candidate petitions strictly to the selected person or group without redundant categorization prompts.
 - **Step 2 (Neutral Distillation)**:
   - The client masks personal entity names prior to sending. The suggestion engine analyzes the raw entry and asks clarifying questions **one at a time**.
   - **Tone & Style**: Strictly neutral, concise, and objective. **Not a therapy bot**—zero artificial empathy, zero psychological framing, and zero conversational filler.

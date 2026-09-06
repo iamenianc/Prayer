@@ -267,9 +267,13 @@ graph TD
   - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer.
   - **Self-Paced & Open-Ended**: Each screen is a complete topic. Users advance through topics at their own pace and exit whenever they wish.
 - **Logging Engine ("Log Prayer Points")**:
-  - Two discrete paths:
-    1. `Record a prayer point` (direct capture with intelligent AI filing: immediate empty text pad for known petitions; uses AI to classify and infer the target root category—`People`, `Groups`, or `General`—and optional group context for one-tap confirmation without multi-turn questioning; entity names are masked on-device and bound locally without AI entity suggestions, falling back to manual picker if offline).
-    2. `"Guide me"` (structured 3-step articulation pipeline: Prompt $\rightarrow$ Open-ended distillation $\rightarrow$ Candidate review displaying strictly 2 candidate points per turn with *Save*, *Suggest 2 more* [one-time action], *Back*, and *Cancel*). The user may skip any question the app asks at any point, resulting in no further questions being asked for that session and proceeding immediately to candidate prayer point review; entity names are masked on-device and bound locally.
+  - **Mandatory Step 0: Target Entity Resolution (Upfront Selection / Creation)**:
+    - Because every petition in the database maintains a foreign key `entity_id` linking to `INDIVIDUAL_ENTITY`, logging begins with selecting an existing person/group or creating a new one.
+    - If initiated from an entity view in the Journal, the target entity is pre-bound.
+    - If initiated from the main menu, an edge-to-edge entity picker allows selecting an existing entity or tapping a contiguous *"New Person / Group"* tile to quickly input a name and select `People` or `Groups`.
+  - **Two Discrete Capture Pathways (Post-Entity Selection)**:
+    1. `Direct Entry`: Pre-bound empty text pad for direct manual entry. Tapping *Save* executes `INSERT INTO PRAYER_POINT` locally. 100% offline; zero network calls.
+    2. `"Guide me"`: Structured articulation pipeline. The app auto-packages the pre-selected entity context (`root` and `group`) into the JSON wire payload (`initial_reflection`, `root`, `group`, `clarifying_question`, `user_response`, `request_more`). Clarifying inquiry is open-ended, concise (6–12 words), with a 2-turn maximum and unconditional question skipping. Candidate review displays strictly 2 points tailored to the entity; category suggestion is omitted (`suggested_root: null`, `suggested_group: null`). One-time option to request 2 more candidate points. Saving commits directly to the selected entity.
 - **Surface & Geometry Token Specifications**:
   - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners.
   - `surface_elevation`: Flat tiles (`elevation: 0`, `box-shadow: none`). Zero skeuomorphic depth, gradients, or drop shadows.
