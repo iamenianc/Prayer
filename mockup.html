@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prayer — Austere Contiguous Architecture</title>
+  <title>Prayer — Contiguous Architecture Mockup</title>
   <style>
     /* =========================================================
-       STRICT ORTHOGONALITY, CONTIGUITY & AUSTERE DISCIPLINE
-       - Zero curved edges (border-radius: 0)
-       - Zero gaps / zero gutters between elements (gap: 0, margin: 0)
-       - Zero explanatory / tutorial-like text
-       - Zero config / display clutter on main screens
+       ORTHOGONAL CONTIGUOUS GEOMETRY (ZERO GAPS / ZERO CURVES)
+       - Strict 0px border-radius
+       - Strict 0px gap & 0px margin between tiles
+       - Austere, unadorned labels (zero tutorial / explanatory text)
+       - Sequestered settings hidden behind Ledger
        ========================================================= */
     *, *::before, *::after {
       box-sizing: border-box;
@@ -25,12 +25,12 @@
       --surface-1: #000000;
       --surface-2: #0d0d0d;
       --surface-3: #161616;
-      --surface-hover: #1c1c1c;
-      --surface-active: #262626;
-      --border: #222222;
+      --surface-hover: #1f1f1f;
+      --surface-active: #292929;
+      --border: #242424;
       --border-accent: #444444;
       --text: #ffffff;
-      --text-muted: #888888;
+      --text-muted: #8c8c8c;
       --text-dim: #444444;
       --action-bg: #ffffff;
       --action-text: #000000;
@@ -46,8 +46,8 @@
       --border: #cccccc;
       --border-accent: #999999;
       --text: #000000;
-      --text-muted: #666666;
-      --text-dim: #aaaaaa;
+      --text-muted: #5e5e5e;
+      --text-dim: #a0a0a0;
       --action-bg: #000000;
       --action-text: #ffffff;
     }
@@ -73,7 +73,7 @@
     .device-viewport {
       width: 100%;
       max-width: 420px;
-      height: 820px;
+      height: 840px;
       background-color: var(--bg);
       border: 2px solid var(--border);
       display: flex;
@@ -83,7 +83,7 @@
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
     }
 
-    /* TOP BAR: CONTIGUOUS TILES (ZERO GAP) */
+    /* TOP BAR: CONTIGUOUS 3-COLUMN TILES */
     .top-bar {
       height: 48px;
       display: grid;
@@ -91,6 +91,7 @@
       border-bottom: 1px solid var(--border);
       background: var(--surface-1);
       flex-shrink: 0;
+      z-index: 10;
     }
 
     .top-bar-btn {
@@ -131,7 +132,7 @@
       background: var(--surface-1);
     }
 
-    /* CONTENT HOST: ZERO MARGIN, ZERO PADDING, ZERO GAPS */
+    /* VIEWPORT CONTENT: ZERO GAP HOST */
     .content-host {
       flex: 1;
       display: flex;
@@ -156,7 +157,7 @@
     }
 
     /* =========================================================
-       SCREEN 1: PRISTINE HOME (STARK, AUSTERE, ZERO TUTORIALS)
+       SCREEN 1: PRISTINE HOME (AUSTERE, CONTIGUOUS)
        ========================================================= */
     .home-hero {
       flex: 0 0 160px;
@@ -165,7 +166,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      text-align: center;
     }
     .home-hero-wordmark {
       font-size: 20px;
@@ -224,7 +224,7 @@
 
     /* =========================================================
        SCREEN 2: CONTEMPLATIVE QUEUE ("START PRAYING")
-       Cards partition 100% of height contiguously. No settings clutter.
+       Cards partition 100% of height contiguously.
        ========================================================= */
     .queue-mosaic {
       flex: 1;
@@ -242,6 +242,8 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      cursor: pointer;
+      position: relative;
     }
     .card-tile:last-child {
       border-bottom: none;
@@ -256,7 +258,7 @@
       margin-bottom: 14px;
     }
     .card-headline {
-      font-size: 21px;
+      font-size: 20px;
       font-weight: 600;
       color: var(--text);
       line-height: 1.3;
@@ -270,7 +272,7 @@
     }
 
     /* =========================================================
-       SCREEN 3: LOG PRAYER POINTS (AUSTERE, FUNCTIONAL)
+       SCREEN 3: LOG PRAYER POINTS
        ========================================================= */
     .log-path-bar {
       display: grid;
@@ -441,7 +443,7 @@
     }
 
     /* =========================================================
-       SCREEN 4: DIRECTORY & LEDGER
+       SCREEN 4: DIRECTORY & LEDGER (ROOTS & ENTITIES)
        ========================================================= */
     .ledger-list {
       flex: 1;
@@ -449,6 +451,7 @@
       flex-direction: column;
       overflow-y: auto;
     }
+
     .section-head-tile {
       height: 38px;
       background: var(--surface-3);
@@ -463,37 +466,32 @@
       letter-spacing: 0.15em;
       color: var(--text-muted);
     }
-    .record-row-tile {
-      height: 52px;
+
+    .entity-row-tile {
+      height: 56px;
       background: var(--surface-1);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 500;
       color: var(--text);
       cursor: pointer;
       transition: background 0.1s ease;
     }
-    .record-row-tile:hover {
+    .entity-row-tile:hover {
       background: var(--surface-hover);
     }
-    .record-row-tile.answered {
-      color: var(--text-dim);
-    }
-    .record-row-tile.answered .record-name {
-      text-decoration: line-through;
-      text-decoration-color: var(--text-muted);
-    }
-    .record-state {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-dim);
+
+    .entity-meta-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: normal;
+      letter-spacing: 0.05em;
     }
 
-    /* Discrete Settings Entry Tile at the bottom of Ledger */
     .settings-nav-tile {
       height: 52px;
       background: var(--surface-2);
@@ -515,8 +513,83 @@
     }
 
     /* =========================================================
-       SCREEN 5: SEQUESTERED SETTINGS (HIDDEN UNTIL NAVIGATED)
-       All preferences and display toggles are sequestered here.
+       SCREEN 5: ENTITY DETAIL (LIST OF 5-10 PRAYER POINTS)
+       ========================================================= */
+    .entity-detail-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .entity-header-banner {
+      height: 56px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+    .entity-header-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .entity-header-count {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    .point-item-tile {
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+    .point-item-tile:hover {
+      background: var(--surface-hover);
+    }
+    .point-item-tile.answered {
+      color: var(--text-dim);
+    }
+    .point-item-tile.answered .point-item-title {
+      text-decoration: line-through;
+      text-decoration-color: var(--text-muted);
+      color: var(--text-dim);
+    }
+    .point-item-tile.answered .point-item-body {
+      color: var(--text-dim);
+    }
+
+    .point-item-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+    }
+    .point-item-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .point-item-body {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    /* =========================================================
+       SCREEN 6: SEQUESTERED SETTINGS
        ========================================================= */
     .settings-panel {
       flex: 1;
@@ -555,7 +628,6 @@
       font-weight: 500;
     }
 
-    /* Option Segments */
     .segment-picker {
       display: flex;
       border: 1px solid var(--border);
@@ -589,12 +661,12 @@
 
     <!-- Top Bar: Contiguous 3-Column Navigation -->
     <div class="top-bar">
-      <button class="top-bar-btn" id="nav-left-btn" onclick="showScreen('screen-home')">Home</button>
+      <button class="top-bar-btn" id="nav-left-btn" onclick="handleLeftNav()">Home</button>
       <div class="top-bar-title" id="screen-label">Devotion</div>
-      <button class="top-bar-btn" id="nav-right-btn" onclick="showScreen('screen-ledger')">Ledger</button>
+      <button class="top-bar-btn" id="nav-right-btn" onclick="handleRightNav()">Ledger</button>
     </div>
 
-    <!-- Viewport Content Host: Zero Margins, Zero Gaps -->
+    <!-- Content Area: 100% Contiguous, Zero Gap -->
     <div class="content-host">
 
       <!-- ================= 1. PRISTINE HOME ================= -->
@@ -603,7 +675,7 @@
           <div class="home-hero-wordmark">Devotion</div>
         </div>
 
-        <button class="home-tile" onclick="showScreen('screen-pray')">
+        <button class="home-tile" onclick="startPrayerSession()">
           <div class="home-tile-title">Start praying</div>
         </button>
 
@@ -619,8 +691,12 @@
 
       <!-- ================= 2. CONTEMPLATIVE QUEUE ================= -->
       <div class="view-screen" id="screen-pray">
-        <div class="queue-mosaic" id="pray-cards-host">
-          <!-- Populated dynamically based on sequestered batch setting -->
+        <div class="queue-mosaic" id="pray-cards-host" onclick="advancePrayer()">
+          <!-- Populated dynamically with active prayer point(s) -->
+        </div>
+        <div class="action-dock">
+          <button class="action-dock-btn" onclick="previousPrayer()">Previous</button>
+          <button class="action-dock-btn primary" onclick="advancePrayer()">Next</button>
         </div>
       </div>
 
@@ -631,22 +707,22 @@
           <button class="log-path-btn" id="tab-guide-btn" onclick="setLogTab('guide')">Guided</button>
         </div>
 
-        <!-- Direct Pathway -->
+        <!-- Direct Form -->
         <div class="log-pane-direct" id="log-direct-pane">
-          <textarea class="raw-textarea" placeholder="Enter prayer point..."></textarea>
+          <textarea class="raw-textarea" id="direct-prayer-input" placeholder="Enter prayer point..."></textarea>
           
           <div class="filing-bar">
             <span>Filing</span>
-            <span class="filing-tag">People / Family</span>
+            <span class="filing-tag">People / Sarah</span>
           </div>
 
           <div class="action-dock">
             <button class="action-dock-btn" onclick="showScreen('screen-home')">Cancel</button>
-            <button class="action-dock-btn primary" onclick="showScreen('screen-home')">Save</button>
+            <button class="action-dock-btn primary" onclick="saveDirectPrayer()">Save</button>
           </div>
         </div>
 
-        <!-- Guided Pathway -->
+        <!-- Guided Flow -->
         <div class="log-pane-guide" id="log-guide-pane">
           <div class="guide-box">
             <span class="guide-tag">Reflection</span>
@@ -678,69 +754,34 @@
 
       <!-- ================= 4. DIRECTORY & LEDGER ================= -->
       <div class="view-screen" id="screen-ledger">
-        <div class="ledger-list">
-          
-          <!-- PEOPLE -->
-          <div class="section-head-tile">
-            <span>People</span>
-            <span>2</span>
-          </div>
-          <div class="record-row-tile">
-            <span class="record-name">Sarah</span>
-            <span class="record-state">Active</span>
-          </div>
-          <div class="record-row-tile answered">
-            <span class="record-name">David</span>
-            <span class="record-state">Answered</span>
-          </div>
-
-          <!-- GROUPS -->
-          <div class="section-head-tile">
-            <span>Groups</span>
-            <span>2</span>
-          </div>
-          <div class="record-row-tile">
-            <span class="record-name">Parish Council</span>
-            <span class="record-state">Active</span>
-          </div>
-          <div class="record-row-tile">
-            <span class="record-name">Work Team</span>
-            <span class="record-state">Active</span>
-          </div>
-
-          <!-- GENERAL -->
-          <div class="section-head-tile">
-            <span>General</span>
-            <span>2</span>
-          </div>
-          <div class="record-row-tile">
-            <span class="record-name">Persecuted Church</span>
-            <span class="record-state">Active</span>
-          </div>
-          <div class="record-row-tile">
-            <span class="record-name">1662 Collect for Peace</span>
-            <span class="record-state">Historic</span>
-          </div>
-
-          <!-- HIDDEN SEQUESTERED SETTINGS ENTRY -->
-          <div class="section-head-tile">
-            <span>Preferences</span>
-            <span>&bull;</span>
-          </div>
-          <div class="settings-nav-tile" onclick="showScreen('screen-settings')">
-            <span>Settings</span>
-            <span>&rarr;</span>
-          </div>
-
+        <div class="ledger-list" id="ledger-entities-list">
+          <!-- Populated from rich entities database -->
         </div>
 
         <div class="action-dock">
           <button class="action-dock-btn" onclick="showScreen('screen-home')">Home</button>
-          <button class="action-dock-btn primary" onclick="showScreen('screen-pray')">Start praying</button>
+          <button class="action-dock-btn primary" onclick="startPrayerSession()">Start praying</button>
         </div>
       </div>
 
-      <!-- ================= 5. SEQUESTERED SETTINGS ================= -->
+      <!-- ================= 5. ENTITY DETAIL (5-10 POINTS) ================= -->
+      <div class="view-screen" id="screen-entity-detail">
+        <div class="entity-header-banner">
+          <div class="entity-header-name" id="detail-entity-name">Sarah</div>
+          <div class="entity-header-count" id="detail-entity-count">7 Points</div>
+        </div>
+
+        <div class="entity-detail-list" id="detail-points-container">
+          <!-- Populated dynamically with the 5-10 points of selected entity -->
+        </div>
+
+        <div class="action-dock">
+          <button class="action-dock-btn" onclick="showScreen('screen-ledger')">Ledger</button>
+          <button class="action-dock-btn primary" onclick="praySelectedEntity()">Pray Entity</button>
+        </div>
+      </div>
+
+      <!-- ================= 6. SEQUESTERED SETTINGS ================= -->
       <div class="view-screen" id="screen-settings">
         <div class="settings-panel">
           
@@ -793,49 +834,501 @@
   </div>
 
   <script>
-    // Contemplative Devotional Data
-    const prayers = [
+    /* =========================================================
+       RICH DATABASE: 5 TO 10 UNIQUE PRAYER POINTS PER ENTITY
+       Grounded in classical Reformed theology & 1662 BCP
+       ========================================================= */
+    const database = [
+      // ROOT: PEOPLE
       {
-        domain: "PEOPLE / SARAH",
-        title: "Chemotherapy Endurance",
-        body: "Relief from severe treatment nausea; steadfast trust in Christ's preserving grace; peace resting in Father's care."
+        id: "ent-sarah",
+        name: "Sarah",
+        root: "People",
+        relation: "Sister / Family",
+        points: [
+          {
+            id: "p-s1",
+            title: "Chemotherapy Endurance",
+            desc: "Relief from severe treatment nausea; steadfast trust in Christ's preserving grace; peace resting in Father's care.",
+            status: "Active"
+          },
+          {
+            id: "p-s2",
+            title: "White Cell Recovery",
+            desc: "Restoration of blood count markers before next infusion cycle; physical vitality; submission to God's sovereign timing.",
+            status: "Active"
+          },
+          {
+            id: "p-s3",
+            title: "Spiritual Steadfastness",
+            desc: "Guard against spiritual fatigue and despair; daily refreshment in the Psalms; joy in the assurance of salvation.",
+            status: "Active"
+          },
+          {
+            id: "p-s4",
+            title: "Family Burden Bearing",
+            desc: "Wisdom for husband caring for children; unity and gentleness in the home; endurance under prolonged trial.",
+            status: "Active"
+          },
+          {
+            id: "p-s5",
+            title: "Oncology Consultation Discernment",
+            desc: "Clear insight for medical team assessing scan results; honesty and compassion from physicians; quiet and trusting heart.",
+            status: "Active"
+          },
+          {
+            id: "p-s6",
+            title: "Surgical Recovery",
+            desc: "Successful resection with clean margins; preservation of nerve function; gratitude to God for skilled surgeons.",
+            status: "Answered"
+          },
+          {
+            id: "p-s7",
+            title: "Work Leave Transition",
+            desc: "Employer understanding and approved extended leave; freedom from employment anxiety; contentment in Christ's provision.",
+            status: "Answered"
+          }
+        ]
       },
       {
-        domain: "GENERAL / 1662 BCP",
-        title: "Second Collect for Peace",
-        body: "O God, who art the author of peace and lover of concord; defend us in all assaults of our enemies; that we may rest in Thy defence."
+        id: "ent-david",
+        name: "David",
+        root: "People",
+        relation: "Colleague & Friend",
+        points: [
+          {
+            id: "p-d1",
+            title: "Bereavement Comfort",
+            desc: "True comfort following mother's death; grounding in Heidelberg Q1 that body & soul belong to Christ; freedom from bitter grief.",
+            status: "Active"
+          },
+          {
+            id: "p-d2",
+            title: "Gospel Openness",
+            desc: "Holy Spirit granting conviction of sin and saving faith in Jesus; hunger for biblical truth; boldness in conversation.",
+            status: "Active"
+          },
+          {
+            id: "p-d3",
+            title: "Marital Reconciliation",
+            desc: "Patience and humility in marital strain; willingness to forgive as Christ forgave; godly biblical counsel.",
+            status: "Active"
+          },
+          {
+            id: "p-d4",
+            title: "Financial Stewardship",
+            desc: "Integrity amid family debts; wise management and budgeting; trust in God's daily provision.",
+            status: "Active"
+          },
+          {
+            id: "p-d5",
+            title: "Employment Transition",
+            desc: "Direction following unexpected redundancy; diligence in job search; contentment resting in divine providence.",
+            status: "Answered"
+          },
+          {
+            id: "p-d6",
+            title: "Sobriety & Freedom",
+            desc: "Deliverance from alcohol dependency; steadfastness in Christian accountability; sobriety honoring the Lord.",
+            status: "Answered"
+          }
+        ]
       },
       {
-        domain: "GROUPS / PARISH COUNCIL",
-        title: "Pastoral Discernment",
-        body: "Wisdom for church leadership; unity in biblical truth; courage in faithful preaching of Christ crucified."
+        id: "ent-me",
+        name: "Me (Personal)",
+        root: "People",
+        relation: "Self",
+        points: [
+          {
+            id: "p-m1",
+            title: "Mortification of Anger",
+            desc: "Holy Spirit restraint over quick temper at home; patience in provoked moments; reflection of Christ's meekness.",
+            status: "Active"
+          },
+          {
+            id: "p-m2",
+            title: "Quiet Devotional Discipline",
+            desc: "Faithfulness in unhurried prayer & Scripture meditation; delight in God's Word; resistance to digital distraction.",
+            status: "Active"
+          },
+          {
+            id: "p-m3",
+            title: "Workplace Integrity",
+            desc: "Honesty and thoroughness under stressful deadlines; freedom from people-pleasing; glorifying God in ordinary labor.",
+            status: "Active"
+          },
+          {
+            id: "p-m4",
+            title: "Rest & Sleep",
+            desc: "Sound restorative sleep free from anxious insomnia; physical stamina; trust in God who neither slumbers nor sleeps.",
+            status: "Active"
+          },
+          {
+            id: "p-m5",
+            title: "Speech Edification",
+            desc: "Gracious speech seasoned with salt; avoidance of gossip and cynical complaint; encouragement for brothers & sisters.",
+            status: "Active"
+          },
+          {
+            id: "p-m6",
+            title: "Migraine Relief",
+            desc: "Diminished frequency of neurological pain; perseverance on difficult work days; gratitude for pain-free hours.",
+            status: "Answered"
+          }
+        ]
+      },
+
+      // ROOT: GROUPS
+      {
+        id: "ent-parish",
+        name: "Parish Council",
+        root: "Groups",
+        relation: "Local Church Leadership",
+        points: [
+          {
+            id: "p-pc1",
+            title: "Doctrinal Faithfulness",
+            desc: "Uncompromising fidelity to Holy Scripture and Thirty-Nine Articles; defense of flock against cultural revisionism.",
+            status: "Active"
+          },
+          {
+            id: "p-pc2",
+            title: "Pastoral Discernment",
+            desc: "Godly wisdom resolving difficult congregational conflict; spirit of gentleness and truth; preserving unity of the Spirit.",
+            status: "Active"
+          },
+          {
+            id: "p-pc3",
+            title: "Evangelistic Boldness",
+            desc: "Clear proclamation of repentance and Christ crucified across parish; fruitfulness in neighborhood outreach.",
+            status: "Active"
+          },
+          {
+            id: "p-pc4",
+            title: "Stewardship & Building",
+            desc: "Honest management of parish roof restoration; timely provision of funds; freedom from worldly anxiety.",
+            status: "Active"
+          },
+          {
+            id: "p-pc5",
+            title: "Youth Ministry Leadership",
+            desc: "Raising mature, godly leaders for youth catechesis; protection of children from secular moral decay.",
+            status: "Active"
+          },
+          {
+            id: "p-pc6",
+            title: "Curate Appointment",
+            desc: "Successful appointment of faithful assistant minister; smooth family transition; parish unity in welcoming them.",
+            status: "Answered"
+          },
+          {
+            id: "p-pc7",
+            title: "In-Person Regathering",
+            desc: "Restoration of weekly in-person Lord's Day worship; renewed hunger for corporate prayer and fellowship.",
+            status: "Answered"
+          }
+        ]
+      },
+      {
+        id: "ent-workteam",
+        name: "Engineering Team",
+        root: "Groups",
+        relation: "Workplace",
+        points: [
+          {
+            id: "p-wt1",
+            title: "Project Delivery Integrity",
+            desc: "Truthful reporting on deliverable deadlines; refusal of deceptive shortcuts; fair treatment of contractors.",
+            status: "Active"
+          },
+          {
+            id: "p-wt2",
+            title: "Team Burnout Relief",
+            desc: "Relief for colleagues under severe pressure; mutual patience and kindness amid technical crisis.",
+            status: "Active"
+          },
+          {
+            id: "p-wt3",
+            title: "Christian Witness",
+            desc: "Quiet, consistent witness of technical excellence, honesty, and grace; open doors to speak of hope in Jesus.",
+            status: "Active"
+          },
+          {
+            id: "p-wt4",
+            title: "Management Prudence",
+            desc: "Wise decisions by senior leadership during corporate restructuring; fairness and justice for junior staff.",
+            status: "Active"
+          },
+          {
+            id: "p-wt5",
+            title: "Resolved Outage",
+            desc: "Swift resolution of database corruption without customer data loss; calm collaboration among engineers.",
+            status: "Answered"
+          }
+        ]
+      },
+
+      // ROOT: GENERAL
+      {
+        id: "ent-persecuted",
+        name: "Persecuted Church",
+        root: "General",
+        relation: "Global Brethren",
+        points: [
+          {
+            id: "p-pr1",
+            title: "Endurance Under Oppression",
+            desc: "Bold perseverance of house churches in hostile regimes; steadfastness under surveillance; joy in Christ's sufferings.",
+            status: "Active"
+          },
+          {
+            id: "p-pr2",
+            title: "Shield for Pastors",
+            desc: "Divine shield around imprisoned ministers; preservation of their families; strength against interrogation.",
+            status: "Active"
+          },
+          {
+            id: "p-pr3",
+            title: "Scripture Distribution",
+            desc: "Safe transit of digital and physical Bibles across closed borders; swift indigenous translation for minority tongues.",
+            status: "Active"
+          },
+          {
+            id: "p-pr4",
+            title: "Love for Oppressors",
+            desc: "Supernatural grace to forgive persecutors; saving conviction of sin among government guards and prison officials.",
+            status: "Active"
+          },
+          {
+            id: "p-pr5",
+            title: "Displaced Families Relief",
+            desc: "Shelter, clean water, and emergency food for believers driven from their ancestral villages.",
+            status: "Active"
+          },
+          {
+            id: "p-pr6",
+            title: "Pastoral Release",
+            desc: "Release of three ministers wrongfully imprisoned in Central Asia; worldwide thanksgiving for answered prayers.",
+            status: "Answered"
+          }
+        ]
+      },
+      {
+        id: "ent-historic",
+        name: "Historic 1662 Collects",
+        root: "General",
+        relation: "Liturgical Heritage",
+        points: [
+          {
+            id: "p-h1",
+            title: "Second Collect for Peace",
+            desc: "O God, who art the author of peace and lover of concord; defend us in all assaults of our enemies; that we may rest in Thy defence.",
+            status: "Historic"
+          },
+          {
+            id: "p-h2",
+            title: "Third Collect for Grace",
+            desc: "O Lord, heavenly Father, almighty and everlasting God; defend us in the same with Thy mighty power; that we fall into no sin.",
+            status: "Historic"
+          },
+          {
+            id: "p-h3",
+            title: "Collect for Purity",
+            desc: "Almighty God, unto whom all hearts be open; cleanse the thoughts of our hearts by the inspiration of Thy Holy Spirit.",
+            status: "Historic"
+          },
+          {
+            id: "p-h4",
+            title: "Collect for Scripture",
+            desc: "Blessed Lord, who hast caused all holy Scriptures to be written for our learning; grant that we may in such wise hear, read, and inwardly digest them.",
+            status: "Historic"
+          },
+          {
+            id: "p-h5",
+            title: "General Thanksgiving",
+            desc: "Almighty God, Father of all mercies; we give Thee most humble and hearty thanks for all Thy goodness and loving-kindness to us and to all men.",
+            status: "Historic"
+          },
+          {
+            id: "p-h6",
+            title: "Collect for Ash Wednesday",
+            desc: "Almighty and everlasting God, who hatest nothing that Thou hast made; create and make in us new and contrite hearts.",
+            status: "Historic"
+          }
+        ]
       }
     ];
 
-    // Sequestered App State
+    // Local State
+    let currentScreen = 'screen-home';
+    let selectedEntityId = null;
+    let prayerQueue = [];
+    let prayerIndex = 0;
     let userBatchSize = 1;
     let userTheme = 'night';
     let userDialect = 'uk';
     let userBlendHistoric = false;
 
+    /* Build Active Prayer Queue */
+    function buildPrayerQueue(filterEntityId = null) {
+      prayerQueue = [];
+      database.forEach(ent => {
+        if (filterEntityId && ent.id !== filterEntityId) return;
+        if (!filterEntityId && ent.root === "General" && ent.name === "Historic 1662 Collects" && !userBlendHistoric) return;
+        
+        ent.points.forEach(pt => {
+          if (pt.status === "Active" || pt.status === "Historic") {
+            prayerQueue.push({
+              domain: `${ent.root.toUpperCase()} / ${ent.name.toUpperCase()}`,
+              title: pt.title,
+              desc: pt.desc,
+              entityId: ent.id,
+              pointId: pt.id
+            });
+          }
+        });
+      });
+      prayerIndex = 0;
+    }
+
+    /* Start Active Devotion Flow */
+    function startPrayerSession() {
+      buildPrayerQueue();
+      showScreen('screen-pray');
+    }
+
+    function praySelectedEntity() {
+      buildPrayerQueue(selectedEntityId);
+      showScreen('screen-pray');
+    }
+
+    /* Render Cards in Contemplation Queue */
     function renderPrayerCards() {
       const host = document.getElementById('pray-cards-host');
       host.innerHTML = '';
-      const count = Math.min(userBatchSize, prayers.length);
+      
+      if (prayerQueue.length === 0) {
+        host.innerHTML = `
+          <div class="card-tile">
+            <div class="card-domain">Devotion Complete</div>
+            <div class="card-headline">All petitions observed</div>
+            <div class="card-body">Tap Home to conclude devotion.</div>
+          </div>
+        `;
+        return;
+      }
+
+      const count = Math.min(userBatchSize, prayerQueue.length);
       for (let i = 0; i < count; i++) {
-        const item = prayers[i];
+        const itemIdx = (prayerIndex + i) % prayerQueue.length;
+        const item = prayerQueue[itemIdx];
         const tile = document.createElement('div');
         tile.className = 'card-tile';
         tile.innerHTML = `
-          <div class="card-domain">${item.domain} &bull; ${i + 1}/${count}</div>
+          <div class="card-domain">${item.domain} &bull; ${itemIdx + 1}/${prayerQueue.length}</div>
           <div class="card-headline">${item.title}</div>
-          <div class="card-body">${item.body}</div>
+          <div class="card-body">${item.desc}</div>
         `;
         host.appendChild(tile);
       }
     }
 
+    function advancePrayer() {
+      if (prayerQueue.length > 0) {
+        prayerIndex = (prayerIndex + userBatchSize) % prayerQueue.length;
+        renderPrayerCards();
+      }
+    }
+
+    function previousPrayer() {
+      if (prayerQueue.length > 0) {
+        prayerIndex = (prayerIndex - userBatchSize + prayerQueue.length) % prayerQueue.length;
+        renderPrayerCards();
+      }
+    }
+
+    /* Populate Ledger Directory with Entities */
+    function renderLedgerDirectory() {
+      const list = document.getElementById('ledger-entities-list');
+      list.innerHTML = '';
+
+      const roots = ["People", "Groups", "General"];
+      roots.forEach(r => {
+        const matchingEntities = database.filter(e => e.root === r);
+        const header = document.createElement('div');
+        header.className = 'section-head-tile';
+        header.innerHTML = `<span>${r}</span><span>${matchingEntities.length}</span>`;
+        list.appendChild(header);
+
+        matchingEntities.forEach(ent => {
+          const row = document.createElement('div');
+          row.className = 'entity-row-tile';
+          const activeCount = ent.points.filter(p => p.status === "Active" || p.status === "Historic").length;
+          const answeredCount = ent.points.filter(p => p.status === "Answered").length;
+          row.innerHTML = `
+            <span>${ent.name}</span>
+            <span class="entity-meta-count">${ent.points.length} points (${activeCount} active${answeredCount > 0 ? `, ${answeredCount} ans` : ''}) &rarr;</span>
+          `;
+          row.onclick = () => openEntityDetail(ent.id);
+          list.appendChild(row);
+        });
+      });
+
+      // Settings access tile at the end
+      const setHead = document.createElement('div');
+      setHead.className = 'section-head-tile';
+      setHead.innerHTML = `<span>Preferences</span><span>&bull;</span>`;
+      list.appendChild(setHead);
+
+      const setRow = document.createElement('div');
+      setRow.className = 'settings-nav-tile';
+      setRow.innerHTML = `<span>Settings</span><span>&rarr;</span>`;
+      setRow.onclick = () => showScreen('screen-settings');
+      list.appendChild(setRow);
+    }
+
+    /* Open Entity Detail Screen showing all 5 to 10 points */
+    function openEntityDetail(entityId) {
+      selectedEntityId = entityId;
+      const ent = database.find(e => e.id === entityId);
+      if (!ent) return;
+
+      document.getElementById('detail-entity-name').textContent = `${ent.name} (${ent.root})`;
+      document.getElementById('detail-entity-count').textContent = `${ent.points.length} Points`;
+
+      const container = document.getElementById('detail-points-container');
+      container.innerHTML = '';
+
+      ent.points.forEach((pt, idx) => {
+        const item = document.createElement('div');
+        item.className = `point-item-tile ${pt.status === 'Answered' ? 'answered' : ''}`;
+        item.innerHTML = `
+          <div class="point-item-meta">
+            <span>Point ${idx + 1}</span>
+            <span>${pt.status}</span>
+          </div>
+          <div class="point-item-title">${pt.title}</div>
+          <div class="point-item-body">${pt.desc}</div>
+        `;
+        // Tap to toggle answered status
+        item.onclick = () => {
+          if (pt.status === "Active") {
+            pt.status = "Answered";
+          } else if (pt.status === "Answered") {
+            pt.status = "Active";
+          }
+          openEntityDetail(entityId);
+        };
+        container.appendChild(item);
+      });
+
+      showScreen('screen-entity-detail');
+    }
+
+    /* Screen Navigation */
     function showScreen(id) {
+      currentScreen = id;
       document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
 
@@ -847,39 +1340,94 @@
         label.textContent = 'Devotion';
         leftBtn.style.visibility = 'hidden';
         rightBtn.textContent = 'Ledger';
-        rightBtn.onclick = () => showScreen('screen-ledger');
       } else if (id === 'screen-pray') {
         label.textContent = 'Contemplation';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
-        leftBtn.onclick = () => showScreen('screen-home');
         rightBtn.textContent = 'Ledger';
-        rightBtn.onclick = () => showScreen('screen-ledger');
         renderPrayerCards();
       } else if (id === 'screen-log') {
         label.textContent = 'Logging';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
-        leftBtn.onclick = () => showScreen('screen-home');
         rightBtn.textContent = 'Ledger';
-        rightBtn.onclick = () => showScreen('screen-ledger');
       } else if (id === 'screen-ledger') {
         label.textContent = 'Ledger';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
-        leftBtn.onclick = () => showScreen('screen-home');
         rightBtn.textContent = 'Settings';
-        rightBtn.onclick = () => showScreen('screen-settings');
+        renderLedgerDirectory();
+      } else if (id === 'screen-entity-detail') {
+        label.textContent = 'Entity';
+        leftBtn.style.visibility = 'visible';
+        leftBtn.textContent = 'Ledger';
+        rightBtn.textContent = 'Home';
       } else if (id === 'screen-settings') {
         label.textContent = 'Settings';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Ledger';
-        leftBtn.onclick = () => showScreen('screen-ledger');
         rightBtn.textContent = 'Home';
-        rightBtn.onclick = () => showScreen('screen-home');
       }
     }
 
+    function handleLeftNav() {
+      if (currentScreen === 'screen-entity-detail') {
+        showScreen('screen-ledger');
+      } else if (currentScreen === 'screen-settings') {
+        showScreen('screen-ledger');
+      } else {
+        showScreen('screen-home');
+      }
+    }
+
+    function handleRightNav() {
+      if (currentScreen === 'screen-home' || currentScreen === 'screen-pray' || currentScreen === 'screen-log') {
+        showScreen('screen-ledger');
+      } else if (currentScreen === 'screen-ledger') {
+        showScreen('screen-settings');
+      } else {
+        showScreen('screen-home');
+      }
+    }
+
+    /* Logging */
+    function setLogTab(tab) {
+      if (tab === 'direct') {
+        document.getElementById('log-direct-pane').style.display = 'flex';
+        document.getElementById('log-guide-pane').classList.remove('active');
+        document.getElementById('tab-direct-btn').classList.add('active');
+        document.getElementById('tab-guide-btn').classList.remove('active');
+      } else {
+        document.getElementById('log-direct-pane').style.display = 'none';
+        document.getElementById('log-guide-pane').classList.add('active');
+        document.getElementById('tab-guide-btn').classList.add('active');
+        document.getElementById('tab-direct-btn').classList.remove('active');
+      }
+    }
+
+    function saveDirectPrayer() {
+      const text = document.getElementById('direct-prayer-input').value.trim();
+      if (text) {
+        // Append to Sarah
+        const sarah = database.find(e => e.id === "ent-sarah");
+        sarah.points.unshift({
+          id: "p-s" + (sarah.points.length + 1),
+          title: text.length > 25 ? text.substring(0, 22) + "..." : text,
+          desc: text,
+          status: "Active"
+        });
+        document.getElementById('direct-prayer-input').value = '';
+        alert('Committed point to Sarah (People) in SQLite vault.');
+      }
+      showScreen('screen-home');
+    }
+
+    function selectCandidate(tile) {
+      document.querySelectorAll('.candidate-tile').forEach(t => t.classList.remove('selected'));
+      tile.classList.add('selected');
+    }
+
+    /* Sequestered Settings */
     function applyTheme(theme) {
       userTheme = theme;
       if (theme === 'morning') {
@@ -897,7 +1445,7 @@
       userBatchSize = n;
       document.querySelectorAll('[id^="btn-batch-"]').forEach(b => b.classList.remove('active'));
       document.getElementById(`btn-batch-${n}`).classList.add('active');
-      if (document.getElementById('screen-pray').classList.contains('active')) {
+      if (currentScreen === 'screen-pray') {
         renderPrayerCards();
       }
     }
@@ -912,25 +1460,6 @@
       userBlendHistoric = blended;
       document.getElementById('btn-hist-off').classList.toggle('active', !blended);
       document.getElementById('btn-hist-on').classList.toggle('active', blended);
-    }
-
-    function setLogTab(tab) {
-      if (tab === 'direct') {
-        document.getElementById('log-direct-pane').style.display = 'flex';
-        document.getElementById('log-guide-pane').classList.remove('active');
-        document.getElementById('tab-direct-btn').classList.add('active');
-        document.getElementById('tab-guide-btn').classList.remove('active');
-      } else {
-        document.getElementById('log-direct-pane').style.display = 'none';
-        document.getElementById('log-guide-pane').classList.add('active');
-        document.getElementById('tab-guide-btn').classList.add('active');
-        document.getElementById('tab-direct-btn').classList.remove('active');
-      }
-    }
-
-    function selectCandidate(tile) {
-      document.querySelectorAll('.candidate-tile').forEach(t => t.classList.remove('selected'));
-      tile.classList.add('selected');
     }
 
     // Initialize
