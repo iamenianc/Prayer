@@ -35,20 +35,20 @@
       --action-bg: #000000;
       --action-text: #ffffff;
 
-      /* Text Scaling: Default is Largest (Large) */
-      --font-scale: 1.15;
-      --fs-hero: 22px;
-      --fs-home-btn: 23px;
-      --fs-card-title: 18px;
-      --fs-card-body: 15px;
-      --fs-card-domain: 10px;
-      --fs-header-title: 17px;
-      --fs-header-meta: 11px;
-      --fs-row-title: 15px;
-      --fs-row-meta: 12px;
-      --fs-input: 16px;
-      --fs-action-btn: 12px;
-      --fs-nav-label: 11px;
+      /* Text Scaling: Default is Largest (Large) - Bold, High-Presence, Effortless Devotional Readability */
+      --font-scale: 1.35;
+      --fs-hero: 26px;
+      --fs-home-btn: 28px;
+      --fs-card-title: 22px;
+      --fs-card-body: 18px;
+      --fs-card-domain: 12px;
+      --fs-header-title: 20px;
+      --fs-header-meta: 13px;
+      --fs-row-title: 18px;
+      --fs-row-meta: 14px;
+      --fs-input: 19px;
+      --fs-action-btn: 14px;
+      --fs-nav-label: 12px;
     }
 
     body.text-size-regular {
@@ -68,19 +68,19 @@
     }
 
     body.text-size-compact {
-      --font-scale: 0.88;
-      --fs-hero: 17px;
-      --fs-home-btn: 17px;
-      --fs-card-title: 14px;
-      --fs-card-body: 11.5px;
-      --fs-card-domain: 8.5px;
-      --fs-header-title: 13px;
-      --fs-header-meta: 9px;
-      --fs-row-title: 12.5px;
-      --fs-row-meta: 10px;
-      --fs-input: 13px;
-      --fs-action-btn: 10px;
-      --fs-nav-label: 10px;
+      --font-scale: 0.78;
+      --fs-hero: 15px;
+      --fs-home-btn: 15px;
+      --fs-card-title: 12.5px;
+      --fs-card-body: 10.5px;
+      --fs-card-domain: 7.5px;
+      --fs-header-title: 12px;
+      --fs-header-meta: 8.5px;
+      --fs-row-title: 11.5px;
+      --fs-row-meta: 9px;
+      --fs-input: 11.5px;
+      --fs-action-btn: 9.5px;
+      --fs-nav-label: 9.5px;
     }
 
     body.theme-night {
@@ -531,12 +531,12 @@
       border-left: 3px solid var(--text);
     }
     .candidate-title {
-      font-size: 15px;
+      font-size: var(--fs-card-title);
       font-weight: 600;
       color: var(--text);
     }
     .candidate-desc {
-      font-size: 12px;
+      font-size: var(--fs-card-body);
       line-height: 1.5;
       color: var(--text-muted);
     }
@@ -555,7 +555,7 @@
       border: none;
       border-right: 1px solid var(--border);
       color: var(--text);
-      font-size: 11px;
+      font-size: var(--fs-action-btn);
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
