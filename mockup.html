@@ -224,7 +224,10 @@
 
     /* =========================================================
        SCREEN 2: CONTEMPLATIVE QUEUE ("START PRAYING")
-       Cards partition 100% of height contiguously.
+       Topic-Centric Contemplation:
+       - Displays single Topic (Entity) per screen
+       - All unanswered points stacked contiguously
+       - Answered points collapsed into hairline expandable tile
        ========================================================= */
     .queue-mosaic {
       flex: 1;
@@ -232,43 +235,128 @@
       flex-direction: column;
       width: 100%;
       height: 100%;
+      overflow-y: auto;
     }
 
-    .card-tile {
-      flex: 1;
-      background: var(--surface-1);
+    .topic-screen-header {
+      background: var(--surface-2);
       border-bottom: 1px solid var(--border);
-      padding: 32px;
+      padding: 16px 20px;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-      cursor: pointer;
-      position: relative;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
     }
-    .card-tile:last-child {
-      border-bottom: none;
+    .topic-screen-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.02em;
     }
-
-    .card-domain {
+    .topic-screen-meta {
       font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .topic-points-stack {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .card-tile {
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: background 0.1s ease;
+    }
+    .card-tile:hover {
+      background: var(--surface-hover);
+    }
+
+    .card-domain {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
       color: var(--text-dim);
-      margin-bottom: 14px;
+      margin-bottom: 8px;
     }
     .card-headline {
-      font-size: 20px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--text);
-      line-height: 1.3;
-      margin-bottom: 14px;
+      line-height: 1.35;
+      margin-bottom: 8px;
       letter-spacing: -0.01em;
     }
     .card-body {
-      font-size: 14px;
-      line-height: 1.65;
+      font-size: 13px;
+      line-height: 1.6;
       color: var(--text-muted);
+    }
+
+    /* Expandable Answered Tile */
+    .answered-toggle-tile {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s ease;
+    }
+    .answered-toggle-tile:hover {
+      background: var(--surface-hover);
+    }
+    .answered-toggle-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+    .answered-toggle-glyph {
+      font-size: 11px;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .answered-points-stack {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      background: var(--surface-2);
+    }
+    .answered-points-stack.expanded {
+      display: flex;
+    }
+
+    .answered-card-tile {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .answered-card-tile .card-headline {
+      text-decoration: line-through;
+      text-decoration-color: var(--text-muted);
+      color: var(--text-dim);
+      font-size: 14px;
+    }
+    .answered-card-tile .card-body {
+      color: var(--text-dim);
+      font-size: 12px;
     }
 
     /* =========================================================
@@ -689,14 +777,14 @@
         </div>
       </div>
 
-      <!-- ================= 2. CONTEMPLATIVE QUEUE ================= -->
+      <!-- ================= 2. CONTEMPLATIVE QUEUE (TOPIC CONTEMPLATION) ================= -->
       <div class="view-screen" id="screen-pray">
-        <div class="queue-mosaic" id="pray-cards-host" onclick="advancePrayer()">
-          <!-- Populated dynamically with active prayer point(s) -->
+        <div class="queue-mosaic" id="pray-cards-host">
+          <!-- Populated dynamically with active Topic and all its prayer points -->
         </div>
         <div class="action-dock">
-          <button class="action-dock-btn" onclick="previousPrayer()">Previous</button>
-          <button class="action-dock-btn primary" onclick="advancePrayer()">Next</button>
+          <button class="action-dock-btn" onclick="previousTopic()">Previous</button>
+          <button class="action-dock-btn primary" onclick="nextTopic()">Next</button>
         </div>
       </div>
 
@@ -792,15 +880,6 @@
             <div class="segment-picker">
               <button class="segment-btn active" id="btn-theme-night" onclick="applyTheme('night')">Quiet Night</button>
               <button class="segment-btn" id="btn-theme-morning" onclick="applyTheme('morning')">Morning Light</button>
-            </div>
-          </div>
-
-          <div class="setting-item-tile">
-            <span class="setting-label">Cards per view</span>
-            <div class="segment-picker">
-              <button class="segment-btn active" id="btn-batch-1" onclick="applyBatch(1)">1</button>
-              <button class="segment-btn" id="btn-batch-2" onclick="applyBatch(2)">2</button>
-              <button class="segment-btn" id="btn-batch-3" onclick="applyBatch(3)">3</button>
             </div>
           </div>
 
@@ -1163,87 +1242,146 @@
     // Local State
     let currentScreen = 'screen-home';
     let selectedEntityId = null;
-    let prayerQueue = [];
-    let prayerIndex = 0;
-    let userBatchSize = 1;
+    let topicQueue = [];
+    let topicIndex = 0;
     let userTheme = 'night';
     let userDialect = 'uk';
     let userBlendHistoric = false;
+    let answeredExpanded = {};
 
-    /* Build Active Prayer Queue */
-    function buildPrayerQueue(filterEntityId = null) {
-      prayerQueue = [];
+    /* Build Active Topic Queue */
+    function buildTopicQueue(filterEntityId = null) {
+      topicQueue = [];
       database.forEach(ent => {
         if (filterEntityId && ent.id !== filterEntityId) return;
         if (!filterEntityId && ent.root === "General" && ent.name === "Historic 1662 Collects" && !userBlendHistoric) return;
         
-        ent.points.forEach(pt => {
-          if (pt.status === "Active" || pt.status === "Historic") {
-            prayerQueue.push({
-              domain: `${ent.root.toUpperCase()} / ${ent.name.toUpperCase()}`,
-              title: pt.title,
-              desc: pt.desc,
-              entityId: ent.id,
-              pointId: pt.id
-            });
-          }
-        });
+        const activePoints = ent.points.filter(pt => pt.status === "Active" || pt.status === "Historic");
+        const answeredPoints = ent.points.filter(pt => pt.status === "Answered");
+        
+        // Include topic if it has active points or if filtered specifically
+        if (activePoints.length > 0 || filterEntityId) {
+          topicQueue.push({
+            entityId: ent.id,
+            name: ent.name,
+            root: ent.root,
+            relation: ent.relation,
+            activePoints: activePoints,
+            answeredPoints: answeredPoints
+          });
+        }
       });
-      prayerIndex = 0;
+      topicIndex = 0;
     }
 
     /* Start Active Devotion Flow */
     function startPrayerSession() {
-      buildPrayerQueue();
+      buildTopicQueue();
       showScreen('screen-pray');
     }
 
     function praySelectedEntity() {
-      buildPrayerQueue(selectedEntityId);
+      buildTopicQueue(selectedEntityId);
       showScreen('screen-pray');
     }
 
-    /* Render Cards in Contemplation Queue */
+    /* Render Active Topic Screen in Contemplation Flow */
     function renderPrayerCards() {
       const host = document.getElementById('pray-cards-host');
       host.innerHTML = '';
       
-      if (prayerQueue.length === 0) {
+      if (topicQueue.length === 0) {
         host.innerHTML = `
-          <div class="card-tile">
+          <div class="card-tile" style="flex:1; justify-content:center; text-align:center;">
             <div class="card-domain">Devotion Complete</div>
-            <div class="card-headline">All petitions observed</div>
+            <div class="card-headline">All Topics Observed</div>
             <div class="card-body">Tap Home to conclude devotion.</div>
           </div>
         `;
         return;
       }
 
-      const count = Math.min(userBatchSize, prayerQueue.length);
-      for (let i = 0; i < count; i++) {
-        const itemIdx = (prayerIndex + i) % prayerQueue.length;
-        const item = prayerQueue[itemIdx];
-        const tile = document.createElement('div');
-        tile.className = 'card-tile';
-        tile.innerHTML = `
-          <div class="card-domain">${item.domain} &bull; ${itemIdx + 1}/${prayerQueue.length}</div>
-          <div class="card-headline">${item.title}</div>
-          <div class="card-body">${item.desc}</div>
+      const topic = topicQueue[topicIndex];
+      const isExpanded = !!answeredExpanded[topic.entityId];
+
+      // 1. Topic Header
+      const header = document.createElement('div');
+      header.className = 'topic-screen-header';
+      header.innerHTML = `
+        <div>
+          <div class="topic-screen-title">${topic.name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${topic.relation || topic.root}</div>
+        </div>
+        <div class="topic-screen-meta">Topic ${topicIndex + 1} / ${topicQueue.length} &bull; ${topic.root}</div>
+      `;
+      host.appendChild(header);
+
+      // 2. Unanswered Points Stack (All active points displayed contiguously)
+      const pointsStack = document.createElement('div');
+      pointsStack.className = 'topic-points-stack';
+
+      if (topic.activePoints.length === 0) {
+        const emptyTile = document.createElement('div');
+        emptyTile.className = 'card-tile';
+        emptyTile.innerHTML = `
+          <div class="card-headline" style="color: var(--text-muted); font-size: 14px;">No active petitions</div>
+          <div class="card-body">All recorded petitions for this topic have been answered.</div>
         `;
-        host.appendChild(tile);
+        pointsStack.appendChild(emptyTile);
+      } else {
+        topic.activePoints.forEach((pt, idx) => {
+          const tile = document.createElement('div');
+          tile.className = 'card-tile';
+          tile.innerHTML = `
+            <div class="card-domain">Point ${idx + 1} of ${topic.activePoints.length}</div>
+            <div class="card-headline">${pt.title}</div>
+            <div class="card-body">${pt.desc}</div>
+          `;
+          pointsStack.appendChild(tile);
+        });
+      }
+      host.appendChild(pointsStack);
+
+      // 3. Expandable Answered Petitions Tile (for thanksgiving)
+      if (topic.answeredPoints.length > 0) {
+        const toggleTile = document.createElement('div');
+        toggleTile.className = 'answered-toggle-tile';
+        toggleTile.innerHTML = `
+          <span class="answered-toggle-label">Answered (${topic.answeredPoints.length})</span>
+          <span class="answered-toggle-glyph">${isExpanded ? '&minus;' : '&#43;'}</span>
+        `;
+        toggleTile.onclick = () => {
+          answeredExpanded[topic.entityId] = !answeredExpanded[topic.entityId];
+          renderPrayerCards();
+        };
+        host.appendChild(toggleTile);
+
+        const answeredStack = document.createElement('div');
+        answeredStack.className = `answered-points-stack ${isExpanded ? 'expanded' : ''}`;
+        topic.answeredPoints.forEach((pt, idx) => {
+          const ansTile = document.createElement('div');
+          ansTile.className = 'answered-card-tile';
+          ansTile.innerHTML = `
+            <div class="card-domain">Answered &bull; Thanksgiving</div>
+            <div class="card-headline">${pt.title}</div>
+            <div class="card-body">${pt.desc}</div>
+          `;
+          answeredStack.appendChild(ansTile);
+        });
+        host.appendChild(answeredStack);
       }
     }
 
-    function advancePrayer() {
-      if (prayerQueue.length > 0) {
-        prayerIndex = (prayerIndex + userBatchSize) % prayerQueue.length;
+    function nextTopic() {
+      if (topicQueue.length > 0) {
+        topicIndex = (topicIndex + 1) % topicQueue.length;
         renderPrayerCards();
       }
     }
 
-    function previousPrayer() {
-      if (prayerQueue.length > 0) {
-        prayerIndex = (prayerIndex - userBatchSize + prayerQueue.length) % prayerQueue.length;
+    function previousTopic() {
+      if (topicQueue.length > 0) {
+        topicIndex = (topicIndex - 1 + topicQueue.length) % topicQueue.length;
         renderPrayerCards();
       }
     }
@@ -1438,15 +1576,6 @@
         document.body.classList.remove('theme-morning');
         document.getElementById('btn-theme-night').classList.add('active');
         document.getElementById('btn-theme-morning').classList.remove('active');
-      }
-    }
-
-    function applyBatch(n) {
-      userBatchSize = n;
-      document.querySelectorAll('[id^="btn-batch-"]').forEach(b => b.classList.remove('active'));
-      document.getElementById(`btn-batch-${n}`).classList.add('active');
-      if (currentScreen === 'screen-pray') {
-        renderPrayerCards();
       }
     }
 
