@@ -11,12 +11,13 @@ This project is dedicated **exclusively to planning, conceptualization, and spec
 
 ---
 
-## 2. Prerequisite: Read All Markdown Files Before Any Action
+## 2. Prerequisite: Context Awareness & Markdown Reading Protocol
 
-**Before starting ANY editing, planning, or decision-making work, the agent MUST always discover and read all markdown files in the workspace: `AGENTS.md`, `beliefs.md`, `BRD.md`, `technical.md`, and `UX.md`.**
+**The agent MUST read the core workspace markdown files (`AGENTS.md`, `beliefs.md`, `BRD.md`, `technical.md`, and `UX.md`) at the start of a session, and whenever it needs a refresher during a long or context-heavy session.**
 
-- **No Blind Edits or Assumptions**: Never start planning, drafting proposals, or modifying documents without first reading and verifying the current contents of all workspace markdown files.
-- **Context Continuity**: Reading all markdown files ensures full awareness of established domain rules, theological foundations, scope boundaries, technical architectures, and decision logs.
+- **Session Start & Refreshers**: Read the core files upon commencing a session to establish full context, or during extended conversations when context has drifted, truncated, or when explicit verification is needed before major architectural updates.
+- **Avoid Redundant Re-reading**: Do **not** mechanically re-read all context files for every consecutive queued prompt or rapid iterative message when the active context already contains the current document states.
+- **Context Continuity**: Ensure decisions remain faithful to established domain rules, theological foundations, scope boundaries, technical architectures, and user journeys.
 
 ---
 
