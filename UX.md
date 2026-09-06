@@ -29,9 +29,9 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 The product uses a pure black-and-white visual identity that reflects dignity, simplicity, architectural order, and liturgical focus.
 
 ### 2.1 The Two Visual Modes
-Users can toggle between two high-contrast modes depending on environment and preference:
-1. **Quiet Night (Black & White)**: Pure black canvas with crisp white typography and subtle charcoal dividers. Tailored for evening devotions, bedside prayer, and low-light environments.
-2. **Morning Light (White & Black)**: Clean white canvas with stark black lettering and soft gray card outlines. Tailored for daytime journaling and bright reading conditions.
+Users can toggle between two high-contrast modes depending on environment and preference, with **Morning Light** serving as the default:
+1. **Morning Light (White & Black) — *(Default)***: Clean white canvas with stark black lettering, subtle soft-gray hairline borders, and subdued gray metadata. Tailored for bright reading conditions, daytime contemplation, and structured readability.
+2. **Quiet Night (Black & White)**: Pure black canvas with crisp white typography and subtle charcoal dividers. Tailored for evening devotions, bedside prayer, and low-light environments.
 
 ### 2.2 Contiguous Geometric Tiles (Zero Gaps & Zero Curved Edges)
 - **Strict Orthogonality**: Every card, button, input box, dialog, sheet, and container adheres to sharp 90-degree right angles (`border-radius: 0`). Curved edges, rounded corners, and pill buttons are strictly forbidden.

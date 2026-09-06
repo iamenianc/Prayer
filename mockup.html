@@ -21,22 +21,6 @@
     }
 
     :root {
-      --bg: #000000;
-      --surface-1: #000000;
-      --surface-2: #0d0d0d;
-      --surface-3: #161616;
-      --surface-hover: #1f1f1f;
-      --surface-active: #292929;
-      --border: #242424;
-      --border-accent: #444444;
-      --text: #ffffff;
-      --text-muted: #8c8c8c;
-      --text-dim: #444444;
-      --action-bg: #ffffff;
-      --action-text: #000000;
-    }
-
-    body.theme-morning {
       --bg: #ffffff;
       --surface-1: #ffffff;
       --surface-2: #f7f7f7;
@@ -52,10 +36,26 @@
       --action-text: #ffffff;
     }
 
+    body.theme-night {
+      --bg: #000000;
+      --surface-1: #000000;
+      --surface-2: #0d0d0d;
+      --surface-3: #161616;
+      --surface-hover: #1f1f1f;
+      --surface-active: #292929;
+      --border: #242424;
+      --border-accent: #444444;
+      --text: #ffffff;
+      --text-muted: #8c8c8c;
+      --text-dim: #444444;
+      --action-bg: #ffffff;
+      --action-text: #000000;
+    }
+
     html, body {
       width: 100%;
       height: 100%;
-      background-color: #080808;
+      background-color: #f0f0f0;
       color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       overflow-x: hidden;
@@ -650,11 +650,11 @@
     }
     .point-item-tile.answered .point-item-title {
       text-decoration: line-through;
-      text-decoration-color: rgba(255, 255, 255, 0.2);
+      text-decoration-color: rgba(0, 0, 0, 0.2);
       color: var(--text-dim);
     }
-    body.theme-morning .point-item-tile.answered .point-item-title {
-      text-decoration-color: rgba(0, 0, 0, 0.2);
+    body.theme-night .point-item-tile.answered .point-item-title {
+      text-decoration-color: rgba(255, 255, 255, 0.2);
     }
     .point-item-tile.answered .point-item-body {
       color: var(--text-dim);
@@ -880,8 +880,8 @@
           <div class="setting-item-tile">
             <span class="setting-label">Theme</span>
             <div class="segment-picker">
-              <button class="segment-btn active" id="btn-theme-night" onclick="applyTheme('night')">Quiet Night</button>
-              <button class="segment-btn" id="btn-theme-morning" onclick="applyTheme('morning')">Morning Light</button>
+              <button class="segment-btn" id="btn-theme-night" onclick="applyTheme('night')">Quiet Night</button>
+              <button class="segment-btn active" id="btn-theme-morning" onclick="applyTheme('morning')">Morning Light</button>
             </div>
           </div>
 
@@ -1322,7 +1322,7 @@
     let selectedEntityId = null;
     let topicQueue = [];
     let topicIndex = 0;
-    let userTheme = 'night';
+    let userTheme = 'morning';
     let userDialect = 'uk';
     let userBlendHistoric = false;
     let answeredExpanded = {};
@@ -1685,14 +1685,14 @@
     /* Sequestered Settings */
     function applyTheme(theme) {
       userTheme = theme;
-      if (theme === 'morning') {
-        document.body.classList.add('theme-morning');
-        document.getElementById('btn-theme-morning').classList.add('active');
-        document.getElementById('btn-theme-night').classList.remove('active');
-      } else {
-        document.body.classList.remove('theme-morning');
+      if (theme === 'night') {
+        document.body.classList.add('theme-night');
         document.getElementById('btn-theme-night').classList.add('active');
         document.getElementById('btn-theme-morning').classList.remove('active');
+      } else {
+        document.body.classList.remove('theme-night');
+        document.getElementById('btn-theme-morning').classList.add('active');
+        document.getElementById('btn-theme-night').classList.remove('active');
       }
     }
 

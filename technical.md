@@ -72,7 +72,7 @@ erDiagram
 - **Client Configuration & Preferences Schema (`APP_CONFIG`)**:
   - Encrypted key-value or single-row table in SQLite storing local preferences:
     - `locale_dialect`: `"EN_AU_UK"` (Default) | `"EN_US"`. Governs application copy, liturgical texts, date nuances, and prompt dialect instructions.
-    - `theme_mode`: `"QUIET_NIGHT"` (Default) | `"MORNING_LIGHT"`.
+    - `theme_mode`: `"MORNING_LIGHT"` (Default) | `"QUIET_NIGHT"`.
     - `blend_historic_prayers`: Boolean (Default: `false`).
 
 ---
