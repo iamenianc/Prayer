@@ -9,7 +9,7 @@
 ## 1. Application Purpose
 
 ### 1.1 Vision & Value Proposition
-Deliver an intimate, distraction-free, mobile-first prayer companion that cleanly separates the contemplative act of prayer from the administrative task of organizing petitions. The application opens to a pristine, blank canvas offering strictly two choices—**Start praying** and **Log prayer points**—grounded in historic Reformed theology and supported by an objective, neutral suggestion engine provided free of charge.
+Deliver an intimate, distraction-free, mobile-first prayer companion that cleanly separates the contemplative act of prayer from the administrative task of organizing petitions. The application opens to a pristine, blank canvas offering strictly three choices—**Start praying**, **Open Journal**, and **Log prayer points**—grounded in historic Reformed theology and supported by an objective, neutral suggestion engine provided free of charge.
 
 ### 1.2 Problem Statement
 Many believers struggle with consistency, distraction, and cognitive overload during prayer. Traditional note-taking apps lack prayer lifecycles, while broad social or spiritual apps often introduce gamification (streaks, badges, confetti) and commercialized community feeds that compromise privacy and reverence. Furthermore, when entering prayer, users are often greeted with complex dashboards and task lists that trigger administrative fatigue rather than contemplative focus.
@@ -32,10 +32,11 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 ### 2.2 Core In-Scope Features (MVP)
 
 1. **Pristine Home Screen & Gestural Navigation**:
-   - The app launches to an uncluttered blank canvas featuring strictly two centered flat geometric tile options with sharp 90-degree right angles, zero curved edges, zero visible gaps (directly abutting tiles sharing a 1px boundary), and strictly zero explanatory, tutorial, or descriptive sub-text:
+   - The app launches to an uncluttered blank canvas featuring strictly three centered flat geometric tile options with sharp 90-degree right angles, zero curved edges, zero visible gaps (directly abutting tiles sharing a 1px boundary), and strictly zero explanatory, tutorial, or descriptive sub-text:
      1. **Start praying**
-     2. **Log prayer points**
-   - A **swipe-left gesture** reveals the structural directory and ledger.
+     2. **Open Journal**
+     3. **Log prayer points**
+   - A **swipe-left gesture** also reveals the structural directory and Journal.
 
 2. **The Three Foundational Roots (`People`, `Groups`, `General`)**:
    - **`People`**: Exclusively and strictly specific, distinct individual human relationships (e.g., spouse, parent, child, a single named friend/neighbor, and personal petitions under *Me*—including personal health, job trials, or sanctification situated within a workplace, school, or hospital). Plural or collective peer environments (such as coworkers or classmates as a unit) belong under `Groups`.
@@ -77,7 +78,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 
 8. **Sequestered Settings & Hidden Preferences**:
    - The active interface is strictly free from settings, display switches, or configuration controls.
-   - All user preferences (Quiet Night vs. Morning Light, dialect selection, and historic prayer blending) are sequestered in a dedicated Settings panel reached exclusively via intentional navigation from the directory ledger.
+   - All user preferences (Quiet Night vs. Morning Light, dialect selection, and historic prayer blending) are sequestered in a dedicated Settings panel reached exclusively via intentional navigation from the Journal.
 
 ### 2.3 Post-MVP / Future Milestones
 - Native iOS client release.
@@ -115,7 +116,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
   - *Omission of Fillers*: Stripping grammatically necessary but low-information words like articles (*a*, *an*, *the*), auxiliary verbs (*is*, *are*), and loose connectives.
   - *Telegraphic Style*: Punchy phrases focused strictly on core nouns and verbs.
 - **Geometric & Contiguous Tessellated UI Architecture (Zero Gaps & Zero Curved Edges)**: The user interface is strictly composed of flat, non-skeuomorphic, planar tiles with sharp 90-degree right angles. Rounded corners, curved pill buttons, bubble cards, drop shadows, and circular frames are strictly forbidden. Crucially, the design eliminates all visible gaps, margins, and gutters between UI elements; all tiles and components are directly adjacent and contiguous to each other, sharing 1px hairline boundary seams across the entire viewport to form a unified architectural plane.
-- **Principle of Austere UI & Zero Explanatory / Config Clutter**: As an unyielding principle, the application shall **never** display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or explanatory commentary. Furthermore, the devotional interface shall never be cluttered with configuration controls, display options, or settings toggles; all preferences are sequestered into a dedicated Settings view accessible exclusively via deliberate navigation from the directory ledger.
+- **Principle of Austere UI & Zero Explanatory / Config Clutter**: As an unyielding principle, the application shall **never** display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or explanatory commentary. Furthermore, the devotional interface shall never be cluttered with configuration controls, display options, or settings toggles; all preferences are sequestered into a dedicated Settings view accessible exclusively via deliberate navigation from the Journal.
 - **Dialect & Orthography Standards**: System copy, preloaded historic prayers, and AI outputs adhere to **English (Australian / UK)** by default, switching consistently to **US English** when configured by the user.
 - **Modular Prompt Deployment**: To comply with serverless execution constraints (e.g., Cloudflare Workers 5.1 kB text binding ceiling) while optimizing attention primacy, prompt directives are decomposed into fine modules assembled in sequence: `PROMPT_PERSONA` (identity & First Principle), `PROMPT_INQUIRY_FLOW` (control loop & inquiry), `PROMPT_THEOLOGY` (doctrinal & comfort boundaries), `PROMPT_TAXONOMY_PRIVACY` (root mapping & entity masking), `PROMPT_CARD_STYLE` (card brevity & shorthand), and `PROMPT_OUTPUT_SCHEMA` (JSON structure).
 - **Benchmarked Stress-Testing Battery**: The suggestion engine is subjected to a standardized 100-request evaluation suite ([`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json)) spanning all wordiness tiers (5–253 words), diverse perspectives, theological boundaries, and root categories to guarantee mobile card brevity and confessional fidelity under stress, with comprehensive evaluation recorded in [`test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/BENCHMARK_RESULTS.md) and detailed linguistic analysis in [`test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/AI_GENERATED_TEXT_REPORT.md).
@@ -127,10 +128,10 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 ```mermaid
 graph TD
     subgraph Mobile Client (Offline-First)
-        EntryUI["Blank Entry Screen (Pray | Log)"]
+        EntryUI["Blank Entry Screen (Pray | Open Journal | Log)"]
         ActivePrayerUI["Passive Prayer Flow (Card Focus)"]
         LoggingUI["Log Flow (Record Point | 'Guide me')"]
-        DirectoryUI["Swipe-Left Directory (People | Groups | General)"]
+        JournalUI["Journal (People | Groups | General)"]
         LocalDB[("Encrypted Local SQLite Database<br/>(SQLCipher + Hardware Keystore)")]
     end
 
@@ -141,11 +142,11 @@ graph TD
 
     EntryUI --> ActivePrayerUI
     EntryUI --> LoggingUI
-    EntryUI --> DirectoryUI
+    EntryUI --> JournalUI
 
     ActivePrayerUI --> LocalDB
     LoggingUI --> LocalDB
-    DirectoryUI --> LocalDB
+    JournalUI --> LocalDB
 
     LoggingUI -.->"Encrypted Payload (Sanitized)"| Proxy
     Proxy --> LLM

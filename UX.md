@@ -13,12 +13,12 @@
 The Prayer app is conceived as a quiet, sacred personal vault. Most consumer apps rely on vibrant colors, badges, notifications, and social feeds designed to capture and monetize user attention. In contrast, this app is designed to **give attention back to the user's interior life, personal relationships, and communion with God**.
 
 ### 1.1 Core Experience Pillars
-- **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly two options: **Start praying** and **Log prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
+- **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly three options: **Start praying**, **Open Journal**, and **Log prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
 - **Strictly Passive Contemplation**: When praying, the screen is 100% read-only. Prayer is not a productivity checklist. There are no check-off buttons, editing controls, or administrative interruptions while in prayer.
 - **Zero-Gap Contiguous Geometry**: Every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
 - **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
 - **Austere Simplicity (Zero Explanatory / Tutorial Text)**: As an unyielding design principle, the application shall never display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or instructional crutches.
-- **Sequestered Configuration (Zero Clutter)**: The interface is never cluttered with configuration, settings, or display options. All user preferences reside in a dedicated Settings panel navigated to only when needed from the directory ledger, preserving an austere, quiet devotional space.
+- **Sequestered Configuration (Zero Clutter)**: The interface is never cluttered with configuration, settings, or display options. All user preferences reside in a dedicated Settings panel navigated to only when needed from the Journal, preserving an austere, quiet devotional space.
 - **Zero Emojis & Zero Gamification**: Emojis, streak counters, celebration popups, badges, and animations are strictly excluded to preserve dignity and respect.
 - **Uncompromised Privacy**: Zero accounts, zero login, zero public feeds, and zero telemetry. All prayer data resides exclusively on the user's physical device.
 
@@ -41,7 +41,7 @@ Users can toggle between two high-contrast modes depending on environment and pr
 
 ### 2.3 Styling & Typography Rules
 - **No Decorative Icons**: Pure typographic hierarchy and delicate hairline rules.
-- **Subdued Answered State**: In the ledger, when a prayer is answered, the text softens with a subtle strikethrough, visually signaling gratitude and completion while preserving the historical record.
+- **Subdued Answered State**: In the Journal, when a prayer is answered, the text softens with a subtle strikethrough, visually signaling gratitude and completion while preserving the historical record.
 
 ---
 
@@ -51,28 +51,30 @@ The navigation model cleanly divorces the **act of praying** from the **act of o
 
 ```mermaid
 graph TD
-    Home["Blank Home Screen<br/>(1. Start praying | 2. Log prayer points)"]
+    Home["Blank Home Screen<br/>(1. Start praying | 2. Open Journal | 3. Log prayer points)"]
     
     Home -->|"Tap 'Start praying'"| PraySession["Topic Contemplation Flow<br/>(All Unanswered Points per Topic)"]
+    Home -->|"Tap 'Open Journal'"| Journal["Journal<br/>(3 Roots: People, Groups, General)"]
     Home -->|"Tap 'Log prayer points'"| LogChoice{"Log Choice"}
-    Home -->|"Swipe Left Gesture"| Directory["Structural Directory & Ledger<br/>(3 Roots: People, Groups, General)"]
+    Home -->|"Swipe Left Gesture"| Journal
     
     LogChoice -->|"Record a prayer point"| DirectCapture["Direct Empty Text Pad<br/>(AI Intelligent Filing)"]
     LogChoice -->|"'Guide me'"| GuideMeFlow["Guide Me Flow<br/>(Step 1: Open Heart<br/>Step 2: Neutral Distillation<br/>Step 3: Save / Back / Cancel)"]
     
-    Directory --> PeopleRoot["People Root<br/>(Individuals, Family, Friends)"]
-    Directory --> GroupsRoot["Groups Root<br/>(Church, Teams, Communities)"]
-    Directory --> GeneralRoot["General Root<br/>(World, Global, Historic Prayers)"]
-    Directory --> Settings["App Settings<br/>(Theme, Language, Blending, Backup)"]
+    Journal --> PeopleRoot["People Root<br/>(Individuals, Family, Friends)"]
+    Journal --> GroupsRoot["Groups Root<br/>(Church, Teams, Communities)"]
+    Journal --> GeneralRoot["General Root<br/>(World, Global, Historic Prayers)"]
+    Journal --> Settings["App Settings<br/>(Theme, Language, Blending, Backup)"]
 ```
 
 ### 3.1 The Blank Entry Screen
-Upon launch, the user meets an uncluttered, contiguous canvas featuring strictly two centered flat action tiles with unadorned labels and zero explanatory sub-text:
+Upon launch, the user meets an uncluttered, contiguous canvas featuring strictly three centered flat action tiles with unadorned labels and zero explanatory sub-text:
 1. **Start praying**
-2. **Log prayer points**
+2. **Open Journal**
+3. **Log prayer points**
 
-### 3.2 The Structural Directory (Swipe Left)
-Swiping left from the blank home screen glides into the structured ledger and management vault, rooted in three foundational domains:
+### 3.2 The Journal (Open Journal / Swipe Left)
+Tapping **Open Journal** (or swiping left from the blank home screen) glides into the structured Journal and management vault, rooted in three foundational domains:
 1. **`People`**: Exclusively and strictly specific, distinct individual relationships (e.g., spouse, children, parents, a single named friend/neighbor, and personal petitions under *Me*—including personal health, job trials, or spiritual sanctification situated within a workplace or hospital).
 2. **`Groups`**: Collectives, communities, and shared peer/work environments (e.g., work colleagues, office team, church congregation, small group, committee, ministry).
 3. **`General`**: Broad topics, global concerns, personal spiritual disciplines, and the preloaded collection of historic Reformed prayers.
@@ -167,9 +169,9 @@ Designed for when thoughts are tangled, heavy, or difficult to articulate:
 
 ---
 
-### 4.3 Journey 3: "Swipe Left" (Structural Directory & Ledger)
+### 4.3 Journey 3: "Open Journal" (Structural Journal & Directory)
 
-Swiping left from the home screen opens the complete management ledger:
+Tapping **Open Journal** (or swiping left from the home screen) opens the complete management journal:
 1. **Hierarchy Browsing**:
    - Drill into **`People`**, **`Groups`**, or **`General`** to see all associated entities and active prayer points.
 2. **Marking Answered**:

@@ -751,7 +751,7 @@
     <div class="top-bar">
       <button class="top-bar-btn" id="nav-left-btn" onclick="handleLeftNav()">Home</button>
       <div class="top-bar-title" id="screen-label">Devotion</div>
-      <button class="top-bar-btn" id="nav-right-btn" onclick="handleRightNav()">Ledger</button>
+      <button class="top-bar-btn" id="nav-right-btn" onclick="handleRightNav()">Journal</button>
     </div>
 
     <!-- Content Area: 100% Contiguous, Zero Gap -->
@@ -767,14 +767,13 @@
           <div class="home-tile-title">Start praying</div>
         </button>
 
+        <button class="home-tile" onclick="showScreen('screen-ledger')">
+          <div class="home-tile-title">Open Journal</div>
+        </button>
+
         <button class="home-tile" onclick="showScreen('screen-log')">
           <div class="home-tile-title">Log prayer points</div>
         </button>
-
-        <div class="home-nav-tile" onclick="showScreen('screen-ledger')">
-          <span>Ledger</span>
-          <span>&rarr;</span>
-        </div>
       </div>
 
       <!-- ================= 2. CONTEMPLATIVE QUEUE (TOPIC CONTEMPLATION) ================= -->
@@ -840,7 +839,7 @@
         </div>
       </div>
 
-      <!-- ================= 4. DIRECTORY & LEDGER ================= -->
+      <!-- ================= 4. DIRECTORY & JOURNAL ================= -->
       <div class="view-screen" id="screen-ledger">
         <div class="ledger-list" id="ledger-entities-list">
           <!-- Populated from rich entities database -->
@@ -864,8 +863,8 @@
         </div>
 
         <div class="action-dock">
-          <button class="action-dock-btn" onclick="showScreen('screen-ledger')">Ledger</button>
-          <button class="action-dock-btn primary" onclick="praySelectedEntity()">Pray Entity</button>
+          <button class="action-dock-btn" onclick="showScreen('screen-ledger')">Journal</button>
+          <button class="action-dock-btn primary" onclick="praySelectedEntity()">Pray Topic</button>
         </div>
       </div>
 
@@ -904,7 +903,7 @@
         </div>
 
         <div class="action-dock">
-          <button class="action-dock-btn" onclick="showScreen('screen-ledger')">Ledger</button>
+          <button class="action-dock-btn" onclick="showScreen('screen-ledger')">Journal</button>
           <button class="action-dock-btn primary" onclick="showScreen('screen-home')">Done</button>
         </div>
       </div>
@@ -1592,20 +1591,20 @@
       if (id === 'screen-home') {
         label.textContent = 'Devotion';
         leftBtn.style.visibility = 'hidden';
-        rightBtn.textContent = 'Ledger';
+        rightBtn.textContent = 'Journal';
       } else if (id === 'screen-pray') {
         label.textContent = 'Contemplation';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
-        rightBtn.textContent = 'Ledger';
+        rightBtn.textContent = 'Journal';
         renderPrayerCards();
       } else if (id === 'screen-log') {
         label.textContent = 'Logging';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
-        rightBtn.textContent = 'Ledger';
+        rightBtn.textContent = 'Journal';
       } else if (id === 'screen-ledger') {
-        label.textContent = 'Ledger';
+        label.textContent = 'Journal';
         leftBtn.style.visibility = 'visible';
         leftBtn.textContent = 'Home';
         rightBtn.textContent = 'Settings';
@@ -1613,12 +1612,12 @@
       } else if (id === 'screen-entity-detail') {
         label.textContent = 'Entity';
         leftBtn.style.visibility = 'visible';
-        leftBtn.textContent = 'Ledger';
+        leftBtn.textContent = 'Journal';
         rightBtn.textContent = 'Home';
       } else if (id === 'screen-settings') {
         label.textContent = 'Settings';
         leftBtn.style.visibility = 'visible';
-        leftBtn.textContent = 'Ledger';
+        leftBtn.textContent = 'Journal';
         rightBtn.textContent = 'Home';
       }
     }

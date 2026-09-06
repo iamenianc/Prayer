@@ -102,7 +102,7 @@ Because **both logging pathways** leverage AI assistance—`Record a prayer poin
 | Feature / Flow | Network Requirement | Plaintext Exposure Boundary |
 | :--- | :--- | :--- |
 | **"Start praying"** (Passive contemplation queue) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; decrypted only in device RAM from SQLCipher vault. |
-| **Directory & Ledger Management** (Browsing, editing, answered tracking) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
+| **Journal Management** (Browsing, editing, answered tracking across People, Groups, General) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
 | **"Record a prayer point"** (AI Intelligent Filing) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
 | **"Guide me"** (AI Distillation & Articulation) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
 | **Offline Logging Fallback** (Manual folder/entity picker) | **100% Offline** (Zero network calls) | Activated when offline or manually selected; never leaves the device. |
@@ -239,10 +239,11 @@ graph TD
 ### 1.5 UI Interaction & Devotional Engine Mechanics
 
 - **Home Screen Presentation**:
-  - A pristine, blank canvas partitioned into contiguous flat tiles with strictly two centered action buttons:
+  - A pristine, blank canvas partitioned into contiguous flat tiles with strictly three centered action buttons:
     1. `Start praying`
-    2. `Log prayer points`
-  - Strictly zero explanatory sub-text, onboarding tips, or tutorial labels. Swiping left triggers the structural directory branch (`People`, `Groups`, `General`).
+    2. `Open Journal`
+    3. `Log prayer points`
+  - Strictly zero explanatory sub-text, onboarding tips, or tutorial labels. Swiping left also triggers the Journal (`People`, `Groups`, `General`).
 - **Passive Prayer Engine ("Start Praying")**:
   - Direct queue instantiation with zero pre-filters.
   - **Topic-Centric Contemplation Architecture**: Replaces mechanical card batches with holistic, entity-based Topics. Each screen in *Start praying* corresponds to an `INDIVIDUAL_ENTITY` (Topic). When a Topic is displayed, **all of its unanswered (active) prayer points** are retrieved from SQLite and rendered together contiguously on screen as an edge-to-edge stack.
@@ -275,10 +276,10 @@ graph TD
   - `edge_style`: Pure orthogonal rectangles (100% rectilinear geometry).
 - **Austere Copy & Zero Explanatory Text Standard**:
   - The UI strictly forbids instructional sub-captions, introductory prompts, or descriptive tooltips under buttons or headers.
-  - Controls feature strictly functional, stark terminology (e.g., *Start praying*, *Log prayer points*, *Save*, *Cancel*, *Ledger*, *Settings*).
+  - Controls feature strictly functional, stark terminology (e.g., *Start praying*, *Open Journal*, *Log prayer points*, *Save*, *Cancel*, *Journal*, *Settings*).
 - **Sequestered Settings Architecture (`APP_CONFIG`)**:
   - Zero settings, display switches, or configuration toggles are permitted on the home screen or active prayer interface.
-  - All configurable parameters (`locale_dialect`, `theme_mode`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the directory ledger.
+  - All configurable parameters (`locale_dialect`, `theme_mode`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the Journal.
 
 ---
 
