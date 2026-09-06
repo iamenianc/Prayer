@@ -253,7 +253,7 @@ graph TD
 - **Surface & Geometry Token Specifications**:
   - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners.
   - `surface_elevation`: Flat tiles (`elevation: 0`, `box-shadow: none`). Zero skeuomorphic depth, gradients, or drop shadows.
-  - `layout_pattern`: Planar tessellation. Adjacent items (e.g., batched prayer cards 1–5, suggestion pairs, or directory entries) abut directly along 1px crisp hairline borders (`#333333` in Quiet Night, `#E0E0E0` in Morning Light), forming an interlocking geometric mosaic.
+  - `layout_pattern`: Contiguous planar tessellation (`grid_gap: 0px`, `margin: 0px`). Zero visible gaps or gutters between elements. All on-screen components, cards, and buttons are directly adjacent to each other, abutting and sharing 1px crisp hairline borders (`#333333` in Quiet Night, `#E0E0E0` in Morning Light) to form a seamless, interlocking rectilinear grid across the entire display.
   - `edge_style`: Pure orthogonal rectangles (100% rectilinear geometry).
 - **Settings & Dialect Preferences**:
   - Provides instant toggles for theme mode, card batch size (1–5 items), blending historic prayers into the daily queue, and locale/dialect selection.

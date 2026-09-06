@@ -15,14 +15,14 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 ### 1.1 Core Experience Pillars
 - **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly two options: **Start praying** and **Log prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
 - **Strictly Passive Contemplation**: When praying, the screen is 100% read-only. Prayer is not a productivity checklist. There are no check-off buttons, editing controls, or administrative interruptions while in prayer.
-- **Geometric Orthogonality & Tessellated Tiles**: Every surface, card, button, and container is rendered as a flat geometric tile with sharp 90-degree right angles. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited. Adjacent components tessellate seamlessly along crisp hairline dividing seams.
+- **Zero-Gap Contiguous Geometry**: Every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
 - **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
 - **Zero Emojis & Zero Gamification**: Emojis, streak counters, celebration popups, badges, and animations are strictly excluded to preserve dignity and respect.
 - **Uncompromised Privacy**: Zero accounts, zero login, zero public feeds, and zero telemetry. All prayer data resides exclusively on the user's physical device.
 
 ---
 
-## 2. Visual Identity: High-Contrast Monochrome & Geometric Tessellation
+## 2. Visual Identity: High-Contrast Monochrome & Contiguous Tessellation
 
 The product uses a pure black-and-white visual identity that reflects dignity, simplicity, architectural order, and liturgical focus.
 
@@ -31,10 +31,10 @@ Users can toggle between two high-contrast modes depending on environment and pr
 1. **Quiet Night (Black & White)**: Pure black canvas with crisp white typography and subtle charcoal dividers. Tailored for evening devotions, bedside prayer, and low-light environments.
 2. **Morning Light (White & Black)**: Clean white canvas with stark black lettering and soft gray card outlines. Tailored for daytime journaling and bright reading conditions.
 
-### 2.2 Geometric, Tessellated Flat Tiles (Strictly Zero Curved Edges)
+### 2.2 Contiguous Geometric Tiles (Zero Gaps & Zero Curved Edges)
 - **Strict Orthogonality**: Every card, button, input box, dialog, sheet, and container adheres to sharp 90-degree right angles (`border-radius: 0`). Curved edges, rounded corners, and pill buttons are strictly forbidden.
 - **Planar Flat Tiles**: Surfaces are rendered as completely flat, zero-elevation rectangular tiles (`elevation: 0`, zero drop shadows, zero gradient bevels).
-- **Tessellated Grid Architecture**: Multiple on-screen elements (e.g., batched prayer cards 1–5, candidate suggestion pairs, or directory lists) seamlessly abut and lock together along 1px hairline dividing seams, forming a unified, non-overlapping geometric mosaic.
+- **Zero Visible Gaps & Direct Adjacency**: All on-screen elements (batched prayer cards 1–5, navigation buttons, input panes, and suggestion options) are directly adjacent to each other. The layout strictly eliminates margins, gutters, and floating card gaps. Elements share 1px hairline boundary seams to form an edge-to-edge architectural mosaic.
 - **Architectural & Liturgical Gravity**: The unyielding rectilinear geometry reinforces solemnity, permanence, and reverence, eschewing the casual, bubbly aesthetics of consumer social apps.
 
 ### 2.3 Styling & Typography Rules
@@ -91,9 +91,9 @@ graph LR
 ```
 
 1. **Immediate Immersion**: Tapping **Start praying** instantly displays the first prayer card. There are no configuration popups, filters, or setup steps required prior to praying.
-2. **Card Focus & Configurable Batch Size (Flat Tessellated Tiles)**:
+2. **Card Focus & Configurable Batch Size (Contiguous Tessellated Tiles)**:
    - Each prayer point occupies the screen as a completely flat rectangular tile with sharp 90-degree right angles and strictly zero curved edges (`border-radius: 0`).
-   - Users can configure their display preference in settings to show **1, 2, 3, 4, or 5 items** simultaneously. When multi-card batches (2–5) are displayed, the tiles tessellate seamlessly across the screen along hairline dividing rules without gaps or rounded corners.
+   - Users can configure their display preference in settings to show **1, 2, 3, 4, or 5 items** simultaneously. When multi-card batches (2–5) are displayed, the tiles tessellate contiguously across the screen along shared hairline dividing rules with zero visible gaps, zero margins, and zero rounded corners.
 3. **Strictly Passive / Read-Only Prayer Experience**:
    - The prayer screen contains **zero interactive buttons, checkboxes, or edit fields**.
    - The user cannot mark items as answered, edit text, or check off tasks during prayer.
