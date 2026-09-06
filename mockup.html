@@ -3,690 +3,813 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Prayer Companion — UI Architecture Mockup</title>
+  <title>Prayer App — Contiguous Tessellated UI Mockup</title>
   <style>
-    /* Reset & Base Strict Orthogonal Geometry */
+    /* =========================================================
+       STRICT ORTHOGONAL CONTIGUOUS GEOMETRY (ZERO GAPS / ZERO CURVES)
+       ========================================================= */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      border-radius: 0 !important; /* STRICT ENFORCEMENT: ZERO CURVED EDGES */
+      border-radius: 0 !important; /* STRICT ENFORCEMENT: NO CURVED EDGES */
       -webkit-font-smoothing: antialiased;
     }
 
     :root {
       --bg: #000000;
-      --surface: #0a0a0a;
-      --surface-tile: #111111;
-      --border: #262626;
-      --border-focus: #525252;
-      --text: #f5f5f5;
-      --text-muted: #8e8e8e;
-      --text-faint: #525252;
-      --accent-active: #ffffff;
-      --accent-bg: #1c1c1c;
+      --surface-1: #000000;
+      --surface-2: #0d0d0d;
+      --surface-3: #141414;
+      --surface-hover: #1c1c1c;
+      --surface-active: #262626;
+      --border: #222222;
+      --border-accent: #444444;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --text-dim: #444444;
+      --highlight: #ffffff;
+      --highlight-contrast: #000000;
     }
 
     body.theme-morning {
       --bg: #ffffff;
-      --surface: #f7f7f7;
-      --surface-tile: #f0f0f0;
-      --border: #d4d4d4;
-      --border-focus: #737373;
-      --text: #171717;
-      --text-muted: #525252;
-      --text-faint: #a3a3a3;
-      --accent-active: #000000;
-      --accent-bg: #e5e5e5;
+      --surface-1: #ffffff;
+      --surface-2: #f7f7f7;
+      --surface-3: #eeeeee;
+      --surface-hover: #e5e5e5;
+      --surface-active: #dcdcdc;
+      --border: #cccccc;
+      --border-accent: #999999;
+      --text: #000000;
+      --text-muted: #666666;
+      --text-dim: #aaaaaa;
+      --highlight: #000000;
+      --highlight-contrast: #ffffff;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: #080808;
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      overflow-x: hidden;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #121212;
-      color: #e5e5e5;
-      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: 16px 0;
     }
 
-    /* Top Control Bar for Mockup Demonstration */
-    .mockup-controls {
+    /* Mockup Control Bar */
+    .mockup-controls-bar {
       width: 100%;
       max-width: 440px;
       display: flex;
-      flex-wrap: wrap;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 16px;
-      padding: 12px;
-      background: #1c1c1c;
+      align-items: stretch;
       border: 1px solid #333333;
-      font-size: 12px;
+      background: #111111;
+      margin-bottom: 16px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
     }
 
-    .ctrl-group {
+    .ctrl-section {
+      display: flex;
+      align-items: stretch;
+    }
+
+    .ctrl-label {
       display: flex;
       align-items: center;
-      gap: 6px;
+      padding: 0 10px;
+      color: #777777;
+      background: #161616;
+      border-right: 1px solid #282828;
+      font-size: 10px;
     }
 
-    .ctrl-btn {
-      background: #2a2a2a;
-      color: #cccccc;
-      border: 1px solid #444444;
-      padding: 6px 10px;
-      font-size: 11px;
+    .ctrl-button {
+      background: transparent;
+      color: #999999;
+      border: none;
+      border-right: 1px solid #282828;
+      padding: 8px 12px;
+      font-size: 10px;
       cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       font-family: inherit;
     }
-    .ctrl-btn:hover {
-      background: #383838;
+    .ctrl-button:hover {
+      background: #222222;
       color: #ffffff;
     }
-    .ctrl-btn.active {
+    .ctrl-button.active {
       background: #ffffff;
       color: #000000;
-      border-color: #ffffff;
-      font-weight: 600;
+      font-weight: 700;
+    }
+    .ctrl-button:last-child {
+      border-right: none;
     }
 
-    /* Simulated Mobile Device Frame */
-    .mobile-frame {
+    /* Outer Device Container */
+    .device-viewport {
       width: 100%;
       max-width: 420px;
-      height: 820px;
+      height: 840px;
       background-color: var(--bg);
       border: 2px solid var(--border);
       display: flex;
       flex-direction: column;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
     }
 
-    /* Device Status Header */
-    .device-header {
-      height: 44px;
+    /* SYSTEM BAR / TOP NAVIGATION: CONTIGUOUS TILES (ZERO GAP) */
+    .contiguous-nav-bar {
+      height: 48px;
+      display: grid;
+      grid-template-columns: 80px 1fr 80px;
       border-bottom: 1px solid var(--border);
+      background: var(--surface-1);
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .nav-tile-btn {
+      background: var(--surface-1);
+      color: var(--text-muted);
+      border: none;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      background: var(--bg);
-      font-size: 11px;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-      z-index: 10;
-      flex-shrink: 0;
+      justify-content: center;
+      padding: 0;
+      transition: background 0.1s ease;
     }
-
-    .header-nav-btn {
-      background: transparent;
-      border: 1px solid var(--border);
+    .nav-tile-btn:hover {
+      background: var(--surface-hover);
       color: var(--text);
-      font-size: 11px;
-      padding: 4px 8px;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
     }
-    .header-nav-btn:hover {
-      border-color: var(--border-focus);
+    .nav-tile-btn:first-child {
+      border-right: 1px solid var(--border);
+    }
+    .nav-tile-btn:last-child {
+      border-left: 1px solid var(--border);
     }
 
-    /* Viewport Area */
-    .viewport {
+    .nav-title-tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text);
+      background: var(--surface-1);
+    }
+
+    /* CONTENT HOST: EDGE-TO-EDGE, ZERO PADDING, ZERO GAPS */
+    .viewport-content {
       flex: 1;
-      position: relative;
       display: flex;
       flex-direction: column;
+      position: relative;
       background: var(--bg);
-      overflow-y: auto;
+      overflow: hidden;
     }
 
-    .view-screen {
+    .screen-pane {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
+      width: 100%;
+      height: 100%;
       display: none;
       flex-direction: column;
-      padding: 20px;
       background: var(--bg);
     }
-    .view-screen.active {
+    .screen-pane.active {
       display: flex;
     }
 
-    /* SCREEN 1: PRISTINE HOME CANVAS */
-    #screen-home {
-      justify-content: center;
-      align-items: stretch;
-      padding: 36px 24px;
-      gap: 20px;
+    /* =========================================================
+       SCREEN 1: PRISTINE HOME (CONTIGUOUS PARTITIONED CANVAS)
+       ========================================================= */
+    #view-home {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    #view-home.active {
+      display: flex;
     }
 
-    .home-header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .home-title {
-      font-size: 18px;
-      font-weight: 300;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text);
-    }
-    .home-subtitle {
-      font-size: 11px;
-      color: var(--text-faint);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-top: 6px;
-    }
-
-    .tessellated-tile-group {
+    /* Top Devotional Banner Tile */
+    .home-hero-tile {
+      flex: 0 0 160px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      border: 1px solid var(--border);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .home-hero-title {
+      font-size: 20px;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--text);
+    }
+    .home-hero-subtitle {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
+      margin-top: 8px;
     }
 
-    .home-tile {
-      background: var(--surface);
+    /* The Two Primary Action Tiles: Directly Contiguous */
+    .home-primary-action-tile {
+      flex: 1;
+      background: var(--surface-1);
       border: none;
       border-bottom: 1px solid var(--border);
-      padding: 32px 20px;
-      text-align: left;
-      cursor: pointer;
-      transition: background 0.15s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .home-tile:last-child {
-      border-bottom: none;
-    }
-    .home-tile:hover {
-      background: var(--accent-bg);
-    }
-
-    .tile-headline {
-      font-size: 17px;
-      font-weight: 500;
-      color: var(--text);
-      letter-spacing: 0.02em;
-    }
-    .tile-caption {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
-
-    .home-gesture-hint {
-      text-align: center;
-      font-size: 11px;
-      color: var(--text-faint);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-top: 20px;
-    }
-
-    /* SCREEN 2: CONTEMPLATION QUEUE ("START PRAYING") */
-    #screen-pray {
-      padding: 16px;
-    }
-
-    .contemplation-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      border: 1px solid var(--border);
-    }
-
-    .prayer-card-tile {
-      flex: 1;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 24px;
+      padding: 32px 28px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      text-align: left;
+      cursor: pointer;
       position: relative;
+      transition: background 0.12s ease;
     }
-    .prayer-card-tile:last-child {
-      border-bottom: none;
+    .home-primary-action-tile:hover {
+      background: var(--surface-hover);
+    }
+    .home-primary-action-tile:active {
+      background: var(--surface-active);
     }
 
-    .card-meta-bar {
+    .action-tile-tag {
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--text-muted);
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
+      margin-bottom: 10px;
     }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
+    .action-tile-heading {
+      font-size: 22px;
+      font-weight: 500;
       color: var(--text);
-      line-height: 1.3;
-      margin-bottom: 12px;
       letter-spacing: -0.01em;
+      margin-bottom: 8px;
     }
-
-    .card-description {
-      font-size: 14px;
-      line-height: 1.6;
+    .action-tile-caption {
+      font-size: 13px;
+      line-height: 1.5;
       color: var(--text-muted);
-      font-family: inherit;
     }
 
-    .passive-notice {
-      height: 36px;
-      border-top: 1px solid var(--border);
-      background: var(--bg);
+    /* Bottom Ledger Hint Tile */
+    .home-footer-tile {
+      height: 52px;
+      background: var(--surface-2);
+      border: none;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
-      font-size: 10px;
-      color: var(--text-faint);
-      letter-spacing: 0.08em;
+      padding: 0 20px;
+      font-size: 11px;
       text-transform: uppercase;
-      flex-shrink: 0;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .home-footer-tile:hover {
+      background: var(--surface-hover);
+      color: var(--text);
     }
 
-    /* SCREEN 3: LOG PRAYER POINTS (PATHWAYS) */
-    #screen-log {
-      padding: 16px;
-      gap: 16px;
+    /* =========================================================
+       SCREEN 2: CONTEMPLATIVE QUEUE ("START PRAYING")
+       Cards partition 100% of the viewport height with zero gaps
+       ========================================================= */
+    #view-pray {
+      display: none;
+      flex-direction: column;
+      height: 100%;
     }
-
-    .log-tabs {
+    #view-pray.active {
       display: flex;
-      border: 1px solid var(--border);
+    }
+
+    .prayer-cards-mosaic {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+    }
+
+    .contiguous-card-tile {
+      flex: 1;
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+    .contiguous-card-tile:last-child {
+      border-bottom: none;
+    }
+
+    .card-domain-strip {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .card-title-text {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+
+    .card-desc-text {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-muted);
+    }
+
+    /* Read-Only Status Footer */
+    .contemplation-footer-tile {
+      height: 44px;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
       flex-shrink: 0;
     }
-    .log-tab-btn {
-      flex: 1;
-      padding: 10px;
-      background: var(--surface);
+
+    /* =========================================================
+       SCREEN 3: LOG PRAYER POINTS (TWO PATHWAYS, ZERO GAP)
+       ========================================================= */
+    #view-log {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    #view-log.active {
+      display: flex;
+    }
+
+    /* Pathway Selector Bar: 2 contiguous 50% tiles */
+    .pathway-selector-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 44px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .pathway-tab-tile {
+      background: var(--surface-2);
+      color: var(--text-muted);
       border: none;
       border-right: 1px solid var(--border);
-      color: var(--text-muted);
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
     }
-    .log-tab-btn:last-child {
+    .pathway-tab-tile:last-child {
       border-right: none;
     }
-    .log-tab-btn.active {
-      background: var(--accent-bg);
+    .pathway-tab-tile.active {
+      background: var(--surface-1);
       color: var(--text);
       font-weight: 600;
     }
 
-    .pathway-pane {
-      display: none;
-      flex-direction: column;
+    /* Pathway A: Direct Capture Form (Zero Gap Stack) */
+    .log-direct-layout {
       flex: 1;
-      gap: 12px;
-    }
-    .pathway-pane.active {
       display: flex;
+      flex-direction: column;
     }
 
-    /* Direct text pad */
-    .flat-textarea {
-      width: 100%;
+    .direct-input-tile {
       flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 16px;
+      width: 100%;
+      background: var(--surface-1);
+      border: none;
+      padding: 24px;
       color: var(--text);
       font-family: inherit;
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.6;
       resize: none;
       outline: none;
     }
-    .flat-textarea:focus {
-      border-color: var(--border-focus);
-    }
 
-    .ai-inference-tile {
-      background: var(--surface-tile);
-      border: 1px solid var(--border);
-      padding: 12px 14px;
+    .inference-meta-tile {
+      height: 52px;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border);
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 12px;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-size: 11px;
       color: var(--text-muted);
+      flex-shrink: 0;
     }
 
-    .tag-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      background: var(--bg);
+    .meta-tag-inline {
+      padding: 4px 10px;
+      background: var(--surface-1);
       border: 1px solid var(--border);
-      font-size: 10px;
       color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    /* Guide me flow */
-    .guide-step-card {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .guide-step-label {
       font-size: 10px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-faint);
+      letter-spacing: 0.08em;
     }
 
-    .guide-question-text {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1.4;
-    }
-
-    .candidate-tiles-container {
-      display: flex;
+    /* Pathway B: Guide Me Flow (Contiguous Stacks) */
+    .log-guide-layout {
+      flex: 1;
+      display: none;
       flex-direction: column;
-      border: 1px solid var(--border);
+      overflow-y: auto;
+    }
+    .log-guide-layout.active {
+      display: flex;
     }
 
-    .candidate-tile {
-      background: var(--surface);
+    .guide-step-tile {
+      padding: 18px 20px;
+      background: var(--surface-2);
       border-bottom: 1px solid var(--border);
-      padding: 14px;
       display: flex;
       flex-direction: column;
       gap: 6px;
-      cursor: pointer;
     }
-    .candidate-tile:last-child {
-      border-bottom: none;
-    }
-    .candidate-tile.selected {
-      background: var(--accent-bg);
-      outline: 1px solid var(--text);
-    }
-
-    .action-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      border: 1px solid var(--border);
-      margin-top: auto;
-    }
-    .action-tile-btn {
-      background: var(--surface);
-      border: none;
-      padding: 14px;
-      color: var(--text);
-      font-size: 12px;
+    .step-badge {
+      font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      border-right: 1px solid var(--border);
-      text-align: center;
+      letter-spacing: 0.12em;
+      color: var(--text-dim);
     }
-    .action-tile-btn:last-child {
-      border-right: none;
-    }
-    .action-tile-btn:hover {
-      background: var(--accent-bg);
-    }
-    .action-tile-btn.primary {
-      background: var(--text);
-      color: var(--bg);
-      font-weight: 600;
+    .step-prompt-text {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
     }
 
-    /* SCREEN 4: DIRECTORY & LEDGER */
-    #screen-directory {
-      padding: 16px;
-      gap: 16px;
-    }
-
-    .directory-tree {
+    .candidate-tiles-stack {
       display: flex;
       flex-direction: column;
-      border: 1px solid var(--border);
       flex: 1;
+    }
+
+    .candidate-tile-item {
+      background: var(--surface-1);
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+    .candidate-tile-item:hover {
+      background: var(--surface-hover);
+    }
+    .candidate-tile-item.selected {
+      background: var(--surface-active);
+      border-left: 3px solid var(--text);
+    }
+
+    .candidate-tile-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .candidate-tile-desc {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    /* CONTIGUOUS ACTION BAR (BOTTOM SCREEN DOCK) */
+    .contiguous-action-bar {
+      height: 52px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      background: var(--surface-1);
+    }
+
+    .action-tile-button {
+      background: var(--surface-2);
+      border: none;
+      border-right: 1px solid var(--border);
+      color: var(--text);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+    .action-tile-button:last-child {
+      border-right: none;
+    }
+    .action-tile-button:hover {
+      background: var(--surface-hover);
+    }
+    .action-tile-button.primary {
+      background: var(--highlight);
+      color: var(--highlight-contrast);
+      font-weight: 700;
+    }
+
+    /* =========================================================
+       SCREEN 4: DIRECTORY & LEDGER (CONTIGUOUS TILES)
+       ========================================================= */
+    #view-directory {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+    #view-directory.active {
+      display: flex;
+    }
+
+    .directory-tree-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       overflow-y: auto;
     }
 
-    .tree-header-tile {
-      background: var(--surface-tile);
+    .domain-header-tile {
+      height: 38px;
+      background: var(--surface-3);
       border-bottom: 1px solid var(--border);
-      padding: 10px 14px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      padding: 0 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
     }
 
-    .tree-item-tile {
-      background: var(--surface);
+    .entry-row-tile {
+      height: 52px;
+      background: var(--surface-1);
       border-bottom: 1px solid var(--border);
-      padding: 12px 14px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
       font-size: 13px;
       color: var(--text);
       cursor: pointer;
+      transition: background 0.1s ease;
     }
-    .tree-item-tile:hover {
-      background: var(--accent-bg);
+    .entry-row-tile:hover {
+      background: var(--surface-hover);
     }
-    .tree-item-tile.answered {
-      color: var(--text-faint);
+    .entry-row-tile.answered {
+      color: var(--text-dim);
     }
-    .tree-item-tile.answered .item-name {
+    .entry-row-tile.answered .entry-name {
       text-decoration: line-through;
       text-decoration-color: var(--text-muted);
     }
 
-    .count-indicator {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-variant-numeric: tabular-nums;
+    .entry-status-badge {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
     }
   </style>
 </head>
 <body>
 
   <!-- Mockup Demonstration Controls -->
-  <div class="mockup-controls">
-    <div class="ctrl-group">
-      <span>Theme:</span>
-      <button class="ctrl-btn active" id="btn-theme-night" onclick="setTheme('night')">Quiet Night</button>
-      <button class="ctrl-btn" id="btn-theme-morning" onclick="setTheme('morning')">Morning Light</button>
+  <div class="mockup-controls-bar">
+    <div class="ctrl-section">
+      <span class="ctrl-label">Theme</span>
+      <button class="ctrl-button active" id="btn-night" onclick="setTheme('night')">Quiet Night</button>
+      <button class="ctrl-button" id="btn-morning" onclick="setTheme('morning')">Morning Light</button>
     </div>
-    <div class="ctrl-group">
-      <span>Batches:</span>
-      <button class="ctrl-btn active" id="btn-batch-1" onclick="setBatch(1)">1</button>
-      <button class="ctrl-btn" id="btn-batch-2" onclick="setBatch(2)">2</button>
-      <button class="ctrl-btn" id="btn-batch-3" onclick="setBatch(3)">3</button>
+    <div class="ctrl-section">
+      <span class="ctrl-label">Batches</span>
+      <button class="ctrl-button active" id="btn-b1" onclick="setBatch(1)">1</button>
+      <button class="ctrl-button" id="btn-b2" onclick="setBatch(2)">2</button>
+      <button class="ctrl-button" id="btn-b3" onclick="setBatch(3)">3</button>
     </div>
   </div>
 
-  <!-- Simulated Mobile Device Container -->
-  <div class="mobile-frame">
-    
-    <!-- Top System & View Navigation Bar -->
-    <div class="device-header">
-      <button class="header-nav-btn" onclick="showScreen('screen-home')">Home</button>
-      <span id="screen-indicator">PRISTINE CANVAS</span>
-      <button class="header-nav-btn" onclick="showScreen('screen-directory')">Ledger &rarr;</button>
+  <!-- Mobile Viewport Frame -->
+  <div class="device-viewport">
+
+    <!-- Top System Bar: Contiguous 3-Column Tiles -->
+    <div class="contiguous-nav-bar">
+      <button class="nav-tile-btn" onclick="showScreen('view-home')">&larr; Home</button>
+      <div class="nav-title-tile" id="title-display">Devotion</div>
+      <button class="nav-tile-btn" onclick="showScreen('view-directory')">Ledger &rarr;</button>
     </div>
 
-    <!-- Viewport Area -->
-    <div class="viewport">
+    <!-- Content Area: 100% Contiguous, Zero Gap -->
+    <div class="viewport-content">
 
-      <!-- 1. PRISTINE HOME SCREEN -->
-      <div class="view-screen active" id="screen-home">
-        <div class="home-header">
-          <div class="home-title">Devotion</div>
-          <div class="home-subtitle">Solemn Communion</div>
+      <!-- ================= SCREEN 1: PRISTINE HOME ================= -->
+      <div class="screen-pane active" id="view-home">
+        <div class="home-hero-tile">
+          <div class="home-hero-title">Devotion</div>
+          <div class="home-hero-subtitle">Solemn Contemplation &bull; 1662 BCP</div>
         </div>
 
-        <div class="tessellated-tile-group">
-          <button class="home-tile" onclick="showScreen('screen-pray')">
-            <span class="tile-headline">Start praying</span>
-            <span class="tile-caption">Enter the contemplative, read-only petition rotation without friction.</span>
-          </button>
-          <button class="home-tile" onclick="showScreen('screen-log')">
-            <span class="tile-headline">Log prayer points</span>
-            <span class="tile-caption">Record formed petitions or distill tangled burdens into structured cards.</span>
-          </button>
-        </div>
+        <button class="home-primary-action-tile" onclick="showScreen('view-pray')">
+          <span class="action-tile-tag">Pathway 1 &bull; Active Rotation</span>
+          <div class="action-tile-heading">Start praying</div>
+          <div class="action-tile-caption">Enter the contemplative queue. Read-only, unhurried devotions without administrative burden.</div>
+        </button>
 
-        <div class="home-gesture-hint">
-          &larr; Swipe left for structural ledger &rarr;
-        </div>
-      </div>
+        <button class="home-primary-action-tile" onclick="showScreen('view-log')">
+          <span class="action-tile-tag">Pathway 2 &bull; Intention Capture</span>
+          <div class="action-tile-heading">Log prayer points</div>
+          <div class="action-tile-caption">Record a known prayer point or articulate heavy burdens via guided objective distillation.</div>
+        </button>
 
-      <!-- 2. CONTEMPLATIVE PRAYER FLOW ("START PRAYING") -->
-      <div class="view-screen" id="screen-pray">
-        <div class="contemplation-container" id="pray-cards-host">
-          <!-- Dynamically populated based on batch size -->
-        </div>
-        <div class="passive-notice">
-          <span>Read-Only Contemplation</span>
-          <span>Self-Paced &bull; Tap Home to Exit</span>
+        <div class="home-footer-tile" onclick="showScreen('view-directory')">
+          <span>Structural Directory &amp; Ledger</span>
+          <span>&rarr;</span>
         </div>
       </div>
 
-      <!-- 3. LOG PRAYER POINTS (PATHWAYS) -->
-      <div class="view-screen" id="screen-log">
-        <div class="log-tabs">
-          <button class="log-tab-btn active" id="tab-direct" onclick="setPathway('direct')">Direct Capture</button>
-          <button class="log-tab-btn" id="tab-guide" onclick="setPathway('guide')">Guide Me (Distillation)</button>
+      <!-- ================= SCREEN 2: CONTEMPLATIVE QUEUE ================= -->
+      <div class="screen-pane" id="view-pray">
+        <div class="prayer-cards-mosaic" id="pray-mosaic-container">
+          <!-- Dynamically populated to fill 100% height with contiguous tiles -->
+        </div>
+        <div class="contemplation-footer-tile">
+          <span>Passive Devotion &bull; Read-Only</span>
+          <span>Tap Home When Complete</span>
+        </div>
+      </div>
+
+      <!-- ================= SCREEN 3: LOG PRAYER POINTS ================= -->
+      <div class="screen-pane" id="view-log">
+        <!-- 2-way selector bar -->
+        <div class="pathway-selector-grid">
+          <button class="pathway-tab-tile active" id="tab-direct-btn" onclick="setPathwayTab('direct')">Direct Capture</button>
+          <button class="pathway-tab-tile" id="tab-guide-btn" onclick="setPathwayTab('guide')">Guide Me (Distillation)</button>
         </div>
 
-        <!-- Pathway A: Direct Capture -->
-        <div class="pathway-pane active" id="pane-direct">
-          <textarea class="flat-textarea" placeholder="Type an already-formed prayer point directly...&#10;&#10;e.g., Physical healing and comfort for Sarah; perseverance through chemotherapy; peace resting in Christ's sovereign care."></textarea>
+        <!-- Pathway A: Direct Capture (Contiguous Stack) -->
+        <div class="log-direct-layout" id="pane-direct-flow">
+          <textarea class="direct-input-tile" placeholder="Type an already-formed prayer point directly...&#10;&#10;e.g., Physical strength and relief for Sarah; perseverance through chemotherapy; peace resting in Christ's sovereign care."></textarea>
           
-          <div class="ai-inference-tile">
-            <span>Inferred Domain Filing:</span>
-            <span class="tag-badge">People &bull; Family</span>
+          <div class="inference-meta-tile">
+            <span>Inferred Category Filing:</span>
+            <span class="meta-tag-inline">People &bull; Family</span>
           </div>
 
-          <div class="action-grid">
-            <button class="action-tile-btn" onclick="showScreen('screen-home')">Cancel</button>
-            <button class="action-tile-btn primary" onclick="alert('Prayer point committed to local encrypted SQLite vault.'); showScreen('screen-home');">Save to Vault</button>
+          <div class="contiguous-action-bar">
+            <button class="action-tile-button" onclick="showScreen('view-home')">Cancel</button>
+            <button class="action-tile-button primary" onclick="alert('Prayer point committed to encrypted SQLite vault.'); showScreen('view-home');">Save to Vault</button>
           </div>
         </div>
 
-        <!-- Pathway B: Guide Me -->
-        <div class="pathway-pane" id="pane-guide">
-          <div class="guide-step-card">
-            <span class="guide-step-label">Step 1 &bull; Open Heart</span>
-            <div class="guide-question-text">&ldquo;Feeling deeply overwhelmed about my father's failing health and heart failure.&rdquo;</div>
+        <!-- Pathway B: Guide Me Distillation (Contiguous Stack) -->
+        <div class="log-guide-layout" id="pane-guide-flow">
+          <div class="guide-step-tile">
+            <span class="step-badge">Step 1 &bull; Open Heart Reflection</span>
+            <div class="step-prompt-text">&ldquo;Feeling heavy and anxious about my father's failing health and recent heart diagnosis.&rdquo;</div>
           </div>
 
-          <div class="guide-step-card">
-            <span class="guide-step-label">Step 2 &bull; Neutral Distillation Inquiry</span>
-            <div class="guide-question-text">&ldquo;What is happening with his treatment that you would like to pray about?&rdquo;</div>
+          <div class="guide-step-tile">
+            <span class="step-badge">Step 2 &bull; Objective Clarifying Inquiry</span>
+            <div class="step-prompt-text">&ldquo;What is happening with his treatment that you would like to pray about?&rdquo;</div>
           </div>
 
-          <div class="candidate-tiles-container">
-            <div class="candidate-tile selected">
-              <span class="guide-step-label">Candidate 1 &bull; People</span>
-              <div class="card-title">Father's Heart Health</div>
-              <div class="card-description">Physical strength during cardiology review; comfort in Christ's ownership; peace regarding treatment.</div>
+          <div class="candidate-tiles-stack">
+            <div class="candidate-tile-item selected" onclick="toggleSelection(this)">
+              <span class="step-badge">Candidate 1 &bull; People</span>
+              <div class="candidate-tile-title">Father's Heart Health</div>
+              <div class="candidate-tile-desc">Physical strength during cardiology review; comfort in Christ's ownership; peace resting in Father's care.</div>
             </div>
-            <div class="candidate-tile">
-              <span class="guide-step-label">Candidate 2 &bull; People</span>
-              <div class="card-title">Family Steadfastness</div>
-              <div class="card-description">Wisdom for physicians managing care; patience in waiting; submission to Father's sovereign will.</div>
+            <div class="candidate-tile-item" onclick="toggleSelection(this)">
+              <span class="step-badge">Candidate 2 &bull; People</span>
+              <div class="candidate-tile-title">Family Steadfastness</div>
+              <div class="candidate-tile-desc">Wisdom for physicians managing care; patience in waiting; submission to God's sovereign will.</div>
             </div>
           </div>
 
-          <div class="action-grid">
-            <button class="action-tile-btn" onclick="alert('Requesting 2 additional suggestions from Cloudflare Worker...');">Suggest 2 More</button>
-            <button class="action-tile-btn primary" onclick="alert('Candidate card saved to People domain.'); showScreen('screen-home');">Save Selection</button>
+          <div class="contiguous-action-bar">
+            <button class="action-tile-button" onclick="alert('Requesting 2 additional suggestions from Cloudflare Worker proxy...');">Suggest 2 More</button>
+            <button class="action-tile-button primary" onclick="alert('Candidate card saved to People domain.'); showScreen('view-home');">Save Selection</button>
           </div>
         </div>
       </div>
 
-      <!-- 4. DIRECTORY & LEDGER -->
-      <div class="view-screen" id="screen-directory">
-        <div class="directory-tree">
-          
-          <!-- PEOPLE ROOT -->
-          <div class="tree-header-tile">
+      <!-- ================= SCREEN 4: DIRECTORY & LEDGER ================= -->
+      <div class="screen-pane" id="view-directory">
+        <div class="directory-tree-list">
+          <!-- PEOPLE DOMAIN -->
+          <div class="domain-header-tile">
             <span>People (Distinct Individuals)</span>
-            <span class="count-indicator">4 Items</span>
+            <span>2 Active &bull; 1 Answered</span>
           </div>
-          <div class="tree-item-tile">
-            <span class="item-name">Sarah &bull; Chemotherapy strength</span>
-            <span class="count-indicator">Active</span>
+          <div class="entry-row-tile">
+            <span class="entry-name">Sarah &bull; Chemotherapy endurance</span>
+            <span class="entry-status-badge">Active</span>
           </div>
-          <div class="tree-item-tile answered">
-            <span class="item-name">David &bull; Employment transition</span>
-            <span class="count-indicator">Answered</span>
-          </div>
-
-          <!-- GROUPS ROOT -->
-          <div class="tree-header-tile">
-            <span>Groups (Communities & Teams)</span>
-            <span class="count-indicator">2 Items</span>
-          </div>
-          <div class="tree-item-tile">
-            <span class="item-name">Parish Council &bull; Pastoral wisdom</span>
-            <span class="count-indicator">Active</span>
-          </div>
-          <div class="tree-item-tile">
-            <span class="item-name">Engineering Team &bull; Integrity & patience</span>
-            <span class="count-indicator">Active</span>
+          <div class="entry-row-tile answered">
+            <span class="entry-name">David &bull; Employment transition</span>
+            <span class="entry-status-badge">Answered</span>
           </div>
 
-          <!-- GENERAL ROOT -->
-          <div class="tree-header-tile">
-            <span>General (Global & Historic Collects)</span>
-            <span class="count-indicator">3 Items</span>
+          <!-- GROUPS DOMAIN -->
+          <div class="domain-header-tile">
+            <span>Groups (Communities &amp; Ministries)</span>
+            <span>2 Active</span>
           </div>
-          <div class="tree-item-tile">
-            <span class="item-name">Persecuted Church &bull; Courage & protection</span>
-            <span class="count-indicator">Active</span>
+          <div class="entry-row-tile">
+            <span class="entry-name">Parish Council &bull; Pastoral wisdom</span>
+            <span class="entry-status-badge">Active</span>
           </div>
-          <div class="tree-item-tile">
-            <span class="item-name">1662 BCP &bull; Second Collect for Peace</span>
-            <span class="count-indicator">Historic</span>
+          <div class="entry-row-tile">
+            <span class="entry-name">Work Team &bull; Integrity &amp; patience</span>
+            <span class="entry-status-badge">Active</span>
           </div>
 
+          <!-- GENERAL DOMAIN -->
+          <div class="domain-header-tile">
+            <span>General (Global &amp; Historic Prayers)</span>
+            <span>2 Items</span>
+          </div>
+          <div class="entry-row-tile">
+            <span class="entry-name">Persecuted Church &bull; Boldness &amp; peace</span>
+            <span class="entry-status-badge">Active</span>
+          </div>
+          <div class="entry-row-tile">
+            <span class="entry-name">1662 BCP &bull; Second Collect for Peace</span>
+            <span class="entry-status-badge">Historic</span>
+          </div>
         </div>
 
-        <div class="action-grid">
-          <button class="action-tile-btn" onclick="showScreen('screen-home')">&larr; Back to Home</button>
-          <button class="action-tile-btn primary" onclick="showScreen('screen-pray')">Start Praying</button>
+        <div class="contiguous-action-bar">
+          <button class="action-tile-button" onclick="showScreen('view-home')">&larr; Back to Home</button>
+          <button class="action-tile-button primary" onclick="showScreen('view-pray')">Start Praying</button>
         </div>
       </div>
 
@@ -694,8 +817,8 @@
   </div>
 
   <script>
-    // Sample Prayer Database for Contemplative Queue
-    const samplePrayers = [
+    // Sample Contemplative Prayers for Queue
+    const queueData = [
       {
         domain: "PEOPLE \u2022 SARAH",
         title: "Chemotherapy Endurance",
@@ -703,7 +826,7 @@
       },
       {
         domain: "GENERAL \u2022 HISTORIC BCP 1662",
-        title: "Collect for Peace",
+        title: "Second Collect for Peace",
         desc: "O God, who art the author of peace and lover of concord; defend us in all assaults of our enemies; that we may rest in Thy defence."
       },
       {
@@ -713,80 +836,85 @@
       }
     ];
 
-    let currentBatchSize = 1;
+    let activeBatch = 1;
 
-    function renderContemplationQueue() {
-      const container = document.getElementById('pray-cards-host');
+    function renderPrayQueue() {
+      const container = document.getElementById('pray-mosaic-container');
       container.innerHTML = '';
       
-      const count = Math.min(currentBatchSize, samplePrayers.length);
+      const count = Math.min(activeBatch, queueData.length);
       for (let i = 0; i < count; i++) {
-        const item = samplePrayers[i];
+        const item = queueData[i];
         const tile = document.createElement('div');
-        tile.className = 'prayer-card-tile';
+        tile.className = 'contiguous-card-tile';
         tile.innerHTML = `
-          <div class="card-meta-bar">
+          <div class="card-domain-strip">
             <span>${item.domain}</span>
-            <span>Card ${i + 1} of ${count}</span>
+            <span>${i + 1} / ${count}</span>
           </div>
-          <div class="card-title">${item.title}</div>
-          <div class="card-description">${item.desc}</div>
+          <div class="card-title-text">${item.title}</div>
+          <div class="card-desc-text">${item.desc}</div>
         `;
         container.appendChild(tile);
       }
     }
 
     function showScreen(screenId) {
-      document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.screen-pane').forEach(p => p.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
 
-      const indicator = document.getElementById('screen-indicator');
-      if (screenId === 'screen-home') indicator.textContent = 'PRISTINE CANVAS';
-      if (screenId === 'screen-pray') {
-        indicator.textContent = 'CONTEMPLATION';
-        renderContemplationQueue();
+      const title = document.getElementById('title-display');
+      if (screenId === 'view-home') title.textContent = 'DEVOTION';
+      if (screenId === 'view-pray') {
+        title.textContent = 'CONTEMPLATION';
+        renderPrayQueue();
       }
-      if (screenId === 'screen-log') indicator.textContent = 'LOGGING VAULT';
-      if (screenId === 'screen-directory') indicator.textContent = 'DIRECTORY LEDGER';
+      if (screenId === 'view-log') title.textContent = 'INTENTION';
+      if (screenId === 'view-directory') title.textContent = 'DIRECTORY';
     }
 
     function setTheme(theme) {
       if (theme === 'morning') {
         document.body.classList.add('theme-morning');
-        document.getElementById('btn-theme-morning').classList.add('active');
-        document.getElementById('btn-theme-night').classList.remove('active');
+        document.getElementById('btn-morning').classList.add('active');
+        document.getElementById('btn-night').classList.remove('active');
       } else {
         document.body.classList.remove('theme-morning');
-        document.getElementById('btn-theme-night').classList.add('active');
-        document.getElementById('btn-theme-morning').classList.remove('active');
+        document.getElementById('btn-night').classList.add('active');
+        document.getElementById('btn-morning').classList.remove('active');
       }
     }
 
-    function setBatch(size) {
-      currentBatchSize = size;
-      document.querySelectorAll('[id^="btn-batch-"]').forEach(b => b.classList.remove('active'));
-      document.getElementById(`btn-batch-${size}`).classList.add('active');
-      if (document.getElementById('screen-pray').classList.contains('active')) {
-        renderContemplationQueue();
+    function setBatch(n) {
+      activeBatch = n;
+      document.querySelectorAll('[id^="btn-b"]').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-b${n}`).classList.add('active');
+      if (document.getElementById('view-pray').classList.contains('active')) {
+        renderPrayQueue();
       }
     }
 
-    function setPathway(pathway) {
-      if (pathway === 'direct') {
-        document.getElementById('pane-direct').classList.add('active');
-        document.getElementById('pane-guide').classList.remove('active');
-        document.getElementById('tab-direct').classList.add('active');
-        document.getElementById('tab-guide').classList.remove('active');
+    function setPathwayTab(tab) {
+      if (tab === 'direct') {
+        document.getElementById('pane-direct-flow').style.display = 'flex';
+        document.getElementById('pane-guide-flow').classList.remove('active');
+        document.getElementById('tab-direct-btn').classList.add('active');
+        document.getElementById('tab-guide-btn').classList.remove('active');
       } else {
-        document.getElementById('pane-guide').classList.add('active');
-        document.getElementById('pane-direct').classList.remove('active');
-        document.getElementById('tab-guide').classList.add('active');
-        document.getElementById('tab-direct').classList.remove('active');
+        document.getElementById('pane-direct-flow').style.display = 'none';
+        document.getElementById('pane-guide-flow').classList.add('active');
+        document.getElementById('tab-guide-btn').classList.add('active');
+        document.getElementById('tab-direct-btn').classList.remove('active');
       }
+    }
+
+    function toggleSelection(tile) {
+      document.querySelectorAll('.candidate-tile-item').forEach(t => t.classList.remove('selected'));
+      tile.classList.add('selected');
     }
 
     // Initialize
-    renderContemplationQueue();
+    renderPrayQueue();
   </script>
 </body>
 </html>
