@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prayer Companion — UI Architecture Mockup</title>
+  <style>
+    /* Reset & Base Strict Orthogonal Geometry */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important; /* STRICT ENFORCEMENT: ZERO CURVED EDGES */
+      -webkit-font-smoothing: antialiased;
+    }
+
+    :root {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --surface-tile: #111111;
+      --border: #262626;
+      --border-focus: #525252;
+      --text: #f5f5f5;
+      --text-muted: #8e8e8e;
+      --text-faint: #525252;
+      --accent-active: #ffffff;
+      --accent-bg: #1c1c1c;
+    }
+
+    body.theme-morning {
+      --bg: #ffffff;
+      --surface: #f7f7f7;
+      --surface-tile: #f0f0f0;
+      --border: #d4d4d4;
+      --border-focus: #737373;
+      --text: #171717;
+      --text-muted: #525252;
+      --text-faint: #a3a3a3;
+      --accent-active: #000000;
+      --accent-bg: #e5e5e5;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #121212;
+      color: #e5e5e5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Top Control Bar for Mockup Demonstration */
+    .mockup-controls {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #1c1c1c;
+      border: 1px solid #333333;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ctrl-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ctrl-btn {
+      background: #2a2a2a;
+      color: #cccccc;
+      border: 1px solid #444444;
+      padding: 6px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .ctrl-btn:hover {
+      background: #383838;
+      color: #ffffff;
+    }
+    .ctrl-btn.active {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Simulated Mobile Device Frame */
+    .mobile-frame {
+      width: 100%;
+      max-width: 420px;
+      height: 820px;
+      background-color: var(--bg);
+      border: 2px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* Device Status Header */
+    .device-header {
+      height: 44px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: var(--bg);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .header-nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .header-nav-btn:hover {
+      border-color: var(--border-focus);
+    }
+
+    /* Viewport Area */
+    .viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      overflow-y: auto;
+    }
+
+    .view-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      flex-direction: column;
+      padding: 20px;
+      background: var(--bg);
+    }
+    .view-screen.active {
+      display: flex;
+    }
+
+    /* SCREEN 1: PRISTINE HOME CANVAS */
+    #screen-home {
+      justify-content: center;
+      align-items: stretch;
+      padding: 36px 24px;
+      gap: 20px;
+    }
+
+    .home-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .home-title {
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .home-subtitle {
+      font-size: 11px;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    .tessellated-tile-group {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+    }
+
+    .home-tile {
+      background: var(--surface);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      padding: 32px 20px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .home-tile:last-child {
+      border-bottom: none;
+    }
+    .home-tile:hover {
+      background: var(--accent-bg);
+    }
+
+    .tile-headline {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .tile-caption {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .home-gesture-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 20px;
+    }
+
+    /* SCREEN 2: CONTEMPLATION QUEUE ("START PRAYING") */
+    #screen-pray {
+      padding: 16px;
+    }
+
+    .contemplation-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+    }
+
+    .prayer-card-tile {
+      flex: 1;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+    .prayer-card-tile:last-child {
+      border-bottom: none;
+    }
+
+    .card-meta-bar {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 12px;
+      letter-spacing: -0.01em;
+    }
+
+    .card-description {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      font-family: inherit;
+    }
+
+    .passive-notice {
+      height: 36px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 10px;
+      color: var(--text-faint);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* SCREEN 3: LOG PRAYER POINTS (PATHWAYS) */
+    #screen-log {
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .log-tabs {
+      display: flex;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .log-tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: var(--surface);
+      border: none;
+      border-right: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+    .log-tab-btn:last-child {
+      border-right: none;
+    }
+    .log-tab-btn.active {
+      background: var(--accent-bg);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .pathway-pane {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      gap: 12px;
+    }
+    .pathway-pane.active {
+      display: flex;
+    }
+
+    /* Direct text pad */
+    .flat-textarea {
+      width: 100%;
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 16px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+    }
+    .flat-textarea:focus {
+      border-color: var(--border-focus);
+    }
+
+    .ai-inference-tile {
+      background: var(--surface-tile);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .tag-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      font-size: 10px;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Guide me flow */
+    .guide-step-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .guide-step-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-faint);
+    }
+
+    .guide-question-text {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .candidate-tiles-container {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+    }
+
+    .candidate-tile {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .candidate-tile:last-child {
+      border-bottom: none;
+    }
+    .candidate-tile.selected {
+      background: var(--accent-bg);
+      outline: 1px solid var(--text);
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--border);
+      margin-top: auto;
+    }
+    .action-tile-btn {
+      background: var(--surface);
+      border: none;
+      padding: 14px;
+      color: var(--text);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .action-tile-btn:last-child {
+      border-right: none;
+    }
+    .action-tile-btn:hover {
+      background: var(--accent-bg);
+    }
+    .action-tile-btn.primary {
+      background: var(--text);
+      color: var(--bg);
+      font-weight: 600;
+    }
+
+    /* SCREEN 4: DIRECTORY & LEDGER */
+    #screen-directory {
+      padding: 16px;
+      gap: 16px;
+    }
+
+    .directory-tree {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .tree-header-tile {
+      background: var(--surface-tile);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tree-item-tile {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .tree-item-tile:hover {
+      background: var(--accent-bg);
+    }
+    .tree-item-tile.answered {
+      color: var(--text-faint);
+    }
+    .tree-item-tile.answered .item-name {
+      text-decoration: line-through;
+      text-decoration-color: var(--text-muted);
+    }
+
+    .count-indicator {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mockup Demonstration Controls -->
+  <div class="mockup-controls">
+    <div class="ctrl-group">
+      <span>Theme:</span>
+      <button class="ctrl-btn active" id="btn-theme-night" onclick="setTheme('night')">Quiet Night</button>
+      <button class="ctrl-btn" id="btn-theme-morning" onclick="setTheme('morning')">Morning Light</button>
+    </div>
+    <div class="ctrl-group">
+      <span>Batches:</span>
+      <button class="ctrl-btn active" id="btn-batch-1" onclick="setBatch(1)">1</button>
+      <button class="ctrl-btn" id="btn-batch-2" onclick="setBatch(2)">2</button>
+      <button class="ctrl-btn" id="btn-batch-3" onclick="setBatch(3)">3</button>
+    </div>
+  </div>
+
+  <!-- Simulated Mobile Device Container -->
+  <div class="mobile-frame">
+    
+    <!-- Top System & View Navigation Bar -->
+    <div class="device-header">
+      <button class="header-nav-btn" onclick="showScreen('screen-home')">Home</button>
+      <span id="screen-indicator">PRISTINE CANVAS</span>
+      <button class="header-nav-btn" onclick="showScreen('screen-directory')">Ledger &rarr;</button>
+    </div>
+
+    <!-- Viewport Area -->
+    <div class="viewport">
+
+      <!-- 1. PRISTINE HOME SCREEN -->
+      <div class="view-screen active" id="screen-home">
+        <div class="home-header">
+          <div class="home-title">Devotion</div>
+          <div class="home-subtitle">Solemn Communion</div>
+        </div>
+
+        <div class="tessellated-tile-group">
+          <button class="home-tile" onclick="showScreen('screen-pray')">
+            <span class="tile-headline">Start praying</span>
+            <span class="tile-caption">Enter the contemplative, read-only petition rotation without friction.</span>
+          </button>
+          <button class="home-tile" onclick="showScreen('screen-log')">
+            <span class="tile-headline">Log prayer points</span>
+            <span class="tile-caption">Record formed petitions or distill tangled burdens into structured cards.</span>
+          </button>
+        </div>
+
+        <div class="home-gesture-hint">
+          &larr; Swipe left for structural ledger &rarr;
+        </div>
+      </div>
+
+      <!-- 2. CONTEMPLATIVE PRAYER FLOW ("START PRAYING") -->
+      <div class="view-screen" id="screen-pray">
+        <div class="contemplation-container" id="pray-cards-host">
+          <!-- Dynamically populated based on batch size -->
+        </div>
+        <div class="passive-notice">
+          <span>Read-Only Contemplation</span>
+          <span>Self-Paced &bull; Tap Home to Exit</span>
+        </div>
+      </div>
+
+      <!-- 3. LOG PRAYER POINTS (PATHWAYS) -->
+      <div class="view-screen" id="screen-log">
+        <div class="log-tabs">
+          <button class="log-tab-btn active" id="tab-direct" onclick="setPathway('direct')">Direct Capture</button>
+          <button class="log-tab-btn" id="tab-guide" onclick="setPathway('guide')">Guide Me (Distillation)</button>
+        </div>
+
+        <!-- Pathway A: Direct Capture -->
+        <div class="pathway-pane active" id="pane-direct">
+          <textarea class="flat-textarea" placeholder="Type an already-formed prayer point directly...&#10;&#10;e.g., Physical healing and comfort for Sarah; perseverance through chemotherapy; peace resting in Christ's sovereign care."></textarea>
+          
+          <div class="ai-inference-tile">
+            <span>Inferred Domain Filing:</span>
+            <span class="tag-badge">People &bull; Family</span>
+          </div>
+
+          <div class="action-grid">
+            <button class="action-tile-btn" onclick="showScreen('screen-home')">Cancel</button>
+            <button class="action-tile-btn primary" onclick="alert('Prayer point committed to local encrypted SQLite vault.'); showScreen('screen-home');">Save to Vault</button>
+          </div>
+        </div>
+
+        <!-- Pathway B: Guide Me -->
+        <div class="pathway-pane" id="pane-guide">
+          <div class="guide-step-card">
+            <span class="guide-step-label">Step 1 &bull; Open Heart</span>
+            <div class="guide-question-text">&ldquo;Feeling deeply overwhelmed about my father's failing health and heart failure.&rdquo;</div>
+          </div>
+
+          <div class="guide-step-card">
+            <span class="guide-step-label">Step 2 &bull; Neutral Distillation Inquiry</span>
+            <div class="guide-question-text">&ldquo;What is happening with his treatment that you would like to pray about?&rdquo;</div>
+          </div>
+
+          <div class="candidate-tiles-container">
+            <div class="candidate-tile selected">
+              <span class="guide-step-label">Candidate 1 &bull; People</span>
+              <div class="card-title">Father's Heart Health</div>
+              <div class="card-description">Physical strength during cardiology review; comfort in Christ's ownership; peace regarding treatment.</div>
+            </div>
+            <div class="candidate-tile">
+              <span class="guide-step-label">Candidate 2 &bull; People</span>
+              <div class="card-title">Family Steadfastness</div>
+              <div class="card-description">Wisdom for physicians managing care; patience in waiting; submission to Father's sovereign will.</div>
+            </div>
+          </div>
+
+          <div class="action-grid">
+            <button class="action-tile-btn" onclick="alert('Requesting 2 additional suggestions from Cloudflare Worker...');">Suggest 2 More</button>
+            <button class="action-tile-btn primary" onclick="alert('Candidate card saved to People domain.'); showScreen('screen-home');">Save Selection</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. DIRECTORY & LEDGER -->
+      <div class="view-screen" id="screen-directory">
+        <div class="directory-tree">
+          
+          <!-- PEOPLE ROOT -->
+          <div class="tree-header-tile">
+            <span>People (Distinct Individuals)</span>
+            <span class="count-indicator">4 Items</span>
+          </div>
+          <div class="tree-item-tile">
+            <span class="item-name">Sarah &bull; Chemotherapy strength</span>
+            <span class="count-indicator">Active</span>
+          </div>
+          <div class="tree-item-tile answered">
+            <span class="item-name">David &bull; Employment transition</span>
+            <span class="count-indicator">Answered</span>
+          </div>
+
+          <!-- GROUPS ROOT -->
+          <div class="tree-header-tile">
+            <span>Groups (Communities & Teams)</span>
+            <span class="count-indicator">2 Items</span>
+          </div>
+          <div class="tree-item-tile">
+            <span class="item-name">Parish Council &bull; Pastoral wisdom</span>
+            <span class="count-indicator">Active</span>
+          </div>
+          <div class="tree-item-tile">
+            <span class="item-name">Engineering Team &bull; Integrity & patience</span>
+            <span class="count-indicator">Active</span>
+          </div>
+
+          <!-- GENERAL ROOT -->
+          <div class="tree-header-tile">
+            <span>General (Global & Historic Collects)</span>
+            <span class="count-indicator">3 Items</span>
+          </div>
+          <div class="tree-item-tile">
+            <span class="item-name">Persecuted Church &bull; Courage & protection</span>
+            <span class="count-indicator">Active</span>
+          </div>
+          <div class="tree-item-tile">
+            <span class="item-name">1662 BCP &bull; Second Collect for Peace</span>
+            <span class="count-indicator">Historic</span>
+          </div>
+
+        </div>
+
+        <div class="action-grid">
+          <button class="action-tile-btn" onclick="showScreen('screen-home')">&larr; Back to Home</button>
+          <button class="action-tile-btn primary" onclick="showScreen('screen-pray')">Start Praying</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Sample Prayer Database for Contemplative Queue
+    const samplePrayers = [
+      {
+        domain: "PEOPLE \u2022 SARAH",
+        title: "Chemotherapy Endurance",
+        desc: "Relief from severe treatment nausea; steadfast trust in Christ's preserving grace; peace resting in Father's care."
+      },
+      {
+        domain: "GENERAL \u2022 HISTORIC BCP 1662",
+        title: "Collect for Peace",
+        desc: "O God, who art the author of peace and lover of concord; defend us in all assaults of our enemies; that we may rest in Thy defence."
+      },
+      {
+        domain: "GROUPS \u2022 PARISH COUNCIL",
+        title: "Pastoral Discernment",
+        desc: "Wisdom for church leadership; unity in biblical truth; courage in faithful preaching of Christ crucified."
+      }
+    ];
+
+    let currentBatchSize = 1;
+
+    function renderContemplationQueue() {
+      const container = document.getElementById('pray-cards-host');
+      container.innerHTML = '';
+      
+      const count = Math.min(currentBatchSize, samplePrayers.length);
+      for (let i = 0; i < count; i++) {
+        const item = samplePrayers[i];
+        const tile = document.createElement('div');
+        tile.className = 'prayer-card-tile';
+        tile.innerHTML = `
+          <div class="card-meta-bar">
+            <span>${item.domain}</span>
+            <span>Card ${i + 1} of ${count}</span>
+          </div>
+          <div class="card-title">${item.title}</div>
+          <div class="card-description">${item.desc}</div>
+        `;
+        container.appendChild(tile);
+      }
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+
+      const indicator = document.getElementById('screen-indicator');
+      if (screenId === 'screen-home') indicator.textContent = 'PRISTINE CANVAS';
+      if (screenId === 'screen-pray') {
+        indicator.textContent = 'CONTEMPLATION';
+        renderContemplationQueue();
+      }
+      if (screenId === 'screen-log') indicator.textContent = 'LOGGING VAULT';
+      if (screenId === 'screen-directory') indicator.textContent = 'DIRECTORY LEDGER';
+    }
+
+    function setTheme(theme) {
+      if (theme === 'morning') {
+        document.body.classList.add('theme-morning');
+        document.getElementById('btn-theme-morning').classList.add('active');
+        document.getElementById('btn-theme-night').classList.remove('active');
+      } else {
+        document.body.classList.remove('theme-morning');
+        document.getElementById('btn-theme-night').classList.add('active');
+        document.getElementById('btn-theme-morning').classList.remove('active');
+      }
+    }
+
+    function setBatch(size) {
+      currentBatchSize = size;
+      document.querySelectorAll('[id^="btn-batch-"]').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-batch-${size}`).classList.add('active');
+      if (document.getElementById('screen-pray').classList.contains('active')) {
+        renderContemplationQueue();
+      }
+    }
+
+    function setPathway(pathway) {
+      if (pathway === 'direct') {
+        document.getElementById('pane-direct').classList.add('active');
+        document.getElementById('pane-guide').classList.remove('active');
+        document.getElementById('tab-direct').classList.add('active');
+        document.getElementById('tab-guide').classList.remove('active');
+      } else {
+        document.getElementById('pane-guide').classList.add('active');
+        document.getElementById('pane-direct').classList.remove('active');
+        document.getElementById('tab-guide').classList.add('active');
+        document.getElementById('tab-direct').classList.remove('active');
+      }
+    }
+
+    // Initialize
+    renderContemplationQueue();
+  </script>
+</body>
+</html>
