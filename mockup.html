@@ -650,8 +650,11 @@
     }
     .point-item-tile.answered .point-item-title {
       text-decoration: line-through;
-      text-decoration-color: var(--text-muted);
+      text-decoration-color: rgba(255, 255, 255, 0.2);
       color: var(--text-dim);
+    }
+    body.theme-morning .point-item-tile.answered .point-item-title {
+      text-decoration-color: rgba(0, 0, 0, 0.2);
     }
     .point-item-tile.answered .point-item-body {
       color: var(--text-dim);

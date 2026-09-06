@@ -176,7 +176,7 @@ Tapping **Open Journal** (or swiping left from the home screen) opens the comple
    - Drill into **`People`**, **`Groups`**, or **`General`** to see all associated entities and active prayer points.
 2. **Marking Answered**:
    - Tapping an active prayer point allows marking it as `Answered`, capturing an optional resolution date and testimony note.
-   - Answered points display with a soft strikethrough.
+   - Answered points display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
 3. **Editing & Archiving**:
    - Update titles, adjust notes, or archive points no longer held in active prayer.
 4. **Settings Access**:
