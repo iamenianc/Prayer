@@ -18,7 +18,7 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 - **Zero-Gap Contiguous Geometry**: Every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
 - **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
 - **Austere Simplicity (Zero Explanatory / Tutorial Text)**: As an unyielding design principle, the application shall never display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or instructional crutches.
-- **Sequestered Configuration (Zero Clutter)**: The interface is never cluttered with configuration, settings, batch selectors, or display options. All user preferences reside in a dedicated Settings panel navigated to only when needed from the directory ledger, preserving an austere, quiet devotional space.
+- **Sequestered Configuration (Zero Clutter)**: The interface is never cluttered with configuration, settings, or display options. All user preferences reside in a dedicated Settings panel navigated to only when needed from the directory ledger, preserving an austere, quiet devotional space.
 - **Zero Emojis & Zero Gamification**: Emojis, streak counters, celebration popups, badges, and animations are strictly excluded to preserve dignity and respect.
 - **Uncompromised Privacy**: Zero accounts, zero login, zero public feeds, and zero telemetry. All prayer data resides exclusively on the user's physical device.
 
@@ -36,7 +36,7 @@ Users can toggle between two high-contrast modes depending on environment and pr
 ### 2.2 Contiguous Geometric Tiles (Zero Gaps & Zero Curved Edges)
 - **Strict Orthogonality**: Every card, button, input box, dialog, sheet, and container adheres to sharp 90-degree right angles (`border-radius: 0`). Curved edges, rounded corners, and pill buttons are strictly forbidden.
 - **Planar Flat Tiles**: Surfaces are rendered as completely flat, zero-elevation rectangular tiles (`elevation: 0`, zero drop shadows, zero gradient bevels).
-- **Zero Visible Gaps & Direct Adjacency**: All on-screen elements (batched prayer cards 1–5, navigation buttons, input panes, and suggestion options) are directly adjacent to each other. The layout strictly eliminates margins, gutters, and floating card gaps. Elements share 1px hairline boundary seams to form an edge-to-edge architectural mosaic.
+- **Zero Visible Gaps & Direct Adjacency**: All on-screen elements (topic prayer points, navigation buttons, input panes, and suggestion options) are directly adjacent to each other. The layout strictly eliminates margins, gutters, and floating card gaps. Elements share 1px hairline boundary seams to form an edge-to-edge architectural mosaic.
 - **Architectural & Liturgical Gravity**: The unyielding rectilinear geometry reinforces solemnity, permanence, and reverence, eschewing the casual, bubbly aesthetics of consumer social apps.
 
 ### 2.3 Styling & Typography Rules
@@ -53,7 +53,7 @@ The navigation model cleanly divorces the **act of praying** from the **act of o
 graph TD
     Home["Blank Home Screen<br/>(1. Start praying | 2. Log prayer points)"]
     
-    Home -->|"Tap 'Start praying'"| PraySession["Start Praying Flow<br/>(Passive Curated Queue)"]
+    Home -->|"Tap 'Start praying'"| PraySession["Topic Contemplation Flow<br/>(All Unanswered Points per Topic)"]
     Home -->|"Tap 'Log prayer points'"| LogChoice{"Log Choice"}
     Home -->|"Swipe Left Gesture"| Directory["Structural Directory & Ledger<br/>(3 Roots: People, Groups, General)"]
     
@@ -63,7 +63,7 @@ graph TD
     Directory --> PeopleRoot["People Root<br/>(Individuals, Family, Friends)"]
     Directory --> GroupsRoot["Groups Root<br/>(Church, Teams, Communities)"]
     Directory --> GeneralRoot["General Root<br/>(World, Global, Historic Prayers)"]
-    Directory --> Settings["App Settings<br/>(Theme, Language, Batch Size, Blending, Backup)"]
+    Directory --> Settings["App Settings<br/>(Theme, Language, Blending, Backup)"]
 ```
 
 ### 3.1 The Blank Entry Screen
@@ -81,28 +81,29 @@ Swiping left from the blank home screen glides into the structured ledger and ma
 
 ## 4. Core User Journeys
 
-### 4.1 Journey 1: "Start Praying" (Devotional Contemplation)
+### 4.1 Journey 1: "Start Praying" (Topic-Centric Contemplation)
 
 ```mermaid
 graph LR
-    Launch["Tap 'Start praying'"] --> Queue["Curated Prayer Queue<br/>(Zero Friction)"]
-    Queue --> ViewCard["Card Focus View<br/>(Configurable 1 to 5 items)"]
-    ViewCard --> PrayQuietly["Read & Pray Silently<br/>(Strictly Passive / Read-Only)"]
-    PrayQuietly --> Next["Swipe to Next Card<br/>(Self-Paced / No Quota)"]
-    Next --> Exit["Exit Anytime Back to Home"]
+    Launch["Tap 'Start praying'"] --> TopicScreen["Topic Canvas<br/>(e.g., Sarah)"]
+    TopicScreen --> UnansweredPoints["All Unanswered Points<br/>(Contiguous Flat Tiles)"]
+    TopicScreen --> ExpandAnswered["Answered Points Collapsed<br/>(Expandable on Demand)"]
+    TopicScreen --> NextTopic["Advance to Next Topic<br/>(Self-Paced / No Quota)"]
+    NextTopic --> Exit["Exit Anytime Back to Home"]
 ```
 
-1. **Immediate Immersion**: Tapping **Start praying** instantly displays the first prayer card. There are no configuration popups, filters, or setup steps required prior to praying.
-2. **Card Focus & Configurable Batch Size (Contiguous Tessellated Tiles)**:
-   - Each prayer point occupies the screen as a completely flat rectangular tile with sharp 90-degree right angles and strictly zero curved edges (`border-radius: 0`).
-   - Users can configure their display preference in settings to show **1, 2, 3, 4, or 5 items** simultaneously. When multi-card batches (2–5) are displayed, the tiles tessellate contiguously across the screen along shared hairline dividing rules with zero visible gaps, zero margins, and zero rounded corners.
+1. **Immediate Immersion**: Tapping **Start praying** instantly displays the first active Topic (an individual person, group, or general concern). There are no configuration popups, filters, or setup steps required prior to praying.
+2. **Topic-Centric Contemplation (All Unanswered Points per Topic)**:
+   - Replaces mechanical card batches with organic, entity-based Topics.
+   - When a Topic is displayed (e.g., *Sarah*), **all of her unanswered prayer points** are shown contiguously together on the screen as flat rectangular tiles with zero visible gaps. The believer holds the complete, undivided burden for that person or group before God at once.
+   - **Expandable Answered Petitions**: Answered prayer points for that topic are sequestered into an austere collapsed tile (e.g., `Answered (2)`). Tapping it expands the answered prayers with soft strikethrough, allowing spontaneous thanksgiving and praise to God without cluttering active intercession.
 3. **Strictly Passive / Read-Only Prayer Experience**:
    - The prayer screen contains **zero interactive buttons, checkboxes, or edit fields**.
    - The user cannot mark items as answered, edit text, or check off tasks during prayer.
-   - Viewing cards automatically updates the internal `last_prayed_at` timestamp without demanding manual interaction.
+   - Progressing past a topic automatically updates the internal `last_prayed_at` timestamp across all its active prayer points without demanding manual interaction.
 4. **Self-Paced & Open-Ended**:
-   - Each screen represents a distinct prayer.
-   - There is no mandatory session quota or timer. The user determines the length of their devotion and simply exits back to the home screen whenever they choose.
+   - Each screen represents a complete topic.
+   - There is no mandatory session quota or timer. The user determines the length of their devotion, advances topic by topic, and simply exits back to the home screen whenever they choose.
 5. **Zero-State Fallback (Curated Reformed Prayers)**:
    - If the user has not yet recorded any personal prayer points, *Start praying* presents preloaded prayers from a curated selection of historic **Reformed, Protestant** classics:
      - The Lord's Prayer
@@ -177,7 +178,6 @@ Swiping left from the home screen opens the complete management ledger:
 4. **Settings Access**:
    - Theme toggle (*Quiet Night* vs. *Morning Light*).
    - **Language / Dialect configuration**: Dedicated selector between **English (Australian / UK)** *(Default)* and **US English**. Switching immediately adjusts UI copy, prayer collects, and distillation orthography.
-   - Card batch size configuration (1, 2, 3, 4, or 5 items per view).
    - Historic Reformed prayers rotation toggle (blend into daily rotation vs. library-only).
    - Local encrypted database backup and export.
 

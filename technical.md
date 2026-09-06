@@ -70,7 +70,6 @@ erDiagram
   - Encrypted key-value or single-row table in SQLite storing local preferences:
     - `locale_dialect`: `"EN_AU_UK"` (Default) | `"EN_US"`. Governs application copy, liturgical texts, date nuances, and prompt dialect instructions.
     - `theme_mode`: `"QUIET_NIGHT"` (Default) | `"MORNING_LIGHT"`.
-    - `batch_size`: Integer `1` to `5` (Default: `1`).
     - `blend_historic_prayers`: Boolean (Default: `false`).
 
 ---
@@ -243,9 +242,10 @@ graph TD
   - Strictly zero explanatory sub-text, onboarding tips, or tutorial labels. Swiping left triggers the structural directory branch (`People`, `Groups`, `General`).
 - **Passive Prayer Engine ("Start Praying")**:
   - Direct queue instantiation with zero pre-filters.
-  - Full-screen contiguous card focus with user-configurable batch sizes: **1, 2, 3, 4, or 5 prayer items visible at a time**.
-  - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer. Viewing an item silently updates its `last_prayed_at` timestamp in local SQLite.
-  - **Self-Paced & Open-Ended**: Each screen is a separate prayer. Users proceed at their own pace and exit whenever they wish.
+  - **Topic-Centric Contemplation Architecture**: Replaces mechanical card batches with holistic, entity-based Topics. Each screen in *Start praying* corresponds to an `INDIVIDUAL_ENTITY` (Topic). When a Topic is displayed, **all of its unanswered (active) prayer points** are retrieved from SQLite and rendered together contiguously on screen as an edge-to-edge stack.
+  - **Expandable Answered Prayer Section**: Answered prayer points for that entity are retrieved and sequestered in a collapsed hairline tile (`Answered (N)`). Tapping toggles expansion, revealing answered items with soft strikethrough for thanksgiving without intruding upon active intercession.
+  - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer. Viewing a topic silently updates the `last_prayed_at` timestamp in local SQLite across all active prayer points belonging to that topic.
+  - **Self-Paced & Open-Ended**: Each screen is a complete topic. Users advance through topics at their own pace and exit whenever they wish.
 - **Logging Engine ("Log Prayer Points")**:
   - Two discrete paths:
     1. `Record a prayer point` (direct capture with intelligent AI filing: immediate empty text pad for known petitions; uses AI to classify and infer the target root category—`People`, `Groups`, or `General`—and optional group context for one-tap confirmation without multi-turn questioning; entity names are masked on-device and bound locally without AI entity suggestions, falling back to manual picker if offline).
@@ -259,8 +259,8 @@ graph TD
   - The UI strictly forbids instructional sub-captions, introductory prompts, or descriptive tooltips under buttons or headers.
   - Controls feature strictly functional, stark terminology (e.g., *Start praying*, *Log prayer points*, *Save*, *Cancel*, *Ledger*, *Settings*).
 - **Sequestered Settings Architecture (`APP_CONFIG`)**:
-  - Zero settings, display switches, batch selectors, or configuration toggles are permitted on the home screen or active prayer interface.
-  - All configurable parameters (`locale_dialect`, `theme_mode`, `batch_size`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the directory ledger.
+  - Zero settings, display switches, or configuration toggles are permitted on the home screen or active prayer interface.
+  - All configurable parameters (`locale_dialect`, `theme_mode`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the directory ledger.
 
 ---
 
