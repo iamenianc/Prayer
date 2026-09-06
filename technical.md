@@ -36,6 +36,8 @@ erDiagram
         string display_name
         string context_description
         boolean is_preloaded_historic
+        int interacted_count "cumulative sessions prayed/observed"
+        datetime last_interacted_at "timestamp of last contemplative engagement"
         datetime created_at
     }
     PRAYER_POINT {
@@ -44,8 +46,9 @@ erDiagram
         string title
         string description
         string status "ACTIVE | ANSWERED | ARCHIVED"
+        int interacted_count "times observed in prayer"
         datetime created_at
-        datetime last_prayed_at
+        datetime last_interacted_at "timestamp of last contemplation"
         datetime answered_at
         string answered_testimony
     }
@@ -243,8 +246,23 @@ graph TD
 - **Passive Prayer Engine ("Start Praying")**:
   - Direct queue instantiation with zero pre-filters.
   - **Topic-Centric Contemplation Architecture**: Replaces mechanical card batches with holistic, entity-based Topics. Each screen in *Start praying* corresponds to an `INDIVIDUAL_ENTITY` (Topic). When a Topic is displayed, **all of its unanswered (active) prayer points** are retrieved from SQLite and rendered together contiguously on screen as an edge-to-edge stack.
+  - **Balanced Queue Curation & Anti-Neglect Algorithm**:
+    - To ensure balanced intercession across all relational spheres, SQLite query ordering balances topics dynamically:
+      ```sql
+      SELECT e.* FROM INDIVIDUAL_ENTITY e
+      WHERE EXISTS (
+        SELECT 1 FROM PRAYER_POINT p 
+        WHERE p.entity_id = e.id AND p.status IN ('ACTIVE', 'HISTORIC')
+      )
+      ORDER BY 
+        e.last_interacted_at IS NOT NULL ASC, -- Never-interacted topics first
+        e.last_interacted_at ASC,             -- Oldest interacted topics next
+        e.interacted_count ASC,               -- Least interacted topics next
+        RANDOM();                             -- Tie-breaker
+      ```
+    - Viewing/advancing past a topic silently increments `e.interacted_count = e.interacted_count + 1`, updates `e.last_interacted_at = CURRENT_TIMESTAMP`, and synchronizes `p.last_interacted_at` across its constituent points.
   - **Expandable Answered Prayer Section**: Answered prayer points for that entity are retrieved and sequestered in a collapsed hairline tile (`Answered (N)`). Tapping toggles expansion, revealing answered items with soft strikethrough for thanksgiving without intruding upon active intercession.
-  - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer. Viewing a topic silently updates the `last_prayed_at` timestamp in local SQLite across all active prayer points belonging to that topic.
+  - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer.
   - **Self-Paced & Open-Ended**: Each screen is a complete topic. Users advance through topics at their own pace and exit whenever they wish.
 - **Logging Engine ("Log Prayer Points")**:
   - Two discrete paths:

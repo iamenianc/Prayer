@@ -92,7 +92,9 @@ graph LR
     NextTopic --> Exit["Exit Anytime Back to Home"]
 ```
 
-1. **Immediate Immersion**: Tapping **Start praying** instantly displays the first active Topic (an individual person, group, or general concern). There are no configuration popups, filters, or setup steps required prior to praying.
+1. **Immediate Immersion & Balanced Curation**: 
+   - Tapping **Start praying** instantly displays the most fitting active Topic without configuration popups, filters, or setup steps.
+   - **Curated Feed Balancing (Anti-Neglect)**: The local engine balances the queue using each topic's retained interaction count (`interacted_count`) and timestamp (`last_interacted_at`). Topics that have never been prayed for, or have the oldest last-interacted dates and lowest counts, are prioritized at the front of the queue so that no relationship, small group, or burden is forgotten.
 2. **Topic-Centric Contemplation (All Unanswered Points per Topic)**:
    - Replaces mechanical card batches with organic, entity-based Topics.
    - When a Topic is displayed (e.g., *Sarah*), **all of her unanswered prayer points** are shown contiguously together on the screen as flat rectangular tiles with zero visible gaps. The believer holds the complete, undivided burden for that person or group before God at once.
@@ -100,7 +102,7 @@ graph LR
 3. **Strictly Passive / Read-Only Prayer Experience**:
    - The prayer screen contains **zero interactive buttons, checkboxes, or edit fields**.
    - The user cannot mark items as answered, edit text, or check off tasks during prayer.
-   - Progressing past a topic automatically updates the internal `last_prayed_at` timestamp across all its active prayer points without demanding manual interaction.
+   - Progressing past a topic automatically and silently increments the topic's `interacted_count`, updates its `last_interacted_at` timestamp, and touches `last_interacted_at` across all constituent active prayer points without demanding manual interaction.
 4. **Self-Paced & Open-Ended**:
    - Each screen represents a complete topic.
    - There is no mandatory session quota or timer. The user determines the length of their devotion, advances topic by topic, and simply exits back to the home screen whenever they choose.
