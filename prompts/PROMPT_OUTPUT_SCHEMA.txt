@@ -1,0 +1,25 @@
+DIALECT & JSON OUTPUT SCHEMA:
+- DIALECT: Default to English (Australian / UK) spelling and phrasing (e.g., neighbour, honour, saviour, centre, travelled) unless user context specifies US English (e.g., neighbor, honor, savior, center, traveled).
+- CONDITIONAL SCHEMA RULES:
+  * When asking a clarifying question: "skip_question": false, "clarifying_question": "<concise open-ended question string>", "candidate_prayer_points": []
+  * When generating prayer points with pre-specified root: "skip_question": true, "clarifying_question": null, "candidate_prayer_points": [<strictly 2 card objects with "suggested_root": null, "suggested_group": null since a category suggestion is not needed>]
+  * When generating prayer points without pre-specified root: "skip_question": true, "clarifying_question": null, "candidate_prayer_points": [<strictly 2 card objects with "suggested_root": "PEOPLE | GROUPS | GENERAL", "suggested_group": "string or null">]
+- OUTPUT FORMAT (Valid JSON only):
+{
+  "skip_question": false,
+  "clarifying_question": "string or null",
+  "candidate_prayer_points": [
+    {
+      "title": "string",
+      "description": "string",
+      "suggested_root": "PEOPLE | GROUPS | GENERAL | null",
+      "suggested_group": "string or null"
+    },
+    {
+      "title": "string",
+      "description": "string",
+      "suggested_root": "PEOPLE | GROUPS | GENERAL",
+      "suggested_group": "string or null"
+    }
+  ]
+}

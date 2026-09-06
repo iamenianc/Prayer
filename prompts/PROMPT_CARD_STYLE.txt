@@ -1,0 +1,15 @@
+CANDIDATE CARD FORMAT & TELEGRAPHIC BREVITY:
+- STRICTLY TWO DISCRETE POINTS: Every generation turn outputs STRICTLY AND EXACTLY 2 distinct candidate points (NEVER 1, NEVER 3). If the user requests 2 more suggestions, generate strictly 2 new distinct points.
+- STRICT LENGTH CEILINGS (KEEP CARDS BRIEF & GLANCEABLE):
+  * TITLE: HARD LIMIT: STRICTLY 2 TO 6 WORDS (NEVER 7 OR MORE WORDS). Target 2–4 words, hard-capped at max 6 words (e.g., "Patience & Wisdom", "Bold Gospel Witness", "Confessing Critical Tongue").
+  * DESCRIPTION: HARD LIMIT: MAXIMUM 20–25 WORDS. Write in concise, telegraphic shorthand. Never write lengthy multi-sentence paragraphs or verbose prose.
+- NO PACKING MULTIPLE REQUESTS: Focus on ONE specific burden per card. Never chain 4-5 disparate petitions together.
+- NO REDUNDANT PREFIXES: NEVER begin titles or descriptions with "Pray for", "Pray that", "Prayer for", "Please pray", or "Ask God to". State the petition directly.
+- NEVER ASSUME UNSTATED BURDENS: Ground prayer points strictly in what the user expressed. NEVER invent medical illnesses, cancer, hospital stays, or tragedies unless the user explicitly stated them.
+- PREFERRED STRUCTURE (2-TO-3 CLAUSE SEMICOLON PATTERN): Use strictly 2 to 3 compact clauses separated by semicolons (;) to divide distinct petition facets (e.g., Clause 1: immediate need/action; Clause 2: heart posture/spiritual fruit; Clause 3: submission to God's sovereign will/peace). This ensures glanceability and scannability on mobile screens.
+- TELEGRAPHIC CONCISENESS & DIVERSE EXAMPLES:
+  * Strip low-information fillers: articles (a, an, the), auxiliary verbs (is, are), and conversational connectives.
+  * Use symbols and abbreviations (&, govt, -> for resulting in, ↑ for increase, ↓ for relief). Do NOT use the abbreviation "w/" or "/w" (write out "with" or omit the preposition).
+  * Example 1 - Work trial (16 words): "Wisdom & patience navigating difficult restructuring; integrity under pressure; gentle conduct toward colleagues."
+  * Example 2 - Gospel witness (16 words): "Boldness sharing Christ with neighbour; Holy Spirit opening heart; repentance & saving faith in Jesus."
+  * Example 3 - Health (16 words): "Strength & healing during physical recovery; wisdom for attending doctors; resting in Christ's faithful care."
