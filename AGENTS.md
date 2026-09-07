@@ -2,18 +2,22 @@
 
 ## 1. Project Purpose & Scope
 
-This repository maintains two distinct domains:
+This repository maintains three distinct domains:
 
 1. **Planning, Conceptualization & Product Specification (`planning/`)**:
-   - The mobile client application (*Pray Without Ceasing*) remains strictly in planning and specification mode.
-   - **No Mobile App Client Code**: The agent shall **never** build client app production implementations (Android/iOS binaries or frameworks) in this repository.
-   - **Strategic Focus**: Focus on product requirements, domain modeling, user workflows, system architecture, feature roadmaps, and scenario analysis.
-   - **Neutrality**: Keep technical specifications conceptual and agnostic of specific coding frameworks unless explicitly instructed by the user.
+   - The architectural foundation and product specification (*Pray Without Ceasing*).
+   - **Strategic Focus**: Product requirements, domain modeling, user workflows, system architecture, feature roadmaps, and scenario analysis.
+   - **Liturgical Integrity**: Maintains `beliefs.md`, `BRD.md`, `technical.md`, and `UX.md` as living doctrinal and system contracts.
 
 2. **AI Agent API Production Code (`api/`)**:
    - The serverless proxy and inference engine supporting the companion app is **active production code**.
    - Located under [`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api): Cloudflare Worker proxy (`worker.js`), deployment configuration (`wrangler.jsonc`), package manifests, modular prompts (`prompts/`), compiled system prompt (`system_prompt.txt`), interactive CLI testing tools (`interactive_guide.ps1`), and the 100-request benchmark suite (`test/`).
    - The agent **is permitted and expected** to maintain, update, test, benchmark, and deploy the API production codebase.
+
+3. **Native Android Production Codebase (`android/`)**:
+   - The native mobile client implementation targeting Samsung Galaxy Flip (and standard Android) devices is **active production code**.
+   - Located under `android/`: Kotlin + Jetpack Compose application, offline encrypted database (Room with SQLCipher), Samsung Flip gesture engine, Cloudflare Worker API bridge, and replicated test suite.
+   - The agent **is permitted and expected** to maintain, update, test, compile, and export sideloadable APK packages to `G:\My Drive\myApps\Prayer.apk`.
 
 ---
 
@@ -91,28 +95,28 @@ Prayer/
 │   ├── BRD.md                         # Business requirements document
 │   ├── technical.md                   # Technical decisions & architecture reference
 │   ├── UX.md                          # UX & product design specification
-│   └── mockup.html                    # Interactive planning UI prototype
-└── api/                               # Production AI Agent API codebase
-    ├── worker.js                      # Cloudflare Worker serverless proxy (multi-route)
-    ├── wrangler.jsonc                 # Cloudflare Worker deployment configuration
-    ├── package.json                   # Worker dependencies & scripts (test, dev, deploy)
-    ├── system_prompt.txt              # Authoritative compiled system prompt
-    ├── prompts/                       # Modular system prompt components
-    │   ├── PROMPT_PERSONA.txt
-    │   ├── PROMPT_INQUIRY_FLOW.txt
-    │   ├── PROMPT_THEOLOGY.txt
-    │   ├── PROMPT_TAXONOMY_PRIVACY.txt
-    │   ├── PROMPT_CARD_STYLE.txt
-    │   └── PROMPT_OUTPUT_SCHEMA.txt
-    ├── interactive_guide.ps1          # Interactive CLI test client for the API
-    └── test/                          # 100-case stress-test suite & benchmark reports
-        ├── README.md
-        ├── prayer_requests_stress_test.json
-        ├── run_stress_test.py
-        ├── stress_test_responses.json
-        ├── generate_report.py
-        ├── generate_text_report.py
-        ├── build_dataset.py
-        ├── BENCHMARK_RESULTS.md
-        └── AI_GENERATED_TEXT_REPORT.md
+│   ├── prototype.html                 # Reference prototype (decommissioned)
+│   ├── test_runner.html               # In-browser spec & layout contract validator
+│   └── tests/                         # Automated Playwright layout & gesture test suite
+├── api/                               # Production AI Agent API codebase
+│   ├── worker.js                      # Cloudflare Worker serverless proxy (multi-route)
+│   ├── wrangler.jsonc                 # Cloudflare Worker deployment configuration
+│   ├── package.json                   # Worker dependencies & scripts (test, dev, deploy)
+│   ├── system_prompt.txt              # Authoritative compiled system prompt
+│   ├── prompts/                       # Modular system prompt components
+│   │   ├── PROMPT_PERSONA.txt
+│   │   ├── PROMPT_INQUIRY_FLOW.txt
+│   │   ├── PROMPT_THEOLOGY.txt
+│   │   ├── PROMPT_TAXONOMY_PRIVACY.txt
+│   │   ├── PROMPT_CARD_STYLE.txt
+│   │   └── PROMPT_OUTPUT_SCHEMA.txt
+│   ├── interactive_guide.ps1          # Interactive CLI test client for the API
+│   └── test/                          # 100-case stress-test suite & benchmark reports
+└── android/                           # Production Native Android Client (Kotlin + Jetpack Compose)
+    ├── app/                           # Android application module
+    │   ├── src/main/java/au/prayer/app/ # Application source code
+    │   └── src/test/java/au/prayer/app/ # Replicated test suites
+    ├── gradle/                        # Version catalogs and Gradle wrapper
+    ├── build.gradle.kts               # Root build configuration
+    └── settings.gradle.kts            # Project settings
 ```

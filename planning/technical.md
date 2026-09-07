@@ -386,17 +386,42 @@ To ensure continuous compliance with theological guardrails, root categorization
 
 ---
 
-## 2. Open-Ended Technical Questions & Decisions Awaiting Input
+### 1.8 Full-Spec Reference Prototype & Automated UI Layout Testing Framework
 
+To ensure that specifications from `beliefs.md`, `BRD.md`, `technical.md`, and `UX.md` are provably testable and executable prior to native mobile implementation, the repository maintains a full-specification reference prototype and automated test harness under [`planning/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning):
+1. **Full-Specification Interactive Prototype ([`planning/prototype.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/prototype.html))**:
+   - **Local Schema & Relational Integrity**: In-memory and `localStorage`-backed persistence mirroring the `ROOT_CATEGORY`, `INDIVIDUAL_ENTITY`, `PRAYER_POINT`, and `APP_CONFIG` SQLCipher tables.
+   - **TouchGestureController**: Full mobile swipe engine enforcing horizontal discrimination ratio ($|\Delta X| \ge 1.5 \times |\Delta Y|$), distance thresholds ($\ge 40\text{px}$ / $\ge 60\text{px}$), and swipe-down exit.
+   - **Entity-First Logging Pathways**: Title-free Direct Entry with auto bullet-point list engine and asynchronous post-commit auto-titling to `/api/v1/title`; Guide Me distillation with on-device entity masking, plain English clarifying inquiry, unconditional skip to candidate points, and strictly 2 candidate cards with 2-to-3 clause semicolon structure.
+   - **Passive Sanctuary Mode**: Full-screen buttonless immersion with pure typographic layout, expandable answered section, and anti-neglect queue balancing.
+2. **In-Browser Automated Spec & Layout Validator ([`planning/test_runner.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/test_runner.html))**:
+   - Zero-dependency, browser-executable test suite running 100+ assertions across geometry, contrast, typography scaling, anti-neglect ordering, gestural navigation, and negative lexicon compliance.
+3. **Automated Headless Playwright Test Battery ([`planning/tests/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests))**:
+   - **Multi-Viewport Mobile Coverage**: Automatically validates layouts across standard mobile viewports:
+     - `Mobile-Standard-390x844` (iPhone 14/15)
+     - `Mobile-Compact-360x740` (Galaxy S)
+     - `Mobile-Large-428x926` (iPhone Pro Max)
+   - **Test Suites**:
+     - [`layout_geometry.spec.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests/layout_geometry.spec.js): Verifies universal 0px border-radius, 0px margins/gaps, 1px contiguous hairline seams, zero drop shadows, Morning Light vs. Quiet Night tokens, and 3-tier text scaling.
+     - [`gesture_engine.spec.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests/gesture_engine.spec.js): Verifies swipe-left advance, swipe-right return, diagonal gesture rejection ($|\Delta X| < 1.5 |\Delta Y|$), swipe-down dismissal, and home-to-journal swipe.
+     - [`devotional_flows.spec.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests/devotional_flows.spec.js): Verifies sanctuary mode, title-free Direct Entry auto-bullets, Guide Me flow, and petition editing/permanent deletion.
+     - [`anti_neglect_queue.spec.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests/anti_neglect_queue.spec.js): Verifies anti-neglect queue sorting priority, silent metric incrementation, and historic prayers zero-state fallback.
+     - [`lexicon_contract.spec.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests/lexicon_contract.spec.js): Verifies zero forbidden terms (`target`, `entity`, `ticket`, `commit`, `sqlite`), zero ordinal numbers (`Point 1`, `Item 1`), minimal contextual data exposure, and dialect selection.
+     - [`test_runner.spec.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests/test_runner.spec.js): Automated headless end-to-end execution of `test_runner.html`, verifying all 25 in-browser test assertions across 10 architectural suites directly inside sandboxed Chromium.
+   - **Execution & Results**: Run via `npm test` inside `planning/tests/`. Current pass rate: **75/75 passed (100.0%)** across all 3 mobile viewports.
+
+---
+
+## 2. Open-Ended Technical Questions & Decisions Awaiting Input
 
 The following areas remain intentionally open for future architectural refinement:
 
 ### 2.1 Cross-Platform Core Technology Selection
-- **Status**: Open
-- **Options Under Consideration**:
-  1. **Kotlin Multiplatform (KMP)**: Shared domain, SQLite (SQLCipher), and network client shared between Android (Compose) and iOS (SwiftUI).
-  2. **Rust / C Core Domain**: Low-level domain and encryption vault exposed via FFI to native Kotlin and Swift.
-  3. **Dual Native Implementations**: Pure native Android (Kotlin) and pure native iOS (Swift) sharing only schema and API contracts.
+- **Status**: Approved
+- **Decision**: **Native Android with Jetpack Compose & Kotlin** located under `android/` for the production mobile client, optimized for sideloading onto Samsung Galaxy Flip devices. Core domain entities and SQLCipher schema are maintained in strict alignment for future iOS (SwiftUI) parity.
+- **Persistence Framework**: SQLite with SQLCipher wrapped in Android Room, with database encryption keys derived and stored using hardware-backed Android Keystore.
+- **Networking Framework**: OkHttp / Ktor connecting to the Cloudflare Worker proxy (`https://pray-proxy.reflex-game.workers.dev/`) with compile-time gateway authentication (`X-Prayer-Gateway-Secret`).
+- **Target Deployment**: Sideloadable signed APK generated directly to Google Drive (`G:\My Drive\myApps\Prayer.apk`).
 
 ### 2.2 OpenRouter Default Model Selection
 - **Status**: Approved

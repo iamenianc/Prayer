@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en-AU" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pray Without Ceasing — Automated Spec & Layout Validator</title>
+  <style>
+    :root {
+      --bg: #FFFFFF;
+      --text: #111111;
+      --text-muted: #666666;
+      --border: #E0E0E0;
+      --surface-hover: #F8F8F8;
+      --pass: #2E7D32;
+      --fail: #D32F2F;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+    }
+
+    body {
+      background: #F4F4F4;
+      color: var(--text);
+      font-family: var(--font-family);
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      #runner-panel {
+        width: 100% !important;
+        height: auto !important;
+      }
+      #preview-panel {
+        width: 100% !important;
+        height: auto !important;
+        min-height: 800px;
+      }
+    }
+
+    /* Split layout: Test Dashboard on left, Prototype iframe on right */
+    #runner-panel {
+      width: 500px;
+      height: 100%;
+      background: #FFFFFF;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    #runner-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      background: #FFFFFF;
+    }
+
+    #runner-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    #runner-summary {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    #btn-run-all {
+      width: 100%;
+      padding: 12px 16px;
+      background: #111111;
+      color: #FFFFFF;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: opacity 0.1s ease;
+    }
+
+    #btn-run-all:hover {
+      opacity: 0.9;
+    }
+
+    #progress-bar-container {
+      height: 4px;
+      width: 100%;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--pass);
+      transition: width 0.15s ease;
+    }
+
+    #scorecard {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-hover);
+    }
+
+    .score-tile {
+      flex: 1;
+      padding: 12px 16px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .score-tile:last-child {
+      border-right: none;
+    }
+
+    .score-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .score-value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    #results-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: #FAFAFA;
+      font-size: 13px;
+    }
+
+    .suite-box {
+      margin-bottom: 16px;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+    }
+
+    .suite-header {
+      padding: 10px 14px;
+      background: var(--surface-hover);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .test-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.4;
+    }
+
+    .test-item:last-child {
+      border-bottom: none;
+    }
+
+    .test-status {
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+      width: 54px;
+    }
+
+    .status-pass { color: var(--pass); }
+    .status-fail { color: var(--fail); }
+    .status-pending { color: var(--text-muted); }
+
+    .test-desc {
+      flex: 1;
+      color: var(--text);
+    }
+
+    .test-error {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--fail);
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    /* Prototype Sandbox Container on right */
+    #preview-panel {
+      flex: 1;
+      height: 100%;
+      background: #1A1A1A;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+
+    #preview-header {
+      position: absolute;
+      top: 12px;
+      left: 20px;
+      color: #888888;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    #viewport-iframe {
+      width: 440px;
+      height: 900px;
+      max-height: 92vh;
+      border: 1px solid #333333;
+      background: #FFFFFF;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left: Test Runner Controls & Live Assertion Tree -->
+  <aside id="runner-panel">
+    <div id="runner-header">
+      <div id="runner-title">Spec & Layout Validator</div>
+      <div id="runner-summary">
+        Continuous architectural, geometry, gestural, and theological contract verification against <em>beliefs.md</em>, <em>BRD.md</em>, <em>technical.md</em>, and <em>UX.md</em>.
+      </div>
+      <button id="btn-run-all">Run Full Validation Battery</button>
+    </div>
+
+    <div id="progress-bar-container">
+      <div id="progress-bar"></div>
+    </div>
+
+    <div id="scorecard">
+      <div class="score-tile">
+        <div class="score-label">Total Tests</div>
+        <div class="score-value" id="score-total">0</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-label">Passed</div>
+        <div class="score-value status-pass" id="score-passed">0</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-label">Failed</div>
+        <div class="score-value status-fail" id="score-failed">0</div>
+      </div>
+      <div class="score-tile">
+        <div class="score-label">Pass Rate</div>
+        <div class="score-value" id="score-rate">0%</div>
+      </div>
+    </div>
+
+    <div id="results-list">
+      <!-- Suites and test items rendered dynamically -->
+    </div>
+  </aside>
+
+  <!-- Right: Live Prototype Sandbox -->
+  <main id="preview-panel">
+    <div id="preview-header">Live Prototype Sandboxed DOM Preview</div>
+    <iframe id="viewport-iframe" src="prototype.html"></iframe>
+  </main>
+
+  <script>
+    (function() {
+      const iframe = document.getElementById('viewport-iframe');
+      const btnRunAll = document.getElementById('btn-run-all');
+      const progressBar = document.getElementById('progress-bar');
+      const resultsList = document.getElementById('results-list');
+      const scoreTotal = document.getElementById('score-total');
+      const scorePassed = document.getElementById('score-passed');
+      const scoreFailed = document.getElementById('score-failed');
+      const scoreRate = document.getElementById('score-rate');
+
+      // Test Suite Definitions
+      const suites = [
+        {
+          name: "1. Strict Geometry & Zero-Gap Contiguity Contract",
+          tests: [
+            {
+              id: "geom_zero_radius",
+              desc: "Universal 0px border-radius enforced across all buttons, inputs, tiles, and modals",
+              fn: (doc) => {
+                const elements = doc.querySelectorAll('button, input, textarea, .home-slab, .entity-tile, .detail-petition-card, .candidate-card, .create-entity-box, #top-bar, .screen');
+                for (const el of elements) {
+                  const style = doc.defaultView.getComputedStyle(el);
+                  const r = style.borderRadius;
+                  if (r !== '0px') {
+                    throw new Error(`Element <${el.tagName.toLowerCase()} class="${el.className}"> has non-zero border-radius: ${r}`);
+                  }
+                }
+              }
+            },
+            {
+              id: "geom_home_slabs_contiguity",
+              desc: "Home screen action slabs share 0px margin/gap and direct 1px contiguous boundary",
+              fn: (doc) => {
+                const slabs = doc.querySelectorAll('#screen-home .home-slab');
+                if (slabs.length !== 3) throw new Error(`Expected 3 home slabs, found ${slabs.length}`);
+                for (let i = 0; i < slabs.length - 1; i++) {
+                  const r1 = slabs[i].getBoundingClientRect();
+                  const r2 = slabs[i+1].getBoundingClientRect();
+                  const gap = Math.abs(r2.top - r1.bottom);
+                  if (gap > 1.5) throw new Error(`Visible gap detected between slab ${i} and ${i+1}: ${gap}px`);
+                }
+              }
+            },
+            {
+              id: "geom_zero_box_shadow",
+              desc: "Zero elevation, gradients, or skeuomorphic drop shadows on interactive elements",
+              fn: (doc) => {
+                const elements = doc.querySelectorAll('.home-slab, .entity-tile, .detail-petition-card, .candidate-card, .btn-submit');
+                for (const el of elements) {
+                  const style = doc.defaultView.getComputedStyle(el);
+                  if (style.boxShadow !== 'none' && style.boxShadow !== '') {
+                    throw new Error(`Element ${el.className} has drop shadow: ${style.boxShadow}`);
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "2. Visual Identity & Monochrome Contrast Suite",
+          tests: [
+            {
+              id: "theme_morning_light",
+              desc: "Morning Light mode enforces pure white canvas (#FFFFFF), dark text, and hairline border tokens",
+              fn: (doc, app) => {
+                doc.documentElement.setAttribute('data-theme', 'light');
+                const bg = doc.defaultView.getComputedStyle(doc.documentElement).getPropertyValue('--bg').trim().toUpperCase();
+                const text = doc.defaultView.getComputedStyle(doc.documentElement).getPropertyValue('--text').trim().toUpperCase();
+                if (bg !== '#FFFFFF') throw new Error(`Expected --bg to be #FFFFFF, got ${bg}`);
+                if (text !== '#111111') throw new Error(`Expected --text to be #111111, got ${text}`);
+              }
+            },
+            {
+              id: "theme_quiet_night",
+              desc: "Quiet Night mode enforces pure black canvas (#000000), crisp white text, and dark border tokens",
+              fn: (doc, app) => {
+                doc.documentElement.setAttribute('data-theme', 'night');
+                const bg = doc.defaultView.getComputedStyle(doc.documentElement).getPropertyValue('--bg').trim().toUpperCase();
+                const text = doc.defaultView.getComputedStyle(doc.documentElement).getPropertyValue('--text').trim().toUpperCase();
+                if (bg !== '#000000') throw new Error(`Expected --bg to be #000000, got ${bg}`);
+                if (text !== '#FFFFFF') throw new Error(`Expected --text to be #FFFFFF, got ${text}`);
+                doc.documentElement.setAttribute('data-theme', 'light'); // reset
+              }
+            }
+          ]
+        },
+        {
+          name: "3. Three-Tier Text Scaling Invariant",
+          tests: [
+            {
+              id: "text_scale_large",
+              desc: "Large scale (Default) sets slab 28px, header 26px, title 22px, body 18px",
+              fn: (doc) => {
+                doc.documentElement.setAttribute('data-text-scale', 'large');
+                const style = doc.defaultView.getComputedStyle(doc.documentElement);
+                if (style.getPropertyValue('--font-slab').trim() !== '28px') throw new Error('Large font-slab != 28px');
+                if (style.getPropertyValue('--font-title').trim() !== '22px') throw new Error('Large font-title != 22px');
+                if (style.getPropertyValue('--font-body').trim() !== '18px') throw new Error('Large font-body != 18px');
+              }
+            },
+            {
+              id: "text_scale_regular",
+              desc: "Regular scale sets slab 20px, header 19px, title 16px, body 13px",
+              fn: (doc) => {
+                doc.documentElement.setAttribute('data-text-scale', 'regular');
+                const style = doc.defaultView.getComputedStyle(doc.documentElement);
+                if (style.getPropertyValue('--font-slab').trim() !== '20px') throw new Error('Regular font-slab != 20px');
+                if (style.getPropertyValue('--font-title').trim() !== '16px') throw new Error('Regular font-title != 16px');
+                if (style.getPropertyValue('--font-body').trim() !== '13px') throw new Error('Regular font-body != 13px');
+              }
+            },
+            {
+              id: "text_scale_compact",
+              desc: "Compact scale sets slab 15px, header 14.5px, title 12.5px, body 10.5px",
+              fn: (doc) => {
+                doc.documentElement.setAttribute('data-text-scale', 'compact');
+                const style = doc.defaultView.getComputedStyle(doc.documentElement);
+                if (style.getPropertyValue('--font-slab').trim() !== '15px') throw new Error('Compact font-slab != 15px');
+                if (style.getPropertyValue('--font-title').trim() !== '12.5px') throw new Error('Compact font-title != 12.5px');
+                if (style.getPropertyValue('--font-body').trim() !== '10.5px') throw new Error('Compact font-body != 10.5px');
+                doc.documentElement.setAttribute('data-text-scale', 'large'); // reset to default
+              }
+            }
+          ]
+        },
+        {
+          name: "4. Passive Full-Screen Prayer Mode Sanctuary Invariant",
+          tests: [
+            {
+              id: "pray_buttonless_sanctuary",
+              desc: "Prayer mode hides top-bar and displays zero buttons, card tiles, or grid lines",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                const topBar = doc.getElementById('top-bar');
+                if (doc.defaultView.getComputedStyle(topBar).display !== 'none') {
+                  throw new Error('Top bar is visible during prayer mode');
+                }
+                const visibleButtons = Array.from(doc.querySelectorAll('#screen-pray button')).filter(b => {
+                  return doc.defaultView.getComputedStyle(b).display !== 'none';
+                });
+                if (visibleButtons.length > 0) {
+                  throw new Error(`Visible buttons detected in prayer sanctuary: ${visibleButtons.length}`);
+                }
+              }
+            },
+            {
+              id: "pray_pure_typography",
+              desc: "Prayer canvas renders exclusively 'Praying for [Name]' heading and unadorned petitions",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                const heading = doc.getElementById('pray-heading').textContent;
+                if (!heading.startsWith('Praying for ')) {
+                  throw new Error(`Heading does not start with 'Praying for ': "${heading}"`);
+                }
+                const cards = doc.querySelectorAll('#screen-pray .prayer-point-entry');
+                if (cards.length === 0) throw new Error('No prayer points rendered');
+              }
+            },
+            {
+              id: "pray_zero_tutorial_text",
+              desc: "Prayer canvas is strictly free of explanatory hint or tutorial text",
+              fn: (doc) => {
+                const hint = doc.getElementById('pray-nav-hint');
+                if (hint) {
+                  throw new Error('Found forbidden tutorial element #pray-nav-hint in DOM');
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "5. Anti-Neglect Balancer & Silent Queue Metrics",
+          tests: [
+            {
+              id: "queue_anti_neglect_sorting",
+              desc: "Queue prioritization strictly orders never-interacted first, then oldest, then least interacted",
+              fn: (doc, app) => {
+                const prevEntities = JSON.parse(JSON.stringify(app.state.entities));
+                const prevPrayers = JSON.parse(JSON.stringify(app.state.prayers));
+                try {
+                  app.state.entities = [
+                    { id: 10, name: 'Alice', root: 'PEOPLE', interacted_count: 5, last_interacted_at: '2026-09-06T00:00:00Z', is_historic: false },
+                    { id: 11, name: 'Bob', root: 'PEOPLE', interacted_count: 0, last_interacted_at: null, is_historic: false },
+                    { id: 12, name: 'Charlie', root: 'PEOPLE', interacted_count: 2, last_interacted_at: '2026-08-01T00:00:00Z', is_historic: false }
+                  ];
+                  app.state.prayers = [
+                    { id: 1001, entity_id: 10, title: 'Trial', body: 'Body', status: 'ACTIVE' },
+                    { id: 1002, entity_id: 11, title: 'Trial', body: 'Body', status: 'ACTIVE' },
+                    { id: 1003, entity_id: 12, title: 'Trial', body: 'Body', status: 'ACTIVE' }
+                  ];
+                  app.buildBalancedPrayerQueue();
+                  const queue = app.state.prayerQueue;
+                  if (queue[0].name !== 'Bob') throw new Error(`Expected Bob (never interacted) first, got ${queue[0].name}`);
+                  if (queue[1].name !== 'Charlie') throw new Error(`Expected Charlie (oldest interacted) second, got ${queue[1].name}`);
+                  if (queue[2].name !== 'Alice') throw new Error(`Expected Alice third, got ${queue[2].name}`);
+                } finally {
+                  app.state.entities = prevEntities;
+                  app.state.prayers = prevPrayers;
+                  app.buildBalancedPrayerQueue();
+                }
+              }
+            },
+            {
+              id: "queue_silent_interaction_increment",
+              desc: "Advancing topic increments interacted_count and updates last_interacted_at timestamp",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                const nextIdx = (app.state.currentPrayerIndex + 1) % app.state.prayerQueue.length;
+                const nextEntity = app.state.prayerQueue[nextIdx];
+                const initialCount = nextEntity.interacted_count;
+                app.nextPrayerTopic();
+                const updated = app.state.entities.find(e => e.id === nextEntity.id);
+                if (updated.interacted_count <= initialCount) {
+                  throw new Error(`interacted_count was not incremented (was ${initialCount}, now ${updated.interacted_count})`);
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "6. Entity-First Logging & Direct Entry Auto-Bullets",
+          tests: [
+            {
+              id: "direct_zero_title_field",
+              desc: "Direct Entry view strictly omits title input field; user never sees or enters a title",
+              fn: (doc, app) => {
+                app.showScreen('screen-log-direct');
+                const inputs = Array.from(doc.querySelectorAll('#screen-log-direct input[type="text"]'));
+                if (inputs.length > 0) {
+                  throw new Error(`Found unexpected title input in Direct Entry: ${inputs.length}`);
+                }
+              }
+            },
+            {
+              id: "direct_auto_bullets_enter",
+              desc: "Typing and pressing Enter on bulleted pad automatically seeds newline with '• '",
+              fn: (doc, app) => {
+                app.showScreen('screen-log-direct');
+                const pad = doc.getElementById('direct-input-body');
+                pad.value = '• First prayer point';
+                pad.selectionStart = pad.selectionEnd = pad.value.length;
+                const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+                pad.dispatchEvent(enterEvent);
+                if (!pad.value.includes('\n• ')) {
+                  throw new Error(`Auto-bullet Enter failed. Value: ${JSON.stringify(pad.value)}`);
+                }
+              }
+            },
+            {
+              id: "direct_auto_bullets_backspace",
+              desc: "Pressing Backspace immediately after empty bullet removes '• ' cleanly",
+              fn: (doc, app) => {
+                app.showScreen('screen-log-direct');
+                const pad = doc.getElementById('direct-input-body');
+                pad.value = '• ';
+                pad.selectionStart = pad.selectionEnd = 2;
+                const bsEvent = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
+                pad.dispatchEvent(bsEvent);
+                if (pad.value.trim() !== '') {
+                  throw new Error(`Empty bullet was not cleared by backspace: "${pad.value}"`);
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "7. Guide Me Articulation & Telegraphic Candor",
+          tests: [
+            {
+              id: "guide_unconditional_skip",
+              desc: "Tapping 'Skip to petitions' immediately bypasses clarifying inquiry to candidate review",
+              fn: (doc, app) => {
+                app.showScreen('screen-log-guide');
+                doc.getElementById('guide-raw-input').value = 'Testing reflection burden';
+                doc.getElementById('btn-guide-continue').click();
+                doc.getElementById('btn-guide-skip-q').click();
+                const substep3 = doc.getElementById('guide-substep-3');
+                if (doc.defaultView.getComputedStyle(substep3).display === 'none') {
+                  throw new Error('Substep 3 is not visible after skip');
+                }
+              }
+            },
+            {
+              id: "guide_strictly_2_candidates",
+              desc: "Candidate review produces strictly and exactly 2 prayer cards with semicolon clauses",
+              fn: (doc, app) => {
+                const cards = doc.querySelectorAll('#guide-candidates-container .candidate-card');
+                if (cards.length !== 2) throw new Error(`Expected strictly 2 candidates, got ${cards.length}`);
+                cards.forEach((c, idx) => {
+                  const title = c.querySelector('.candidate-title').textContent.trim();
+                  const body = c.querySelector('.candidate-body').textContent.trim();
+                  const wordCount = title.split(/\s+/).length;
+                  if (wordCount < 2 || wordCount > 6) {
+                    throw new Error(`Candidate ${idx+1} title word count out of range (2-6): "${title}" (${wordCount} words)`);
+                  }
+                  if (!body.includes(';')) {
+                    throw new Error(`Candidate ${idx+1} does not use preferred 2-3 clause semicolon pattern: "${body}"`);
+                  }
+                });
+              }
+            },
+            {
+              id: "guide_one_time_suggest_more",
+              desc: "'Suggest 2 more' button permanently hides upon single invocation",
+              fn: (doc) => {
+                const btnMore = doc.getElementById('btn-guide-request-more');
+                btnMore.click();
+                if (doc.defaultView.getComputedStyle(btnMore).display !== 'none') {
+                  throw new Error("'Suggest 2 more' did not hide after click");
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "8. Saved Petition Editing & Permanent Deletion",
+          tests: [
+            {
+              id: "petition_click_once_edit",
+              desc: "Single-click on petition card opens petition editor with editable title and body",
+              fn: (doc, app) => {
+                app.state.selectedEntityId = 1;
+                app.showScreen('screen-entity-detail');
+                const firstCard = doc.querySelector('.detail-petition-card');
+                if (!firstCard) throw new Error('No petition card in entity detail');
+                firstCard.click();
+                if (app.state.currentScreen !== 'screen-edit-petition') {
+                  throw new Error(`Expected screen-edit-petition, got ${app.state.currentScreen}`);
+                }
+                const titleInput = doc.getElementById('edit-input-title');
+                if (!titleInput || titleInput.readOnly) throw new Error('Title input is missing or readonly');
+              }
+            },
+            {
+              id: "petition_permanent_deletion",
+              desc: "Confirming permanent delete permanently purges the record from state",
+              fn: (doc, app) => {
+                const targetId = app.state.editingPrayerId;
+                doc.getElementById('btn-edit-delete').click();
+                doc.getElementById('btn-confirm-delete').click();
+                const exists = app.state.prayers.some(p => p.id === targetId);
+                if (exists) throw new Error(`Prayer ${targetId} still exists in state after permanent delete`);
+                if (app.resetVault) app.resetVault();
+              }
+            }
+          ]
+        },
+        {
+          name: "9. Touch Gesture Discrimination & Navigation",
+          tests: [
+            {
+              id: "gesture_horizontal_swipe_next",
+              desc: "Touch horizontal swipe left (ΔX = -45px, ΔY = 10px) advances prayer topic",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                const idx = app.state.currentPrayerIndex;
+                app.handlePrayGesture(100, 200, 55, 210, 150); // ΔX = -45px
+                const nextIdx = (idx + 1) % app.state.prayerQueue.length;
+                if (app.state.currentPrayerIndex !== nextIdx) {
+                  throw new Error(`Expected index ${nextIdx}, got ${app.state.currentPrayerIndex}`);
+                }
+              }
+            },
+            {
+              id: "gesture_diagonal_rejection",
+              desc: "Diagonal swipe (|ΔX| < 1.5 * |ΔY|) is rejected without changing topic",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                const idx = app.state.currentPrayerIndex;
+                app.handlePrayGesture(100, 200, 140, 235, 150); // ΔX = 40px, ΔY = 35px -> ratio 1.14 < 1.5
+                if (app.state.currentPrayerIndex !== idx) {
+                  throw new Error('Diagonal swipe was not rejected');
+                }
+              }
+            },
+            {
+              id: "gesture_swipe_down_exit",
+              desc: "Swipe down (ΔY >= 60px) initiated in upper 150px exits prayer mode to Home",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                app.handlePrayGesture(100, 50, 105, 120, 150); // Ystart = 50px, ΔY = 70px
+                if (app.state.currentScreen !== 'screen-home') {
+                  throw new Error(`Expected screen-home after swipe down, got ${app.state.currentScreen}`);
+                }
+              }
+            }
+          ]
+        },
+        {
+          name: "10. Devotional Lexicon & Negative Terminology Contract",
+          tests: [
+            {
+              id: "lexicon_no_forbidden_terms",
+              desc: "No visible UI text contains forbidden clinical/engineering terms (target, entity, ticket, commit, sqlite)",
+              fn: (doc, app) => {
+                const forbidden = ['target', 'entity', 'ticket', 'commit', 'sqlite', 'database', 'pipeline'];
+                const allScreens = ['screen-home', 'screen-pray', 'screen-journal', 'screen-entity-detail', 'screen-log-step0', 'screen-log-step1', 'screen-log-direct', 'screen-log-guide', 'screen-edit-petition', 'screen-settings'];
+
+                for (const s of allScreens) {
+                  app.showScreen(s);
+                  const text = doc.getElementById(s).innerText.toLowerCase();
+                  for (const word of forbidden) {
+                    if (new RegExp('\\b' + word + '\\b', 'i').test(text)) {
+                      throw new Error(`Forbidden term "${word}" found in ${s}: "${text.substring(0, 80)}..."`);
+                    }
+                  }
+                }
+              }
+            },
+            {
+              id: "lexicon_no_ordinal_numbers",
+              desc: "Absolute prohibition of ordinal numbers ('Point 1', 'Point 2', 'Item 1', 'Point 1 of N')",
+              fn: (doc, app) => {
+                const ordinalRegex = /\b(point \d+|item \d+|petition \d+|\d+ of \d+)\b/i;
+                const allScreens = ['screen-home', 'screen-pray', 'screen-journal', 'screen-entity-detail'];
+                for (const s of allScreens) {
+                  app.showScreen(s);
+                  const text = doc.getElementById(s).innerText;
+                  const match = ordinalRegex.exec(text);
+                  if (match) {
+                    throw new Error(`Forbidden ordinal label "${match[0]}" found in ${s}`);
+                  }
+                }
+              }
+            },
+            {
+              id: "lexicon_minimal_exposure",
+              desc: "Minimal contextual data exposure: no queue numbers ('Topic 1 of 8') or administrative tallies in presentation",
+              fn: (doc, app) => {
+                app.showScreen('screen-pray');
+                const prayText = doc.getElementById('screen-pray').innerText;
+                if (/topic \d+ of \d+/i.test(prayText) || /\(\d+ active\)/i.test(prayText)) {
+                  throw new Error('Contextual data leakage detected in screen-pray');
+                }
+              }
+            }
+          ]
+        }
+      ];
+
+      // Test Runner Execution Engine
+      let isRunning = false;
+      async function runValidationBattery() {
+        if (isRunning) return;
+        isRunning = true;
+        btnRunAll.disabled = true;
+        btnRunAll.textContent = 'Running validation battery...';
+        resultsList.innerHTML = '';
+        progressBar.style.width = '0%';
+
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        const app = iframe.contentWindow.__PRAYER_APP__;
+        if (!app) {
+          alert('Prototype controller __PRAYER_APP__ not ready yet. Please wait for iframe to load.');
+          btnRunAll.disabled = false;
+          btnRunAll.textContent = 'Run Full Validation Battery';
+          return;
+        }
+
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        suites.forEach(s => totalTests += s.tests.length);
+        scoreTotal.textContent = totalTests;
+        scorePassed.textContent = '0';
+        scoreFailed.textContent = '0';
+        scoreRate.textContent = '0%';
+
+        let currentIdx = 0;
+
+        for (const suite of suites) {
+          const suiteBox = document.createElement('div');
+          suiteBox.className = 'suite-box';
+          const suiteHeader = document.createElement('div');
+          suiteHeader.className = 'suite-header';
+          suiteHeader.innerHTML = `<span>${suite.name}</span><span id="suite-status-${suite.name.replace(/\W/g, '')}">...</span>`;
+          suiteBox.appendChild(suiteHeader);
+
+          let suitePassed = 0;
+
+          for (const test of suite.tests) {
+            currentIdx++;
+            const item = document.createElement('div');
+            item.className = 'test-item';
+            item.innerHTML = `
+              <div class="test-status status-pending" id="status-${test.id}">RUNNING</div>
+              <div class="test-desc">
+                <div>${test.desc}</div>
+                <div class="test-error" id="error-${test.id}" style="display:none;"></div>
+              </div>
+            `;
+            suiteBox.appendChild(item);
+            resultsList.appendChild(suiteBox);
+
+            // Yield frame for rendering
+            await new Promise(r => setTimeout(r, 25));
+
+            const statusEl = item.querySelector(`#status-${test.id}`);
+            const errEl = item.querySelector(`#error-${test.id}`);
+
+            try {
+              test.fn(doc, app);
+              statusEl.textContent = 'PASS';
+              statusEl.className = 'test-status status-pass';
+              passedTests++;
+              suitePassed++;
+            } catch (err) {
+              statusEl.textContent = 'FAIL';
+              statusEl.className = 'test-status status-fail';
+              errEl.textContent = err.message || String(err);
+              errEl.style.display = 'block';
+              failedTests++;
+            }
+
+            scorePassed.textContent = passedTests;
+            scoreFailed.textContent = failedTests;
+            const rate = Math.round((passedTests / currentIdx) * 100);
+            scoreRate.textContent = `${rate}%`;
+            progressBar.style.width = `${Math.round((currentIdx / totalTests) * 100)}%`;
+          }
+
+          const headerStatus = suiteBox.querySelector(`[id^="suite-status-"]`);
+          if (headerStatus) {
+            headerStatus.textContent = `${suitePassed}/${suite.tests.length} PASS`;
+            headerStatus.style.color = (suitePassed === suite.tests.length) ? 'var(--pass)' : 'var(--fail)';
+          }
+        }
+
+        // Return prototype to home screen
+        app.showScreen('screen-home');
+
+        isRunning = false;
+        btnRunAll.disabled = false;
+        btnRunAll.textContent = 'Re-Run Validation Battery';
+        progressBar.style.backgroundColor = (failedTests === 0) ? 'var(--pass)' : 'var(--fail)';
+      }
+
+      btnRunAll.addEventListener('click', () => {
+        runValidationBattery();
+      });
+
+      window.__TEST_RUNNER__ = {
+        runValidationBattery,
+        getScores: () => ({
+          total: Number(scoreTotal.textContent),
+          passed: Number(scorePassed.textContent),
+          failed: Number(scoreFailed.textContent),
+          rate: scoreRate.textContent
+        })
+      };
+    })();
+  </script>
+</body>
+</html>

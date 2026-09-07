@@ -25,7 +25,8 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 ## 2. Application Scope
 
 ### 2.1 Platform Scope
-- **Mobile Only**: Initial launch focused exclusively on **Android** (compatible with standard Android and de-googled environments such as GrapheneOS).
+- **Mobile Only**: Active production implementation focused on **Android** (Kotlin + Jetpack Compose under `android/`), optimized for Samsung Galaxy Flip devices and standard/de-googled Android environments.
+- **Sideload Delivery**: Distributed via signed APK to Google Drive (`G:\My Drive\myApps\Prayer.apk`) for immediate personal sideloading.
 - **Portability Mandate**: Core domain and architecture must guarantee seamless future portability to **iOS**.
 - **Independent from Vendor Attestation**: Explicitly free from dependencies on Google Play Integrity API or Apple DeviceCheck.
 - **Desktop / Web**: Strictly out of scope.
@@ -149,6 +150,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 - **Dialect & Orthography Standards**: System copy, preloaded historic prayers, and AI outputs adhere to **English (Australian / UK)** by default, switching consistently to **US English** when configured by the user.
 - **Modular Prompt Deployment**: To comply with serverless execution constraints (e.g., Cloudflare Workers 5.1 kB text binding ceiling) while optimizing attention primacy, prompt directives are decomposed into fine modules assembled in sequence: `PROMPT_PERSONA` (identity & First Principle), `PROMPT_INQUIRY_FLOW` (control loop & inquiry), `PROMPT_THEOLOGY` (doctrinal & comfort boundaries), `PROMPT_TAXONOMY_PRIVACY` (root mapping & entity masking), `PROMPT_CARD_STYLE` (card brevity & shorthand), and `PROMPT_OUTPUT_SCHEMA` (JSON structure).
 - **Benchmarked Stress-Testing Battery**: The suggestion engine is subjected to a standardized 100-request evaluation suite ([`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json)) spanning all wordiness tiers (5–253 words), diverse perspectives, theological boundaries, and root categories to guarantee mobile card brevity and confessional fidelity under stress, with comprehensive evaluation recorded in [`api/test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/BENCHMARK_RESULTS.md) and detailed linguistic analysis in [`api/test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/AI_GENERATED_TEXT_REPORT.md).
+- **Full-Spec Reference Prototype & Automated UI Layout Battery**: The mobile companion specifications are fully executable and provably validated via a high-fidelity reference prototype ([`planning/prototype.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/prototype.html)), an in-browser spec validator ([`planning/test_runner.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/test_runner.html)), and an automated headless Playwright test suite ([`planning/tests/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/tests)) validating universal 0px border-radius, contiguous 0px gaps/gutters, 1px hairline planar seams, gesture discrimination ratios ($\ge 1.5$), title-free Direct Entry auto-bullets, and strict prohibition of clinical or ordinal labels.
 
 ---
 

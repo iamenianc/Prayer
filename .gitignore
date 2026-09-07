@@ -1,4 +1,4 @@
-﻿# Environment and local configurations
+# Environment and local configurations
 .env
 .env.*
 *.local
@@ -19,3 +19,19 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
+# Playwright test artifacts
+test-results/
+playwright-report/
+
+# Android
+.gradle/
+build/
+android/**/build/
+android/local.properties
+*.apk
+*.aab
+.idea/
+*.iml
+.kotlin/
+

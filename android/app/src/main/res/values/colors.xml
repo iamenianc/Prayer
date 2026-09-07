@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Morning Light (Default) -->
+    <color name="morning_bg">#FFFFFF</color>
+    <color name="morning_surface">#FFFFFF</color>
+    <color name="morning_text">#111111</color>
+    <color name="morning_text_subtle">#666666</color>
+    <color name="morning_border">#E0E0E0</color>
+    
+    <!-- Quiet Night -->
+    <color name="night_bg">#000000</color>
+    <color name="night_surface">#000000</color>
+    <color name="night_text">#FFFFFF</color>
+    <color name="night_text_subtle">#888888</color>
+    <color name="night_border">#333333</color>
+</resources>
