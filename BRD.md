@@ -1,6 +1,7 @@
-# Business Requirements Document (BRD) — Prayer App
+# Business Requirements Document (BRD) — Pray Without Ceasing
 
 **Status:** Active Approved Draft  
+**Application Title (Unofficial):** *Pray Without Ceasing* (1 Thessalonians 5:17)  
 **Last Updated:** 2026-09-07  
 **Document Owner:** Planning & Architecture Team  
 
@@ -9,7 +10,7 @@
 ## 1. Application Purpose
 
 ### 1.1 Vision & Value Proposition
-Deliver an intimate, distraction-free, mobile-first prayer companion that cleanly separates the contemplative act of prayer from the administrative task of organizing petitions. The application opens to a pristine, blank canvas offering strictly three choices—**Start praying**, **Open Journal**, and **Log prayer points**—grounded in historic Reformed theology and supported by an objective, neutral suggestion engine provided free of charge.
+Deliver an intimate, distraction-free, mobile-first prayer companion (*Pray Without Ceasing*) that cleanly separates the contemplative act of prayer from the administrative task of organizing petitions. The application opens to a pristine, blank canvas offering strictly three choices—**Start praying**, **Open Journal**, and **Log prayer points**—grounded in historic Reformed theology and supported by an objective, neutral suggestion engine provided free of charge.
 
 ### 1.2 Problem Statement
 Many believers struggle with consistency, distraction, and cognitive overload during prayer. Traditional note-taking apps lack prayer lifecycles, while broad social or spiritual apps often introduce gamification (streaks, badges, confetti) and commercialized community feeds that compromise privacy and reverence. Furthermore, when entering prayer, users are often greeted with complex dashboards and task lists that trigger administrative fatigue rather than contemplative focus.
@@ -44,13 +45,14 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - **`Groups`**: Collectives, communities, and shared peer/work environments (e.g., work colleagues, office team, church congregation, small groups, committees, ministries).
    - **`General`**: Broad topics, global matters, societal needs, and historic liturgical prayers.
 
-3. **Contemplative, Passive Prayer Flow ("Start Praying")**:
-   - **Zero Friction**: Direct transition into a curated queue without requiring pre-session filtering.
-   - **Topic-Centric Contemplation (All Unanswered Points per Topic)**: Replaces mechanical batches with organic Topics. Each screen in *Start praying* represents a single Topic (an individual person, group, or general concern, such as *Sarah* or *Parish Council*). When a Topic is active, **all of its unanswered prayer points** are presented contiguously together on the screen as flat rectangular tiles with zero visible gaps between them.
+3. **Contemplative, Passive Prayer Flow ("Start Praying" / Full-Screen Prayer Mode)**:
+   - **Zero Friction & Full-Screen Immersion**: Direct transition into prayer mode. When in Prayer mode, the UI is completely full screen, with strictly zero buttons, zero card tiles, and zero grid lines.
+   - **Pure Typographic Structure**: Displays solely the name of the entity being prayed for preceded by "Praying for" (e.g. *Praying for Sarah*), followed directly by the prayer points with ample typographic breathing room.
+   - **Buttonless Navigation**: Navigation between topics is entirely gestural (tapping the right/left halves of the screen, swiping left/right, or using arrow keys). Swiping down, tapping the top edge, or pressing Escape exits back to the home screen.
    - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: The application shall never code, render, or display arbitrary sequential counters, numeric badges, or ordinal enumerations (e.g., *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, *Item 1*) anywhere in the software. Petitions are solemn intercessory prayers, not indexed checklist items or ticketing tasks. Each prayer point is recognized and presented exclusively by its meaningful petition title and description.
    - **Principle of Minimal Contextual Data Exposure**: Just because data is stored, calculated, or available in the backend does not mean it has value to show to the user. The interface strictly exposes only the least amount of data relevant to the immediate devotional context. Queue progression counters (`Topic 1 of 8`), administrative tallies (`5 points (3 active, 2 ans)`), database root tags (`(People)`), and sequential item numbers (`Point 1`, `Point 2`) are strictly suppressed from presentation.
    - **Balanced Queue Balancing & Interaction Metrics (Preventing Neglect)**: The local database retains cumulative interaction counts (`interacted_count`) and last-interacted timestamps (`last_interacted_at`) for every topic (as well as individual prayer points). The contemplation queue uses these silent metrics to balance the curated feed—prioritizing topics with the oldest interaction dates and lowest counts—so that relational persons, ministries, and general burdens do not get neglected over time.
-   - **Expandable Answered Petitions**: Answered prayer points for the active topic are sequestered in a subtle, collapsed tile (e.g., `Answered (2)`), expandable on demand when the believer wishes to reflect on God's past faithfulness and offer thanksgiving, without cluttering active intercession.
+   - **Expandable Answered Petitions**: Answered prayer points for the active topic are rendered softly beneath active petitions without boxes or tiles, allowing believers to reflect on God's past faithfulness and offer thanksgiving without cluttering active intercession.
    - **Strictly Passive / Read-Only**: Zero buttons, checkmarks, editing tools, or task-completion toggles during prayer. Progressing past a topic silently increments its `interacted_count` and updates its `last_interacted_at` timestamp.
    - **Self-Paced & Open-Ended**: Each screen is a complete topic. Users advance through topics at their own pace and simply stop when they are ready.
    - **Zero-State Fallback (Historic Reformed Prayers)**: When the local database contains no user-logged prayers, the app draws from preloaded classic **Reformed, Protestant** prayers (The Lord's Prayer, classic Anglican Book of Common Prayer collects, and the Apostles' Creed). Once personal prayers exist, these reside under `General → Historic Prayers` with a toggle to blend into daily rotations.

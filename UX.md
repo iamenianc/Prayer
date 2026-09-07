@@ -2,6 +2,7 @@
 
 **Document:** `UX.md`  
 **Status:** Approved Design Principles & User Journey Map  
+**Application Title (Unofficial):** *Pray Without Ceasing* (1 Thessalonians 5:17)  
 **Last Updated:** 2026-09-07  
 **Target Audience:** Product Owner, Business Stakeholders, Product Designers  
 **Platform Focus:** Mobile App (Clean, solemn, distraction-free companion)  
@@ -14,8 +15,8 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 
 ### 1.1 Core Experience Pillars
 - **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly three options: **Start praying**, **Open Journal**, and **Log prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
-- **Strictly Passive Contemplation**: When praying, the screen is 100% read-only. Prayer is not a productivity checklist. There are no check-off buttons, editing controls, or administrative interruptions while in prayer.
-- **Zero-Gap Contiguous Geometry**: Every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
+- **Strictly Passive Full-Screen Prayer Mode**: When in Prayer mode (*Start praying*), the UI transitions into an immersive, full-screen sanctuary: strictly zero buttons, zero card tiles, and zero grid lines. There are no check-off boxes, editing tools, or progress bars. The view presents exclusively the name of the entity being prayed for preceded by "Praying for" (e.g., *Praying for Sarah*), followed directly by the prayer points in serene typographic whitespace.
+- **Zero-Gap Contiguous Geometry**: In navigation, logging, and journal views, every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
 - **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
 - **Austere Simplicity (Zero Explanatory / Tutorial Text)**: As an unyielding design principle, the application shall never display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or instructional crutches.
 - **Strict Prohibition of Ordinal / Sequential Labels ("Point 1", "Point 2")**: As an absolute design principle, the application shall never code, render, or display arbitrary sequential counters, numeric badges, or ordinal enumerations (e.g., *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, *Item 1*) anywhere in the UI. Petitions before Almighty God are sacred burdens of prayer, never numbered tickets or items on a bureaucratic checklist. Each petition is recognized and presented exclusively by its meaningful title and descriptive content.
@@ -47,23 +48,17 @@ Users can toggle between two high-contrast modes depending on environment and pr
 
 ---
 
-## 3. Information Architecture & Navigation
-
-The navigation model cleanly divorces the **act of praying** from the **act of organizing**.
+## 3. Screen Structure & Navigation Framework
 
 ```mermaid
 graph TD
-    Home["Blank Home Screen<br/>(1. Start praying | 2. Open Journal | 3. Log prayer points)"]
+    Launch([App Launch]) --> Home["Blank Home Screen<br/>(1. Start praying | 2. Open Journal | 3. Log prayer points)"]
+    Home -->|"Tap 'Start praying'"| PraySession["Full-Screen Prayer Mode<br/>(No Buttons, No Tiles, 'Praying for [Entity]')"]
+    Home -->|"Tap 'Log prayer points'"| LogStep0["Log Step 0: Target Entity Selection<br/>(Pick or Create Person/Group)"]
+    LogStep0 -->|"Select/Create Target"| LogStep1["Log Step 1: Capture Petitions<br/>('Direct Entry' or 'Guide Me')"]
+    Home -->|"Tap 'Open Journal' / Swipe Left"| Journal["Journal Vault Directory<br/>(People | Groups | General)"]
     
-    Home -->|"Tap 'Start praying'"| PraySession["Topic Contemplation Flow<br/>(All Unanswered Points per Topic)"]
-    Home -->|"Tap 'Open Journal'"| Journal["Journal<br/>(3 Roots: People, Groups, General)"]
-    Home -->|"Tap 'Log prayer points'"| LogChoice{"Log Choice"}
-    Home -->|"Swipe Left Gesture"| Journal
-    
-    LogChoice -->|"Record a prayer point"| DirectCapture["Direct Empty Text Pad<br/>(AI Intelligent Filing)"]
-    LogChoice -->|"'Guide me'"| GuideMeFlow["Guide Me Flow<br/>(Step 1: Open Heart<br/>Step 2: Neutral Distillation<br/>Step 3: Save / Back / Cancel)"]
-    
-    Journal --> PeopleRoot["People Root<br/>(Individuals, Family, Friends)"]
+    Journal --> PeopleRoot["People Root<br/>(Personal & Distinct Relational Sphere)"]
     Journal --> GroupsRoot["Groups Root<br/>(Church, Teams, Communities)"]
     Journal --> GeneralRoot["General Root<br/>(World, Global, Historic Prayers)"]
     Journal --> Settings["App Settings<br/>(Theme, Language, Blending, Backup)"]
@@ -87,28 +82,32 @@ Tapping **Open Journal** (or swiping left from the blank home screen) glides int
 
 ## 4. Core User Journeys
 
-### 4.1 Journey 1: "Start Praying" (Topic-Centric Contemplation)
+### 4.1 Journey 1: "Start Praying" (Full-Screen Prayer Mode)
 
 ```mermaid
 graph LR
-    Launch["Tap 'Start praying'"] --> TopicScreen["Topic Canvas<br/>(e.g., Sarah)"]
-    TopicScreen --> UnansweredPoints["All Unanswered Points<br/>(Contiguous Flat Tiles)"]
-    TopicScreen --> ExpandAnswered["Answered Points Collapsed<br/>(Expandable on Demand)"]
-    TopicScreen --> NextTopic["Advance to Next Topic<br/>(Self-Paced / No Quota)"]
-    NextTopic --> Exit["Exit Anytime Back to Home"]
+    Launch["Tap 'Start praying'"] --> PrayerCanvas["Full-Screen Prayer Canvas<br/>(No Buttons, No Tiles, No Grid)"]
+    PrayerCanvas --> Header["Heading: 'Praying for [Entity]'"]
+    Header --> Points["Pure Typographic Prayer Points"]
+    Points --> Gestures["Advance Topic (Tap / Swipe)"]
+    Gestures --> Exit["Exit to Home (Swipe Down / Esc)"]
 ```
 
 1. **Immediate Immersion & Balanced Curation**: 
-   - Tapping **Start praying** instantly displays the most fitting active Topic without configuration popups, filters, or setup steps.
+   - Tapping **Start praying** instantly immerses the user in full-screen prayer mode without configuration popups, filters, or setup steps.
    - **Curated Feed Balancing (Anti-Neglect)**: The local engine balances the queue using each topic's retained interaction count (`interacted_count`) and timestamp (`last_interacted_at`). Topics that have never been prayed for, or have the oldest last-interacted dates and lowest counts, are prioritized at the front of the queue so that no relationship, small group, or burden is forgotten.
-2. **Topic-Centric Contemplation (All Unanswered Points per Topic)**:
-   - Replaces mechanical card batches with organic, entity-based Topics.
-   - When a Topic is displayed (e.g., *Sarah*), **all of her unanswered prayer points** are shown contiguously together on the screen as flat rectangular tiles with zero visible gaps. The believer holds the complete, undivided burden for that person or group before God at once.
-   - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: Contemplation cards and prayer lists present strictly the petition title and description. Coding or rendering useless sequential labels or numeric badges (such as *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, status tags, or ticket categories) is strictly prohibited to keep prayer from feeling like a task list.
-   - **Expandable Answered Petitions**: Answered prayer points for that topic are sequestered into an austere collapsed tile (e.g., `Answered (2)`). Tapping it expands the answered prayers with soft strikethrough, allowing spontaneous thanksgiving and praise to God without cluttering active intercession.
-3. **Strictly Passive / Read-Only Prayer Experience**:
-   - The prayer screen contains **zero interactive buttons, checkboxes, or edit fields**.
-   - The user cannot mark items as answered, edit text, or check off tasks during prayer.
+2. **Full-Screen, Tileless, Gridless Typographic Presentation**:
+   - The top navigation bar, bottom action dock, and on-screen buttons are completely suppressed (`display: none`).
+   - The canvas contains **no boxy card tiles, no borders, and no grid lines**.
+   - **Heading**: The screen begins with a clean, reverent heading stating the name of the entity preceded by "Praying for" (e.g., `Praying for Sarah`, `Praying for Parish Council`).
+   - **Prayer Points**: Directly underneath, each petition is presented with its title and body separated by generous typographic whitespace.
+   - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: Contemplation views and prayer lists present strictly the petition title and description. Coding or rendering useless sequential labels or numeric badges (such as *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, status tags, or ticket categories) is strictly prohibited.
+   - **Expandable Answered Petitions**: Answered prayer points for that topic are rendered softly beneath active petitions without boxy tiles or borders.
+3. **Buttonless Gestural Navigation**:
+   - Because on-screen buttons are eliminated to preserve solemn contemplation, topic navigation is driven by natural gestures:
+     - **Tap right 75% of screen / Swipe Left / ArrowRight**: Advances to next topic.
+     - **Tap left 25% of screen / Swipe Right / ArrowLeft**: Returns to previous topic.
+     - **Swipe Down / Tap Top Edge / Escape**: Exits prayer mode back to the home screen.
    - Progressing past a topic automatically and silently increments the topic's `interacted_count`, updates its `last_interacted_at` timestamp, and touches `last_interacted_at` across all constituent active prayer points without demanding manual interaction.
 4. **Self-Paced & Open-Ended**:
    - Each screen represents a complete topic.

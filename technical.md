@@ -2,6 +2,7 @@
 
 **Document:** `technical.md`  
 **Status:** Approved Decisions & Open Questions Log  
+**Application Title (Unofficial):** *Pray Without Ceasing* (1 Thessalonians 5:17)  
 **Last Updated:** 2026-09-07  
 **Platform Scope:** Mobile Only (Android initial; engineered for iOS portability)  
 **Security Posture:** 100% Offline-First Local Persistence; Hardware-Secured Encrypted Vault  
@@ -245,9 +246,14 @@ graph TD
     2. `Open Journal`
     3. `Log prayer points`
   - Strictly zero hero headers, application title banners, wordmarks, or tutorial/explanatory labels. The three slabs occupy the viewport edge-to-edge. Swiping left also triggers the Journal (`People`, `Groups`, `General`).
-- **Passive Prayer Engine ("Start Praying")**:
-  - Direct queue instantiation with zero pre-filters.
-  - **Topic-Centric Contemplation Architecture**: Replaces mechanical card batches with holistic, entity-based Topics. Each screen in *Start praying* corresponds to an `INDIVIDUAL_ENTITY` (Topic). When a Topic is displayed, **all of its unanswered (active) prayer points** are retrieved from SQLite and rendered together contiguously on screen as an edge-to-edge stack.
+- **Passive Prayer Engine ("Start Praying" / Full-Screen Prayer Mode)**:
+  - **Full-Screen Buttonless Architecture**: When in Prayer mode (`screen-pray`), the top navigation bar and bottom action dock are completely hidden (`display: none`). The interface features strictly zero buttons, zero card tiles, and zero grid borders.
+  - **Typographic Presentation**: The screen renders exclusively a clean, solemn heading (`Praying for {entity.name}`), followed directly by the prayer points (`prayer-point-title` and `prayer-point-body`) with generous typographic breathing room on the edge-to-edge canvas.
+  - **Gestural & Keyboard Navigation**: Since on-screen buttons are strictly prohibited, navigation is driven entirely by gestures and hardware keys:
+    - Screen Touch: Tapping the right 75% of the viewport advances to the next topic; tapping the left 25% returns to the previous topic.
+    - Touch Gestures: Horizontal swipe left/right transitions between topics; swiping down exits back to the home screen.
+    - Top Dismiss Zone: Tapping the top edge exits to Home.
+    - Keyboard: `ArrowRight` / `Space` / `PageDown` (Next), `ArrowLeft` / `PageUp` (Previous), `Escape` (Exit to Home).
   - **Design Principle: Strict Prohibition of Ordinal / Index Labels**: UI components, templates, and view models are strictly prohibited from generating, coding, or interpolating sequential counter labels (e.g., `Point 1`, `Point 2`, `Point ${idx + 1}`, `Point N of M`, `Item 1`). While database records retain internal primary keys (`id`) for relational integrity, all presentation layers must strictly suppress ordinal numbering. Petitions are rendered solely as unnumbered, sacred petitions featuring their substantive `title` and `description`.
   - **Principle of Minimal Contextual Data Exposure**: UI components, templates, and view models must strictly adhere to contextual data economy. Just because an entity or session model possesses rich backend metadata (e.g., `id`, `root`, `interacted_count`, `last_interacted_at`, total count of points, active count, queue indices) does not mean it should be exposed in presentation views. The frontend shall render solely the minimal data points demanded by the immediate devotional task, keeping view models lean and free from administrative leakage.
   - **Balanced Queue Curation & Anti-Neglect Algorithm**:
