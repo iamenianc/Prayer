@@ -250,10 +250,9 @@ graph TD
 - **Passive Prayer Engine ("Start Praying" / Full-Screen Prayer Mode)**:
   - **Full-Screen Buttonless Architecture**: When in Prayer mode (`screen-pray`), the top navigation bar and bottom action dock are completely hidden (`display: none`). The interface features strictly zero buttons, zero card tiles, and zero grid borders.
   - **Typographic Presentation**: The screen renders exclusively a clean, solemn heading (`Praying for {entity.name}`), followed directly by the prayer points (`prayer-point-title` and `prayer-point-body`) with generous typographic breathing room on the edge-to-edge canvas.
-  - **Gestural & Keyboard Navigation**: Since on-screen buttons are strictly prohibited, navigation is driven entirely by gestures and hardware keys:
-    - Screen Touch: Tapping the right 75% of the viewport advances to the next topic; tapping the left 25% returns to the previous topic.
-    - Touch Gestures: Horizontal swipe left/right transitions between topics; swiping down exits back to the home screen.
-    - Top Dismiss Zone: Tapping the top edge exits to Home.
+  - **Gestural & Keyboard Navigation (Smartphone Swipe Primacy)**:
+    - Native Touch Gestures: Horizontal swipe left/right transitions between topics; swiping down from the top edge exits back to the home screen. Primary navigation mode for mobile devotion.
+    - Screen Touch Zones (Accessibility): Tapping the right 75% of the viewport advances to the next topic; tapping the left 25% returns to the previous topic; tapping top edge exits.
     - Keyboard: `ArrowRight` / `Space` / `PageDown` (Next), `ArrowLeft` / `PageUp` (Previous), `Escape` (Exit to Home).
   - **Design Principle: Strict Prohibition of Ordinal / Index Labels**: UI components, templates, and view models are strictly prohibited from generating, coding, or interpolating sequential counter labels (e.g., `Point 1`, `Point 2`, `Point ${idx + 1}`, `Point N of M`, `Item 1`). While database records retain internal primary keys (`id`) for relational integrity, all presentation layers must strictly suppress ordinal numbering. Petitions are rendered solely as unnumbered, sacred petitions featuring their substantive `title` and `description`.
   - **Principle of Minimal Contextual Data Exposure**: UI components, templates, and view models must strictly adhere to contextual data economy. Just because an entity or session model possesses rich backend metadata (e.g., `id`, `root`, `interacted_count`, `last_interacted_at`, total count of points, active count, queue indices) does not mean it should be exposed in presentation views. The frontend shall render solely the minimal data points demanded by the immediate devotional task, keeping view models lean and free from administrative leakage.
@@ -329,7 +328,35 @@ graph TD
 
 ---
 
-### 1.6 Engine Stress-Testing & Theological Benchmark Suite
+### 1.6 Smartphone Touch & Gesture Engine Architecture
+
+To guarantee fluid, native smartphone responsiveness without relying on heavy third-party gesture libraries, the application specifies a lightweight, deterministic `TouchGestureController`:
+
+1. **Touch Recognition Pipeline & Discrimination Thresholds**:
+   - **Captured Events**: `touchstart`, `touchmove`, `touchend`, `touchcancel` (mirrored by pointer event handlers for desktop mouse emulation).
+   - **Horizontal Intent Discrimination**:
+     - Horizontal Delta: $\Delta X = X_{end} - X_{start}$
+     - Vertical Delta: $\Delta Y = Y_{end} - Y_{start}$
+     - Ratio Threshold: $|\Delta X| \ge 1.5 \times |\Delta Y|$ guarantees that diagonal or vertical scrolls do not trigger horizontal swipe actions accidentally.
+     - Distance Threshold: Minimum $|\Delta X| \ge 40\text{px}$ to register a deliberate horizontal swipe.
+     - Velocity Window: Registered within $\le 400\text{ms}$ or displacement $\ge 80\text{px}$.
+2. **Contextual Gesture Mapping**:
+   - **Full-Screen Prayer Canvas (`screen-pray`)**:
+     - $\Delta X \le -40\text{px}$ (Swipe Left): Dispatches `nextPrayerTopic()`, advances queue index, logs silent interaction, and resets viewport scroll to top.
+     - $\Delta X \ge +40\text{px}$ (Swipe Right): Dispatches `prevPrayerTopic()`.
+     - $\Delta Y \ge +60\text{px}$ with $Y_{start} \le 150\text{px}$ (Swipe Down from top): Dispatches `exitPrayerMode()` to return to Home.
+   - **Petition Card Gestures (`.detail-petition-card`)**:
+     - Rightward Swipe ($\Delta X \ge +60\text{px}$): Triggers quick status mutation (`UPDATE PRAYER_POINT SET status = CASE WHEN status = 'ACTIVE' THEN 'ANSWERED' ELSE 'ACTIVE' END`), emitting a soft haptic pulse (`navigator.vibrate(15)`).
+     - Leftward Swipe ($\Delta X \le -60\text{px}$): Exposes planar deletion confirmation dialogue.
+     - Single Tap / Click: Opens full petition editor (`screen-edit-petition`).
+   - **Universal Edge-Swipe Back Navigation**:
+     - $X_{start} \le 25\text{px}$ and $\Delta X \ge +50\text{px}$: Automatically executes top-bar back traversal across all sub-screens.
+   - **Home Screen Canvas (`screen-home`)**:
+     - $\Delta X \le -50\text{px}$ (Swipe Left): Transitions directly into `screen-journal`.
+
+---
+
+### 1.7 Engine Stress-Testing & Theological Benchmark Suite
 
 To ensure continuous compliance with theological guardrails, root categorization rules, and mobile card brevity constraints, the repository maintains a 100-request benchmark suite located under [`test/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test):
 - **Primary Dataset**: [`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json) containing exactly 100 diverse, multi-perspective prayer requests.

@@ -48,7 +48,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 3. **Contemplative, Passive Prayer Flow ("Start Praying" / Full-Screen Prayer Mode)**:
    - **Zero Friction & Full-Screen Immersion**: Direct transition into prayer mode. When in Prayer mode, the UI is completely full screen, with strictly zero buttons, zero card tiles, and zero grid lines.
    - **Pure Typographic Structure**: Displays solely the name of the entity being prayed for preceded by "Praying for" (e.g. *Praying for Sarah*), followed directly by the prayer points with ample typographic breathing room.
-   - **Buttonless Navigation**: Navigation between topics is entirely gestural (tapping the right/left halves of the screen, swiping left/right, or using arrow keys). Swiping down, tapping the top edge, or pressing Escape exits back to the home screen.
+   - **Buttonless Navigation (Smartphone Swipe Primacy)**: Navigation between topics is driven primarily by natural smartphone swipe gestures: **Swipe Left** advances to the next topic (analogous to turning a prayer book page); **Swipe Right** returns to the previous topic; **Swipe Down** dismisses prayer mode and returns to Home. Touch tap zones (right 75% advance, left 25% return, top edge exit) and keyboard arrows operate as complementary accessibility fallbacks.
    - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: The application shall never code, render, or display arbitrary sequential counters, numeric badges, or ordinal enumerations (e.g., *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, *Item 1*) anywhere in the software. Petitions are solemn intercessory prayers, not indexed checklist items or ticketing tasks. Each prayer point is recognized and presented exclusively by its meaningful petition title and description.
    - **Principle of Minimal Contextual Data Exposure**: Just because data is stored, calculated, or available in the backend does not mean it has value to show to the user. The interface strictly exposes only the least amount of data relevant to the immediate devotional context. Queue progression counters (`Topic 1 of 8`), administrative tallies (`5 points (3 active, 2 ans)`), database root tags (`(People)`), and sequential item numbers (`Point 1`, `Point 2`) are strictly suppressed from presentation.
    - **Balanced Queue Balancing & Interaction Metrics (Preventing Neglect)**: The local database retains cumulative interaction counts (`interacted_count`) and last-interacted timestamps (`last_interacted_at`) for every topic (as well as individual prayer points). The contemplation queue uses these silent metrics to balance the curated feed—prioritizing topics with the oldest interaction dates and lowest counts—so that relational persons, ministries, and general burdens do not get neglected over time.
@@ -85,6 +85,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 6. **Granular Prayer Point Lifecycle & Editing Requirements**:
    - Independent states per prayer point: `Active`, `Answered` (with resolution timestamp and thanksgiving note), and `Archived`.
    - **Click Once to Edit**: In the Journal directory and entity detail views, clicking or tapping a saved prayer point once immediately opens edit mode.
+   - **List Card Swipe Gestures**: On mobile touchscreens, petition cards in directory and detail views support rapid list swiping: **Swipe Right** toggles status between `Active` and `Answered` (recording thanksgiving); **Swipe Left** reveals immediate deletion controls.
    - **Editable Title & Body**: While titles are auto-generated on initial log, users have complete authority to edit and customize the title and body during editing.
    - **Permanent Deletion**: The system explicitly supports permanent deletion (`DELETE FROM PRAYER_POINT`), completely purging the record from local storage upon user confirmation.
    - Answered prayers are displayed in the directory with a subtle strikethrough.
@@ -103,6 +104,10 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - Clinical or marketing terms such as *"Target"* or *"Target Entity"* are strictly prohibited from user-facing presentations, replaced universally by **`Praying for [Name]`**, **`Who are you praying for?`**, and **`Person or group`**.
    - Arbitrary sequential numbering (*Point 1*, *Point 2*, *Item 1*) is strictly forbidden; petitions are presented purely by substantive title and body.
    - Administrative and database operations are framed relationally: saving to disk is presented as **`Save to [Name]`**, AI inquiry is framed as a gentle **`Clarifying question`** with **`Continue`** and **`Skip to petitions`**, and answered prayers are framed around **`Thanksgiving notes`** for God's sovereign faithfulness.
+
+10. **Smartphone Gestural Standard**:
+   - The application treats touchscreen smartphones as tactile instruments of devotion, actively leveraging native gestures rather than relying on legacy button-heavy web patterns.
+   - Horizontal swipe inputs (left/right topic progression, card swipe actions, and edge-swipe back navigation) are elevated as primary user-input paradigms across the mobile client.
 
 ### 2.3 Post-MVP / Future Milestones
 - Native iOS client release.

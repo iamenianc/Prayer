@@ -129,11 +129,11 @@ graph LR
    - **Prayer Points**: Directly underneath, each petition is presented with its title and body separated by generous typographic whitespace.
    - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: Contemplation views and prayer lists present strictly the petition title and description. Coding or rendering useless sequential labels or numeric badges (such as *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, status tags, or ticket categories) is strictly prohibited.
    - **Expandable Answered Petitions**: Answered prayer points for that topic are rendered softly beneath active petitions without boxy tiles or borders.
-3. **Buttonless Gestural Navigation**:
-   - Because on-screen buttons are eliminated to preserve solemn contemplation, topic navigation is driven by natural gestures:
-     - **Tap right 75% of screen / Swipe Left / ArrowRight**: Advances to next topic.
-     - **Tap left 25% of screen / Swipe Right / ArrowLeft**: Returns to previous topic.
-     - **Swipe Down / Tap Top Edge / Escape**: Exits prayer mode back to the home screen.
+3. **Buttonless Gestural Navigation (Swipe-First Mobile Ergonomics)**:
+   - Because on-screen buttons are completely eliminated to preserve solemn contemplation, topic progression leverages the full tactile capability of smartphones:
+     - **Swipe Left (`ΔX < -40px`) / Tap right 75% / ArrowRight**: Advances to next prayer topic. Primary thumb action on mobile.
+     - **Swipe Right (`ΔX > +40px`) / Tap left 25% / ArrowLeft**: Returns to previous prayer topic.
+     - **Swipe Down (`ΔY > +60px`) / Tap Top Edge / Escape**: Exits prayer mode and returns immediately to the home screen.
    - Progressing past a topic automatically and silently increments the topic's `interacted_count`, updates its `last_interacted_at` timestamp, and touches `last_interacted_at` across all constituent active prayer points without demanding manual interaction.
 4. **Self-Paced & Open-Ended**:
    - Each screen represents a complete topic.
@@ -178,24 +178,22 @@ Before drafting petitions, the user specifies the person or group:
    - Enter name (e.g., *"David"*, *"Youth Ministry"*).
    - Select sphere (`People` or `Groups`).
    - Tapping **Add & continue** creates the person/group locally and proceeds immediately into logging.
-3. **Contextual In-Directory Entry**: When logging is initiated from within an existing person or group view in the Journal, Step 0 is seamlessly pre-satisfied; the context (*Praying for [Name]*) is already established.
 
 ---
 
-#### Step 1: Choosing Pathway (Direct vs. "Guide Me")
-Once the person or group is established, the user selects their preferred mode:
+#### Pathway A: Direct Entry (Elimination of Title Input, Auto-Bullets & Post-Commit Auto-Titling)
+A clean, distraction-free text canvas pre-bound to the chosen person or group:
+- **Zero Title Field**: The user is never prompted for or shown a title field when logging new prayer points. The view presents strictly a single, unadorned text pad bound to the target person or group.
+- **Auto Bullet-Point Writing Pad**: The writing pad automatically formats input into bullet points:
+  - Focus or initial activation auto-seeds the pad with a bullet prefix (`• `).
+  - Pressing line space (<kbd>Enter</kbd> / <kbd>Return</kbd>) automatically generates a new bullet on the subsequent line (`\n• `).
+  - Pressing <kbd>Enter</kbd> or <kbd>Backspace</kbd> on an empty bullet removes the bullet cleanly to allow ending lists without friction.
+- **Immediate Local Save**: Tapping **Save to [Name]** immediately commits the text to the encrypted local SQLite database.
+- **Post-Committal Branched AI Title Generation**: After local saving, an asynchronous lightweight branch of the AI engine generates a concise 2–6 word petition title in the background, updating the record (`UPDATE PRAYER_POINT SET title = ?`).
+- **Theological Validation Exemption**: Because this branch performs exclusively the straightforward summarization of user-committed text into a brief label, theological validation is not required.
+- **Offline Fallback**: When offline, the petition is stored with a truncated text preview as an interim label until background connectivity generates the permanent title.
 
-#### Pathway A: "Direct Entry" (Direct Capture & Auto-Titling)
-- **Elimination of Title Input**: The user shall **never be able to see or add a title** when logging new points. The view presents strictly a single, uncluttered text pad pre-bound to the selected person or group. Users pour out their prayer, burden, or intercession directly without the friction of titling or categorizing upfront.
-- **Auto Bullet-Point Writing Pad**:
-  - The writing pad automatically formats input as a structured bullet-point list.
-  - On initial focus or upon typing the first character, a bullet point prefix (`• `) is automatically initialized.
-  - Pressing **Enter / Return** (line space) automatically triggers a new bullet point on the next line (`\n• `).
-  - Pressing Backspace on an empty bullet cleanses the prefix without breaking editing flow.
-- **Immediate Local Persistence**: Tapping **Save to [Name]** instantly commits the petition body to the local SQLite database.
-- **Post-Committal Auto-Titling via Branched AI Engine**: Following committal, the title (2–6 words) is auto-generated asynchronously in the background using a dedicated lightweight branch of the AI engine.
-- **Theological Validation Not Required**: Because this branch performs solely the simple task of generating a concise title summarizing the user's already-committed text, theological validation is not required.
-- **Offline Resilience**: If offline upon save, the petition is safely stored with an initial clean snippet (first 3–5 words) until network connectivity allows the background title generator to populate the permanent title.
+---
 
 #### Pathway B: "Guide Me" (Objective AI-Assisted Articulation)
 Designed for when thoughts regarding the selected person or group are tangled, heavy, or difficult to articulate:
@@ -245,8 +243,36 @@ Tapping **Open Journal** (or swiping left from the home screen) opens the comple
 
 ---
 
-## 5. Mobile Ergonomics & Accessibility
+## 5. Smartphone Gestural System (Swipe & Touch Paradigms)
 
-- **Thumb-Zone Navigation**: The primary two options on the home screen and primary actions (*Save*, *Back*, *Cancel*) sit naturally within thumb reach on mobile devices.
+Smartphones are tactile, touch-first instruments. Devotional prayer frequently occurs during personal quiet time, walking, or moments where the phone is held in one hand. Relying strictly on small buttons or tap zones demands visual targeting, pulling the believer's focus away from prayer. 
+
+The application elevates **Swipe Input** to a first-class interaction standard across all touch form factors:
+
+### 5.1 Full-Screen Prayer Mode Gestures
+In the buttonless, gridless prayer canvas, navigation between topics is governed primarily by horizontal thumb swipes:
+- **Swipe Left (`ΔX < -40px`)**: Advances to the **Next topic** in the balanced anti-neglect queue. Matches the universal physical metaphor of turning forward to the next page of a prayer book.
+- **Swipe Right (`ΔX > +40px`)**: Returns to the **Previous topic**.
+- **Swipe Down (`ΔY > +60px` initiated in upper half of screen)**: Dismisses prayer mode and returns immediately to the Home screen.
+- **Accessibility Fallbacks**: Tapping the right 75% of the screen, tapping the left 25%, tapping the top edge, and hardware keyboard arrows (`ArrowLeft`, `ArrowRight`, `Escape`, `Space`) remain operational as complementary fallbacks.
+
+### 5.2 List & Card Swipe Actions (Journal & Entity Detail)
+In directory and petition views, individual cards support native mobile list swipe gestures:
+- **Swipe Card Right (`ΔX > +60px`)**: Instant status toggle between `ACTIVE` and `ANSWERED`. Provides immediate tactile satisfaction without forcing the user into edit mode just to mark answered prayer.
+- **Swipe Card Left (`ΔX < -60px`)**: Reveals destructive management action (**Permanent Delete**), presenting an immediate planar confirmation dialog.
+- **Tap / Single Click**: Opens the full Petition Editor for title and body refinement.
+
+### 5.3 Global Navigation & Edge-Swipe Back
+- **Swipe Right from Left Screen Edge (`X ≤ 25px, ΔX ≥ 50px`)**: Universal back navigation. Navigates back one hierarchical level from any sub-screen (Entity Detail → Journal → Home; Direct Entry / Guide Me → Step 0 → Home; Settings → Journal). Eliminates the need to reach for the top-left back button.
+
+### 5.4 Home Screen Gestural Pathway
+- **Swipe Left on Home Canvas (`ΔX < -50px`)**: Directly slides into the Journal directory, providing immediate, fluid access to the spiritual records vault.
+
+---
+
+## 6. Mobile Ergonomics & Accessibility
+
+- **Thumb-Zone Navigation**: Primary actions (*Save*, *Cancel*, swipe gestures) sit comfortably within the natural thumb sweep radius on modern smartphone screens.
 - **Frictionless Entry**: Zero account creation, zero login, and zero API key configuration. Users are able to pray or log within one second of opening the app.
 - **Instant Local Performance**: All read and write operations interact directly with the embedded SQLite database on device, guaranteeing zero network lag or loading spinners.
+- **Haptic Feedback**: Light system haptics (10–15ms) accompany successful swipe triggers (topic advance, answered toggle, delete reveal) to provide silent, non-distracting tactile reassurance.

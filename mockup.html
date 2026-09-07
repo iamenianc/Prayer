@@ -253,13 +253,15 @@
       display: flex;
     }
 
-    /* Gestural zones for touch / click */
+    /* Gestural zones for touch / click / swipe */
     #pray-gesture-overlay {
       position: absolute;
       inset: 0;
       z-index: 10;
       display: flex;
       pointer-events: auto;
+      touch-action: none;
+      user-select: none;
     }
 
     #pray-zone-prev {
@@ -437,11 +439,14 @@
     }
 
     .detail-petition-card {
+      position: relative;
       padding: var(--pad-card);
       border-bottom: 1px solid var(--border);
       cursor: pointer;
       background: var(--bg);
-      transition: background 0.1s ease;
+      transition: background 0.1s ease, transform 0.15s ease, border-left 0.15s ease, border-right 0.15s ease;
+      touch-action: pan-y;
+      user-select: none;
     }
 
     .detail-petition-card:hover {
@@ -705,9 +710,8 @@
           </div>
 
           <div id="pray-nav-hint">
-            <span>← Tap left for prev</span>
-            <span>Tap top / Esc to exit</span>
-            <span>Tap right for next →</span>
+            <span>Swipe ← / → for topics</span>
+            <span>Swipe ↓ or tap top to exit</span>
           </div>
         </div>
       </section>
@@ -1131,6 +1135,54 @@
       });
 
       // -----------------------------------------------------------------------
+      // Global Smartphone Touch Gestures (Home Swipe & Edge Back)
+      // -----------------------------------------------------------------------
+      // Home screen swipe left to open Journal
+      let homeTouchStartX = 0;
+      let homeTouchStartY = 0;
+      const screenHome = document.getElementById('screen-home');
+      screenHome.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          homeTouchStartX = e.touches[0].clientX;
+          homeTouchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      screenHome.addEventListener('touchend', (e) => {
+        if (e.changedTouches.length === 1) {
+          const dX = e.changedTouches[0].clientX - homeTouchStartX;
+          const dY = e.changedTouches[0].clientY - homeTouchStartY;
+          if (dX < -45 && Math.abs(dX) > 1.2 * Math.abs(dY)) {
+            showScreen('screen-journal');
+          }
+        }
+      }, { passive: true });
+
+      // Universal Edge-Swipe Back Navigation (Swipe right from left edge X <= 35px)
+      let vpTouchStartX = 0;
+      let vpTouchStartY = 0;
+      const mobileViewport = document.getElementById('mobile-viewport');
+      mobileViewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          const rect = mobileViewport.getBoundingClientRect();
+          vpTouchStartX = e.touches[0].clientX - rect.left;
+          vpTouchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+      mobileViewport.addEventListener('touchend', (e) => {
+        if (e.changedTouches.length === 1) {
+          const rect = mobileViewport.getBoundingClientRect();
+          const localX = e.changedTouches[0].clientX - rect.left;
+          const dX = localX - vpTouchStartX;
+          const dY = e.changedTouches[0].clientY - vpTouchStartY;
+          if (vpTouchStartX <= 35 && dX >= 45 && dX > 1.2 * Math.abs(dY)) {
+            if (state.currentScreen !== 'screen-home' && state.currentScreen !== 'screen-pray') {
+              topBarBack.click();
+            }
+          }
+        }
+      }, { passive: true });
+
+      // -----------------------------------------------------------------------
       // 2. Full-Screen Prayer Mode Engine ("Start praying")
       // Balanced Anti-Neglect Queue & Natural Gestural Navigation
       // -----------------------------------------------------------------------
@@ -1236,10 +1288,90 @@
         showScreen('screen-home');
       }
 
-      // Gestural Zone Event Listeners
-      document.getElementById('pray-zone-next').addEventListener('click', nextPrayerTopic);
-      document.getElementById('pray-zone-prev').addEventListener('click', prevPrayerTopic);
-      document.getElementById('pray-zone-top-exit').addEventListener('click', exitPrayerMode);
+      // -----------------------------------------------------------------------
+      // Smartphone Touch & Pointer Gestural Engine (Prayer Mode)
+      // Supports native touch swipes and desktop pointer dragging
+      // Swipe Left -> Next topic, Swipe Right -> Prev topic, Swipe Down -> Exit
+      // -----------------------------------------------------------------------
+      const prayOverlay = document.getElementById('pray-gesture-overlay');
+      let prayTouchStartX = 0;
+      let prayTouchStartY = 0;
+      let prayTouchStartTime = 0;
+      let isPrayDragging = false;
+
+      function onPrayStart(x, y) {
+        prayTouchStartX = x;
+        prayTouchStartY = y;
+        prayTouchStartTime = Date.now();
+        isPrayDragging = true;
+      }
+
+      function onPrayEnd(x, y) {
+        if (!isPrayDragging) return;
+        isPrayDragging = false;
+
+        const dX = x - prayTouchStartX;
+        const dY = y - prayTouchStartY;
+        const absDX = Math.abs(dX);
+        const absDY = Math.abs(dY);
+
+        // 1. Check for Tap / Click (< 15px movement)
+        if (absDX < 15 && absDY < 15) {
+          const rect = prayOverlay.getBoundingClientRect();
+          const relativeY = prayTouchStartY - rect.top;
+          const relativeX = prayTouchStartX - rect.left;
+
+          if (relativeY <= 54) {
+            exitPrayerMode();
+          } else if (relativeX < rect.width * 0.25) {
+            prevPrayerTopic();
+          } else {
+            nextPrayerTopic();
+          }
+          return;
+        }
+
+        // 2. Vertical Swipe Down to Exit (dY >= 50 and largely vertical)
+        if (dY >= 50 && absDY >= 1.3 * absDX) {
+          exitPrayerMode();
+          return;
+        }
+
+        // 3. Horizontal Swipe (absDX >= 35 and largely horizontal)
+        if (absDX >= 35 && absDX >= 1.2 * absDY) {
+          if (dX < 0) {
+            // Swipe Left -> Next topic
+            nextPrayerTopic();
+          } else {
+            // Swipe Right -> Prev topic
+            prevPrayerTopic();
+          }
+        }
+      }
+
+      // Touch events (Mobile)
+      prayOverlay.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          onPrayStart(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      prayOverlay.addEventListener('touchend', (e) => {
+        if (e.changedTouches.length === 1) {
+          onPrayEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        }
+      }, { passive: true });
+
+      // Pointer events (Desktop mouse drag & testing)
+      prayOverlay.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch') return;
+        onPrayStart(e.clientX, e.clientY);
+      });
+
+      prayOverlay.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') return;
+        onPrayEnd(e.clientX, e.clientY);
+      });
 
       // Keyboard navigation for prayer mode
       window.addEventListener('keydown', (e) => {
@@ -1315,10 +1447,95 @@
             <div class="detail-petition-body">${escapeHtml(p.body)}</div>
           `;
 
-          // Tap to edit petition (Click once to start editing)
-          card.addEventListener('click', () => {
-            state.editingPrayerId = p.id;
-            showScreen('screen-edit-petition');
+          // Card Touch & Swipe Mechanics (Tap to edit, Swipe Right to toggle answered, Swipe Left to delete)
+          let cardStartX = 0;
+          let cardStartY = 0;
+          let cardDragging = false;
+
+          function onCardStart(x, y) {
+            cardStartX = x;
+            cardStartY = y;
+            cardDragging = true;
+          }
+
+          function onCardMove(x, y) {
+            if (!cardDragging) return;
+            const dX = x - cardStartX;
+            const dY = y - cardStartY;
+            if (Math.abs(dX) > 15 && Math.abs(dX) > Math.abs(dY)) {
+              const limitedDx = Math.max(-80, Math.min(80, dX));
+              card.style.transform = `translateX(${limitedDx}px)`;
+              if (dX > 35) {
+                card.style.borderLeft = '4px solid #2E7D32';
+                card.style.borderRight = 'none';
+              } else if (dX < -35) {
+                card.style.borderRight = '4px solid #D32F2F';
+                card.style.borderLeft = 'none';
+              } else {
+                card.style.borderLeft = 'none';
+                card.style.borderRight = 'none';
+              }
+            }
+          }
+
+          function onCardEnd(x, y) {
+            if (!cardDragging) return;
+            cardDragging = false;
+            const dX = x - cardStartX;
+            const dY = y - cardStartY;
+            const absDX = Math.abs(dX);
+            const absDY = Math.abs(dY);
+
+            card.style.transform = '';
+            card.style.borderLeft = '';
+            card.style.borderRight = '';
+
+            // 1. Clean Tap / Click (< 10px): open petition editor!
+            if (absDX < 10 && absDY < 10) {
+              state.editingPrayerId = p.id;
+              showScreen('screen-edit-petition');
+              return;
+            }
+
+            // 2. Swipe Right (dX >= 45): Quick toggle Answered!
+            if (dX >= 45 && absDX >= 1.2 * absDY) {
+              p.status = (p.status === 'ACTIVE') ? 'ANSWERED' : 'ACTIVE';
+              renderEntityDetail();
+              return;
+            }
+
+            // 3. Swipe Left (dX <= -45): Reveal delete confirmation in editor!
+            if (dX <= -45 && absDX >= 1.2 * absDY) {
+              state.editingPrayerId = p.id;
+              showScreen('screen-edit-petition');
+              const confirmBox = document.getElementById('delete-confirm-box');
+              confirmBox.style.display = 'block';
+              confirmBox.scrollIntoView({ behavior: 'smooth' });
+              return;
+            }
+          }
+
+          card.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) onCardStart(e.touches[0].clientX, e.touches[0].clientY);
+          }, { passive: true });
+          card.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) onCardMove(e.touches[0].clientX, e.touches[0].clientY);
+          }, { passive: true });
+          card.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length === 1) onCardEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+          }, { passive: true });
+
+          card.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch') return;
+            onCardStart(e.clientX, e.clientY);
+          });
+          card.addEventListener('pointermove', (e) => {
+            if (e.pointerType === 'touch') return;
+            onCardMove(e.clientX, e.clientY);
+          });
+          card.addEventListener('pointerup', (e) => {
+            if (e.pointerType === 'touch') return;
+            onCardEnd(e.clientX, e.clientY);
           });
 
           list.appendChild(card);
