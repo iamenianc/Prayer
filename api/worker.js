@@ -82,16 +82,20 @@ MANDATORY COMPLIANCE DIRECTIVES:
    - When generating cards (skip_question: true), clarifying_question MUST be null and output STRICTLY AND EXACTLY 2 candidate cards.
    - When asking a clarifying question (skip_question: false), candidate_prayer_points MUST be empty ([]).
    - If user_input.root is NOT null (already pre-specified, e.g. 'PEOPLE', 'GROUPS', or 'GENERAL'), you MUST set "suggested_root": null and "suggested_group": null on every card (a suggestion is not needed).
-   - If user_input.root IS null, output exactly ONE suggested_root ('PEOPLE', 'GROUPS', or 'GENERAL') across all cards.
+   - If user_input.root IS null, you MUST classify every generated card with a NON-NULL suggested_root drawn strictly from 'PEOPLE', 'GROUPS', or 'GENERAL'. NEVER output null for suggested_root in this case. 'PEOPLE' requires a single distinct individual; 'GROUPS' for a collective/community/setting; 'GENERAL' for broad societal, national, or abstract matters. The three suggested_root values across the response MUST be identical (one single root for the whole response).
    - Entity names are masked locally for privacy; do not invent or suggest entity names.
-6. THEOLOGICAL GUARDRAILS:
+6. CRITICAL INQUIRY PRESERVATION:
+   - If tier1_draft.skip_question is false (Tier 1 posed a clarifying question), you MUST NOT generate candidate prayer points under any circumstances. Output skip_question: false, preserve that clarifying_question (refine wording only for brevity if needed), and candidate_prayer_points: []. NEVER convert a clarifying question into prayer cards.
+   - If user_input.user_response is present and non-null (including the literal "skip"): the user has already answered or skipped, SO DO NOT ask any further questions. You MUST generate candidate prayer points with skip_question: true and clarifying_question: null.
+   - If user_input.request_more is true: DO NOT ask questions. Generate strictly 2 NEW distinct candidate points with skip_question: true and clarifying_question: null.
+7. THEOLOGICAL GUARDRAILS:
    - Classical Reformed Protestant theology (Solus Christus, Sola Gratia, Soli Deo Gloria).
    - Comfort grounded in Heidelberg Catechism Q&A 1 (resting in Christ's faithful preservation and sovereign care).
    - Reject prosperity decrees, bargaining, and word-faith formulas.
    - Never invent or assume unstated medical illnesses, hospitalizations, or tragedies.
-7. DIALECT:
+8. DIALECT:
    - Default to English (Australian / UK) spelling (e.g., neighbour, honour, saviour) unless US English is requested.
-8. OUTPUT FORMAT: Output STRICTLY valid JSON with no markdown fences or conversational commentary:
+9. OUTPUT FORMAT: Output STRICTLY valid JSON with no markdown fences or conversational commentary:
 {
   "skip_question": boolean,
   "clarifying_question": "string or null",
@@ -99,11 +103,63 @@ MANDATORY COMPLIANCE DIRECTIVES:
     {
       "title": "string",
       "description": "string",
-      "suggested_root": "PEOPLE | GROUPS | GENERAL | null",
+      "suggested_root": "PEOPLE | GROUPS | GENERAL | null (set a real root from PEOPLE/GROUPS/GENERAL when user_input.root is null)",
       "suggested_group": "string or null"
     }
   ]
 }`;
+
+const DEFAULT_INQUIRY_PROMPT = `You are a focused clarifying inquiry assistant for a prayer journal. The user has written only a brief, vague reflection. Your SINGLE task is to formulate exactly ONE concise, natural, open-ended clarifying question that invites the user to describe the actual situation or burden they want to bring to prayer.
+- Ask strictly ONE question, ideally 6 to 12 words, never more than 15 words.
+- Plain, natural English. NEVER bureaucratic or stiff phrasing (never "Which burden or circumstance regarding...").
+- If the reflection is an internal feeling or emotional state (e.g. anxious, tired, sad, overwhelmed, confused): ask plainly what is causing that feeling.
+- If it names a person or topic with no context (e.g. my boss, finances, David, church): ask plainly what is happening.
+- If several competing concerns are presented together: perform concise burden triage and ask which weighs most heavily.
+- Never guess, speculate, or invent unstated circumstances. Never propose candidate prayer points.
+Output STRICTLY valid JSON with no other text:
+{
+  "skip_question": false,
+  "clarifying_question": "<your question here>",
+  "candidate_prayer_points": []
+}`;
+
+// --- TURN-1 VAGUE INPUT DETECTION (Deterministic Inquiry Gate) ---
+
+const VAGUE_DETAIL_HINT = /(\btomorrow\b|\byesterday\b|\btoday\b|\btonight\b|\bweek\b|\bmonth\b|\bmorning\b|\bafternoon\b|\bevening\b|\bround\b|\bday\b|chemo|surgery|hospital|scan|tumou?r|diagnos|interview|meeting|exam|trial|rent|overdue|funeral|accident|passed|passing|gave|got|lost|losing|broke|argu|fight|figh|crisis|emergency|died|death|born|delivery|nausea|pain|heal|recover|results|test|promotion|redundan|dismiss|fired|layoff|boss|\d)/i;
+
+function isVagueReflection(text) {
+  const tokens = text.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length <= 3) return true;
+  if (tokens.length > 8) return false;
+  return !VAGUE_DETAIL_HINT.test(text);
+}
+
+function fallbackClarifyingQuestion(text) {
+  const t = text.trim();
+  if (/(anxious|anxiety|worr|afraid|scared|fear|sad|grief|griev|tired|exhaust|overwhelm|stress|depress|lone|lonely|confus|ashamed|guilt)/i.test(t)) {
+    return "What is making you feel this way right now?";
+  }
+  if (/\b(my boss|my manager|work|job|colleague|co-worker|coworker)\b/i.test(t)) {
+    return "What is happening at work right now?";
+  }
+  if (/\b(finance|money|financ|debt|rent|bill)\b/i.test(t)) {
+    return "What is happening with your finances right now?";
+  }
+  return "What is the situation you would like to pray about?";
+}
+
+function parseInquiryContent(content) {
+  try {
+    const parsed = JSON.parse(content);
+    const q = (typeof parsed.clarifying_question === "string") ? parsed.clarifying_question.trim() : "";
+    if (parsed.skip_question === false && q.length >= 4 && q.split(/\s+/).length <= 18) {
+      return { skip_question: false, clarifying_question: q, candidate_prayer_points: [] };
+    }
+  } catch {
+    // fall through to fallback
+  }
+  return null;
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -127,7 +183,7 @@ export default {
       return new Response(JSON.stringify({
         status: "online",
         service: "Prayer AI Agent API Proxy",
-        version: "1.2.0",
+        version: "1.3.0",
         endpoints: {
           assistant: "POST /api/v1/assistant (or POST /api/v1/guide, POST /)",
           title: "POST /api/v1/title",
@@ -372,6 +428,43 @@ async function handleDistillationGuide(request, env) {
     const promptJsonString = JSON.stringify(promptPayload);
     const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
 
+    // --- DETERMINISTIC TURN-1 INQUIRY GATE ---
+    // When the user has not yet provided a response (fresh Turn 1), a brief or
+    // context-free reflection MUST trigger a clarifying question rather than
+    // speculative card generation (see planning/BRD.md, planning/UX.md).
+    const isFreshTurn1 = !requestMore && (userResponse === null || userResponse.trim().length === 0);
+    if (isFreshTurn1 && isVagueReflection(initialReflection.trim())) {
+      const inquiryPrompt = env.PROMPT_INQUIRY || DEFAULT_INQUIRY_PROMPT;
+      const inquiryContent = await callOpenRouter(env, {
+        model: upstreamModel,
+        temperature: 1.0,
+        top_p: 0.95,
+        max_tokens: 1000,
+        messages: [
+          { role: "system", content: inquiryPrompt },
+          { role: "user", content: String(initialReflection).trim().slice(0, 1500) },
+        ],
+        title: "Prayer Distillation Engine - Clarifying Inquiry",
+      });
+
+      let inquiryResponse = inquiryContent ? parseInquiryContent(inquiryContent) : null;
+      if (!inquiryResponse) {
+        inquiryResponse = {
+          skip_question: false,
+          clarifying_question: fallbackClarifyingQuestion(String(initialReflection)),
+          candidate_prayer_points: [],
+        };
+      }
+
+      return new Response(JSON.stringify(inquiryResponse), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
     // --- TIER 1: Thoughtful Articulation & Pastoral Insight (Temperature: 1.0, Top_P: 0.95) ---
     const tier1Content = await callOpenRouter(env, {
       model: upstreamModel,
@@ -429,8 +522,10 @@ async function handleDistillationGuide(request, env) {
       const parsedFinal = JSON.parse(tier2Content);
       if (promptPayload.root && Array.isArray(parsedFinal.candidate_prayer_points)) {
         for (const card of parsedFinal.candidate_prayer_points) {
-          card.suggested_root = null;
-          card.suggested_group = null;
+          if (card && typeof card === "object") {
+            card.suggested_root = null;
+            card.suggested_group = null;
+          }
         }
         finalOutput = JSON.stringify(parsedFinal);
       }
@@ -447,6 +542,7 @@ async function handleDistillationGuide(request, env) {
     });
 
   } catch (err) {
+    console.error("GUIDE_HANDLER_ERROR", err && err.stack ? err.stack : String(err));
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: {

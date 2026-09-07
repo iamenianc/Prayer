@@ -21,13 +21,37 @@ This repository maintains three distinct domains:
 
 ---
 
+## 1.5. Mandatory Deploy-on-Completion Protocol (Android)
+
+**Whenever any Android production work is complete** — a bug fix, feature implementation, refactor, or any change that compiles cleanly — the agent **MUST proactively deploy a fresh release build to Google Drive before declaring the task finished.**
+
+### Deploy Procedure
+1. From the `android/` directory, run the bundled Gradle task:
+   ```powershell
+   .\gradlew.bat :app:deployToDrive
+   ```
+   This task depends on `assembleRelease`, so it compiles the release APK and then copies it to `G:\My Drive\myApps\Prayer.apk` (overwrite).
+2. The destination `G:\My Drive\myApps` folder **must exist** before running. If it does not, halt and ask the user to mount/start Google Drive for Desktop rather than inventing an alternate path.
+3. After the build, **verify** the deployed file with `Get-Item -LiteralPath "G:\My Drive\myApps\Prayer.apk"` and confirm a non-zero `Length` and a fresh `LastWriteTime`.
+4. **Do not** deploy if the release build fails to compile. Fix all compile errors first (see the `LinedNotepad` / `JournalScreen` String-vs-`TextFieldValue` contract as a known gotcha), then re-run the deploy task.
+
+### When to Skip
+- Pure planning, documentation, or `api/`-only changes that touch no Kotlin source under `android/`.
+- When the user explicitly instructs a build-only or no-deploy run for this turn.
+
+### Reminder Trigger
+If the agent finishes Android work and has not yet run `:app:deployToDrive`, it **must** do so as the final action of the turn, and report the deployed APK path and size in its closing summary.
+
+---
+
 ## 2. Prerequisite: Context Awareness & Markdown Reading Protocol
 
-**The agent MUST read the core workspace markdown files (`AGENTS.md`, `planning/beliefs.md`, `planning/BRD.md`, `planning/technical.md`, and `planning/UX.md`) at the start of a session, and whenever it needs a refresher during a long or context-heavy session.**
+**The agent MUST read the core workspace markdown files (`AGENTS.md`, `planning/beliefs.md`, `planning/BRD.md`, `planning/technical.md`, `planning/UX.md`, and `planning/codebase_knowledge_graph.md`) at the start of a session, and whenever it needs a refresher during a long or context-heavy session.**
 
 - **Session Start & Refreshers**: Read the core files upon commencing a session to establish full context, or during extended conversations when context has drifted, truncated, or when explicit verification is needed before major architectural updates.
 - **Avoid Redundant Re-reading**: Do **not** mechanically re-read all context files for every consecutive queued prompt or rapid iterative message when the active context already contains the current document states.
 - **Context Continuity**: Ensure decisions remain faithful to established domain rules, theological foundations, scope boundaries, technical architectures, and user journeys.
+- **Knowledge Graph as Living Map**: Treat `planning/codebase_knowledge_graph.md` as the authoritative cross-layer architecture map. Read it alongside the other core files to understand how `api/`, `android/`, and `planning/` connect, and update it whenever code structure, module relationships, or the architecture changes (see §6).
 
 ---
 
@@ -61,25 +85,27 @@ All planning artifacts and specifications must adhere to the following conventio
 
 ## 5. Core Specification Deliverables: Beliefs, BRD, Technical, and UX Documents
 
-The project maintains four central, living specification documents inside [`planning/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning):
+The project maintains five central, living specification documents inside [`planning/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning):
 1. **`planning/beliefs.md`** (Confessional Foundation & Theological Grounding): Mandatory theological bedrock defining the doctrinal standards, historic Anglican formularies, creeds, and prayer theology governing all app design, AI boundaries, and features.
 2. **`planning/BRD.md`** (Business Requirements Document): Single source of truth for business purpose, scope boundaries, domain rules, governance, and conceptual architecture.
 3. **`planning/technical.md`** (Technical Reference): Approved technical decisions, data model, security/storage architecture, OpenRouter suggestion engine specs, theological guardrails, and open-ended technical questions.
 4. **`planning/UX.md`** (User Experience Specification): Business- and product-owner-facing document defining emotional tone, visual identity, core user journeys, ergonomics, and liturgical reverence.
+5. **`planning/codebase_knowledge_graph.md`** (Architecture Map & Cross-Layer Knowledge Graph): Authoritative map of how `api/`, `android/`, and `planning/` connect, including module relationships, data flows, and structural contracts. Must be read for full system context and updated whenever code structure, module relationships, or architecture changes (see §6).
 
 ---
 
 ## 6. Mandatory Document Synchronization Rule
 
-**Always update `planning/beliefs.md`, `planning/BRD.md`, `planning/technical.md`, and `planning/UX.md` whenever decisions are made between the user and the agent.**
+**Always update `planning/beliefs.md`, `planning/BRD.md`, `planning/technical.md`, `planning/UX.md`, and `planning/codebase_knowledge_graph.md` whenever decisions are made between the user and the agent.**
 
 ### Synchronization Protocol:
-- **Simultaneous Updates**: Whenever a scope clarification, theological alignment, feature addition, architectural choice, or constraint is agreed upon during conversation, update **`planning/beliefs.md`**, **`planning/BRD.md`**, **`planning/technical.md`**, and **`planning/UX.md`** promptly.
+- **Simultaneous Updates**: Whenever a scope clarification, theological alignment, feature addition, architectural choice, or constraint is agreed upon during conversation, update **`planning/beliefs.md`**, **`planning/BRD.md`**, **`planning/technical.md`**, **`planning/UX.md`**, and **`planning/codebase_knowledge_graph.md`** promptly.
 - **Complementary Scopes**:
   - Update **`planning/beliefs.md`** for confessional commitments, doctrinal boundaries, hermeneutical standards, and theology of prayer.
   - Update **`planning/BRD.md`** for business intent, scope boundaries (MVP vs. future), user policies, and high-level architecture.
   - Update **`planning/technical.md`** for technical system architecture, data models, API schemas, security constraints, theological guardrails in prompts, and open-ended technical decisions.
   - Update **`planning/UX.md`** for user journeys, interaction patterns, design tokens, liturgical reverence, and ergonomic flows.
+  - Update **`planning/codebase_knowledge_graph.md`** whenever code structure, module relationships, data flows, file/folder layout, or the architecture of `api/`, `android/`, or `planning/` changes in any way — including new files, renamed modules, deleted components, or revised cross-layer contracts.
 - **Active State Principle**: Keep the documents lean and current. Do not retain full audit logs, historical trial decisions, or overruled/redundant decisions. Directly reflect all current decisions in the text.
 
 ---

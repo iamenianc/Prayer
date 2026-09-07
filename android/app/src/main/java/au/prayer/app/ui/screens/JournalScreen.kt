@@ -29,6 +29,7 @@ import au.prayer.app.data.models.*
 import au.prayer.app.ui.gestures.edgeSwipeRight
 import au.prayer.app.ui.navigation.LifoBackStack
 import androidx.compose.ui.text.input.TextFieldValue
+import au.prayer.app.ui.components.LinedNotepad
 import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
 import au.prayer.app.ui.theme.PrayerSpacing
@@ -366,7 +367,7 @@ fun JournalScreen(
                                                         // Click Once to Edit Prayer Point
                                                         editingPoint = point
                                                         editTitle = point.title
-                                                        editBody = point.description
+                                                        editBody = TextFieldValue(point.description)
                                                         editStatus = point.status
                                                         editTestimony = point.answeredTestimony ?: ""
                                                         showDeleteConfirm = false
@@ -457,11 +458,13 @@ fun JournalScreen(
                                 LinedNotepad(
                                     text = editBody,
                                     onTextChange = { editBody = it },
+                                    colors = colors,
+                                    typography = typography,
                                     placeholder = "Prayer point...",
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .weight(1f),
-                                    textStyle = typography.prayerPointBody.copy(color = colors.textPrimary)
+                                    textStyle = typography.prayerPointBody
                                 )
 
                                 Spacer(modifier = Modifier.height(PrayerSpacing.medium))
@@ -552,7 +555,7 @@ fun JournalScreen(
                                 // Save Changes Action
                                 Button(
                                     onClick = {
-                                        onUpdatePrayerPoint(point.id, editTitle, editBody, editStatus, editTestimony)
+                                        onUpdatePrayerPoint(point.id, editTitle, editBody.text, editStatus, editTestimony)
                                         journalBackStack.pop()
                                     },
                                     modifier = Modifier
@@ -1113,7 +1116,7 @@ fun JournalScreen(
                         onClick = {
                             editingPoint = point
                             editTitle = point.title
-                            editBody = point.description
+                            editBody = TextFieldValue(point.description)
                             editStatus = point.status
                             editTestimony = point.answeredTestimony ?: ""
                             showDeleteConfirm = false

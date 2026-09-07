@@ -28,12 +28,12 @@ Rather than generating flowing prose or multi-sentence paragraphs, the AI text e
 
 | Structural Delimiter / Symbol | Occurrences in Descriptions | Primary Syntactic Role |
 | :--- | :---: | :--- |
-| **`Semicolons (;)`** | 153 (86.9%) | Separating distinct petitionary clauses without conjunctions |
-| **`Ampersands (&)`** | 50 (28.4%) | Joining paired virtues or related concerns (e.g., 'Wisdom & Peace') |
-| **`Hyphens / Dashes (-)`** | 22 (12.5%) | Telegraphic sub-clauses and compound terms |
-| **`Slashes (/)`** | 6 (3.4%) | Alternative aspects or paired options |
-| **`Arrows`** | 2 (1.1%) | Indicating progression or directional outcomes |
-| **`Abbreviations (w/)`** | 2 (1.1%) | Alternative aspects or paired options |
+| **`Semicolons (;)`** | 156 (97.5%) | Separating distinct petitionary clauses without conjunctions |
+| **`Ampersands (&)`** | 0 (0.0%) | Joining paired virtues or related concerns (e.g., 'Wisdom & Peace') |
+| **`Hyphens / Dashes (-)`** | 14 (8.8%) | Telegraphic sub-clauses and compound terms |
+| **`Slashes (/)`** | 0 (0.0%) | Alternative aspects or paired options |
+| **`Arrows`** | 0 (0.0%) | Indicating progression or directional outcomes |
+| **`Abbreviations (w/)`** | 0 (0.0%) | Alternative aspects or paired options |
 
 ### 2.2 Clause Deconstruction Pattern
 Over 86% of generated descriptions follow a clean three-part or two-part telegraphic cadence:
@@ -56,12 +56,12 @@ Over 86% of generated descriptions follow a clean three-part or two-part telegra
 ```text
 Word Count | Cards | Percentage | Visual Distribution
 ---------------------------------------------------------
-  2 words  |   51  |    29.0%   | ##############
-  3 words  |   96  |    54.5%   | ###########################
-  4 words  |   28  |    15.9%   | #######
-  5 words  |    1  |     0.6%   | 
+  2 words  |   90  |    56.2%   | ############################
+  3 words  |   44  |    27.5%   | #############
+  4 words  |   20  |    12.5%   | ######
+  5 words  |    6  |     3.8%   | #
 ---------------------------------------------------------
-  Total    |  176  |   100.0%   | Mean: 2.88 words
+  Total    |  160  |   100.0%   | Mean: 2.64 words
 ```
 
 - **Mode**: **3 words** (54.5% of cards, 96 titles) — e.g., *'Peace Amid Results'*, *'Grace & Guidance'*, *'Wisdom & Endurance'*.
@@ -74,21 +74,27 @@ Word Count | Cards | Percentage | Visual Distribution
 ```text
 Word Count | Cards | Percentage | Visual Distribution
 ---------------------------------------------------------
-  11 words |    1  |     0.6%   | 
-  12 words |    2  |     1.1%   | #
-  13 words |    3  |     1.7%   | #
-  14 words |   11  |     6.2%   | ######
-  15 words |   19  |    10.8%   | ##########
-  16 words |   29  |    16.5%   | ################
-  17 words |   32  |    18.2%   | ##################
-  18 words |   28  |    15.9%   | ###############
-  19 words |   28  |    15.9%   | ###############
-  20 words |   13  |     7.4%   | #######
-  21 words |    4  |     2.3%   | ##
-  22 words |    3  |     1.7%   | #
-  23 words |    3  |     1.7%   | #
+   6 words |    2  |     1.2%   | #
+   7 words |    5  |     3.1%   | ###
+   8 words |    7  |     4.4%   | ####
+   9 words |    6  |     3.8%   | ###
+  10 words |   12  |     7.5%   | #######
+  11 words |   20  |    12.5%   | ############
+  12 words |   24  |    15.0%   | ###############
+  13 words |   14  |     8.8%   | ########
+  14 words |   14  |     8.8%   | ########
+  15 words |   12  |     7.5%   | #######
+  16 words |   13  |     8.1%   | ########
+  17 words |   10  |     6.2%   | ######
+  18 words |    3  |     1.9%   | #
+  19 words |    9  |     5.6%   | #####
+  20 words |    4  |     2.5%   | ##
+  21 words |    1  |     0.6%   | 
+  24 words |    1  |     0.6%   | 
+  29 words |    2  |     1.2%   | #
+  36 words |    1  |     0.6%   | 
 ---------------------------------------------------------
-  Total    |  176  |   100.0%   | Mean: 17.25 words (Min: 11, Max: 23)
+  Total    |  160  |   100.0%   | Mean: 13.53 words (Min: 6, Max: 36)
 ```
 
 - **Strict Compliance Rate**: **100.0%** (176 of 176 descriptions adhered to <= 25 words).
@@ -166,18 +172,26 @@ Tone: Objective, respectful, non-therapeutic, strictly open-ended
 
 | ID | Trigger Category | Input Text Shorthand | Exact AI Clarifying Question Generated | Evaluated Inquirer Posture |
 | :--- | :--- | :--- | :--- | :--- |
-| **REQ-010** | Short | *"Tomorrow marks one full year since my..."* | "What specific aspect of tomorrow—such as emotional strength, gratitude for her life, or hope—would you most want to bring before God?" | Gentle pastoral focus without prying |
-| **REQ-016** | Medium | *"My older brother Julian is a biology ..."* | "What specific aspect of Julian's life or relationship with him would you most like to see God work in as you pray for him?" | Evangelistic specificity |
-| **REQ-026** | Short | *"Sending high positive vibrations into..."* | "What specific outcome or trust are you seeking to lay before God regarding this promotion decision?" | Subtle redirection from universe to God |
-| **REQ-031** | Ultra-Short | *"Decree breakthrough new car miracle now"* | "What specific burden or need would you like to bring before God regarding the new car?" | Clarifying decree into genuine need |
-| **REQ-032** | Short | *"St. Jude, patron saint of lost causes..."* | "What specific outcome or concern regarding your court hearing would you most like to bring before God?" | Subtle redirection from saint to God |
-| **REQ-040** | Short | *"Lord, if you make this brain MRI come..."* | "What specific fear or concern about the MRI's outcome would you like to bring before the Lord?" | Probing heart fear beneath bargaining |
-| **REQ-043** | Ultra-Short | *"Tithing faithfully God must fix car e..."* | "Could you describe the car engine situation and what you'd like to focus on regarding tithing?" | Deconstructing transactional barter |
-| **REQ-046** | Ultra-Short | *"Spiritual warfare dark thoughts menta..."* | "Is this spiritual battle and mental fog you are currently experiencing personally, or are you seeking prayer points for someone else?" | Entity context clarification (self vs other) |
-| **REQ-061** | Ultra-Short | *"Job interview tomorrow morning rent o..."* | "Which burden weighs most heavily on you right now: the interview outcome or the financial pressure from unpaid rent?" | Burden triage between competing crises |
-| **REQ-077** | Ultra-Short | *"Pride anger repentance patience humility"* | "Which specific struggle or situation would you like to bring before God first?" | Specific struggle prioritization |
-| **REQ-096** | Ultra-Short | *"Praising God cancer remission confirm..."* | "What specific aspect of the remission would you like to focus in ongoing prayer?" | Ongoing spiritual thanksgiving focus |
-| **REQ-099** | Medium | *"Almighty and everlasting God, who art..."* | "What specific burden, situation, or outcome would you like to bring before God?" | Eliciting petition from liturgical adoration |
+| **REQ-002** | Ultra-Short | *"Sarah chemo round 3 today nausea"* | "What specific concerns or requests are you bringing before God today?" | Eliciting petition from liturgical adoration |
+| **REQ-013** | Ultra-Short | *"Mrs Davis funeral tomorrow morning"* | "What specific details should I know about Mrs. Davis's passing?" | Eliciting petition from liturgical adoration |
+| **REQ-017** | Ultra-Short | *"Son Toby salvation repentance soft heart"* | "What is happening with Toby that you want prayer for?" | Eliciting petition from liturgical adoration |
+| **REQ-023** | Short | *"Praying for a powerful work of the Ho..."* | "Which universities or regions feel most urgent to pray for?" | Eliciting petition from liturgical adoration |
+| **REQ-028** | Short | *"I command the rain clouds to clear aw..."* | "What specific weather or outdoor situation are you commanding to change?" | Eliciting petition from liturgical adoration |
+| **REQ-029** | Medium | *"We take authority over the principali..."* | "What specific circumstances surround the financial situation in Detroit?" | Eliciting petition from liturgical adoration |
+| **REQ-030** | Short | *"I decree that our country's stock mar..."* | "What circumstance prompts your concern about market and currency?" | Eliciting petition from liturgical adoration |
+| **REQ-031** | Ultra-Short | *"Decree breakthrough new car miracle now"* | "What specific challenge or situation with a vehicle do you need breakthrough for?" | Clarifying decree into genuine need |
+| **REQ-034** | Short | *"Saint Michael the Archangel, defend u..."* | "What specific threat or danger does this guardian prayer address?" | Eliciting petition from liturgical adoration |
+| **REQ-038** | Medium | *"I have fasted for three full days and..."* | "What situation are you fasting and praying about?" | Eliciting petition from liturgical adoration |
+| **REQ-039** | Long | *"I have never committed adultery, I ha..."* | "What specific business circumstances are causing the cash flow problems?" | Eliciting petition from liturgical adoration |
+| **REQ-042** | Short | *"God owes protection to our country be..."* | "What specific concerns drive this belief in divine obligation?" | Eliciting petition from liturgical adoration |
+| **REQ-043** | Ultra-Short | *"Tithing faithfully God must fix car e..."* | "What specific car problem are you trying to resolve?" | Deconstructing transactional barter |
+| **REQ-046** | Ultra-Short | *"Spiritual warfare dark thoughts menta..."* | "What specific situation triggers these dark thoughts?" | Entity context clarification (self vs other) |
+| **REQ-055** | Ultra-Short | *"Nigeria Middle Belt village attacks p..."* | "What specific need or burden regarding the village attacks do you want prayer for?" | Eliciting petition from liturgical adoration |
+| **REQ-057** | Short | *"Praying for safe smuggling routes and..."* | "What specific legal and technological challenges are being faced in these regions?" | Eliciting petition from liturgical adoration |
+| **REQ-069** | Ultra-Short | *"Ethan ADHD school struggles patience"* | "What specific ADHD challenges at school feel hardest for him right now?" | Eliciting petition from liturgical adoration |
+| **REQ-077** | Ultra-Short | *"Pride anger repentance patience humility"* | "What specific situation triggers your pride and anger?" | Specific struggle prioritization |
+| **REQ-096** | Ultra-Short | *"Praising God cancer remission confirm..."* | "What specific type of cancer and treatment history led to this remission?" | Ongoing spiritual thanksgiving focus |
+| **REQ-099** | Medium | *"Almighty and everlasting God, who art..."* | "What specific situation or need are you praying for?" | Eliciting petition from liturgical adoration |
 
 ### Key Question Patterns Observed:
 1. **The 'What specific...' Opening**: 8 of the 12 questions begin with *'What specific...'*, effectively channeling diffuse or chaotic emotions into a clear focal point.
@@ -193,16 +207,16 @@ A frequency census of key theological terms across the 176 generated description
 
 | Theological Keyword Family | Total Occurrences in Descriptions | Doctrinal Significance |
 | :--- | :---: | :--- |
-| **`sovereign / sovereignty`** | 37 cards | Upholding God's sovereign governance over outcomes |
-| **`grace (alone / unmerited)`** | 22 cards | Affirming Sola Gratia against human merit |
-| **`Christ / Jesus`** | 77 cards | Solus Christus: Mediation solely through Christ |
-| **`providence / providential`** | 8 cards | Trusting divine ordering in suffering & life events |
-| **`repentance / repent`** | 17 cards | Orienting lost and believer petitions toward heart turning |
-| **`steadfast / endurance`** | 18 cards | Historic Reformed posture in trials and spiritual warfare |
-| **`contentment / provision`** | 20 cards | Refusal of greed & prosperity dogmas |
-| **`wisdom / discernment`** | 41 cards | Sound pastoral and ecclesiastical navigation |
-| **`comfort / peace`** | 29 cards | Heidelberg Q1 grounding in affliction |
-| **`Soli Deo Gloria / glory`** | 10 cards | Ultimate end of all prayer (Article I) |
+| **`sovereign / sovereignty`** | 59 cards | Upholding God's sovereign governance over outcomes |
+| **`grace (alone / unmerited)`** | 12 cards | Affirming Sola Gratia against human merit |
+| **`Christ / Jesus`** | 54 cards | Solus Christus: Mediation solely through Christ |
+| **`providence / providential`** | 3 cards | Trusting divine ordering in suffering & life events |
+| **`repentance / repent`** | 7 cards | Orienting lost and believer petitions toward heart turning |
+| **`steadfast / endurance`** | 10 cards | Historic Reformed posture in trials and spiritual warfare |
+| **`contentment / provision`** | 18 cards | Refusal of greed & prosperity dogmas |
+| **`wisdom / discernment`** | 25 cards | Sound pastoral and ecclesiastical navigation |
+| **`comfort / peace`** | 30 cards | Heidelberg Q1 grounding in affliction |
+| **`Soli Deo Gloria / glory`** | 1 cards | Ultimate end of all prayer (Article I) |
 
 ### 6.2 Commonwealth vs US Dialect Consistency
 - The system prompt defaulted to Australian/UK English. The text consistently utilized Commonwealth orthography:

@@ -35,3 +35,7 @@ android/local.properties
 *.iml
 .kotlin/
 
+# Wrangler / Cloudflare local state
+.dev.vars
+.wrangler/
+

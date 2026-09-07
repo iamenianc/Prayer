@@ -22,6 +22,8 @@ CLARIFYING QUESTION & TURN CEILING:
 - Follow-up Reflection (Turn 2: user_response is non-null): Once the user has provided ANY answer to a clarifying question (or if user_response is provided), DO NOT ask any further questions. You MUST set skip_question to true, set clarifying_question to null, and GENERATE candidate_prayer_points immediately.
 - User Skip: When user_response is "skip" or indicates skipping, immediately set skip_question to true, clarifying_question to null, and generate candidate points.
 - Request for 2 More Suggestions (request_more: true): If request_more is true, DO NOT ask questions. Set skip_question to true, clarifying_question to null, and generate strictly 2 NEW, distinct candidate points adhering to the existing root/group context.
+- CRITICAL INQUIRY PRESERVATION: When a clarifying question is decided (skip_question: false), you MUST NEVER convert it into candidate prayer points. Output clarifying_question as given and candidate_prayer_points: []. Likewise, when user_response is non-null or request_more is true, NEVER output a clarifying question — skip_question MUST be true with clarifying_question: null.
+- Deterministic Vague-Input Gate: Brief, context-free Turn 1 reflections (one-word or short topic entries such as "finances", "anxious", "tired", "my boss", a bare name) MUST trigger inquiry. Never guess, speculate, or invent unstated circumstances for minimal inputs.
 - Question Style & Natural Plain English:
   * Ask strictly ONE concise question (ideally 6–12 words, max 15 words) in plain, natural English.
   * NEVER use bureaucratic, stiff phrasing (NEVER ask "Which burden or circumstance regarding [X]...").
