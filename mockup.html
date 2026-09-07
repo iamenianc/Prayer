@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html lang="en-AU" data-theme="light" data-text-scale="large">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pray Without Ceasing</title>
+  <style>
+    /* -------------------------------------------------------------------------
+       CSS Custom Properties & Design Tokens
+       Strict Orthogonality (0px radius), Contiguous Planes (0px gap/margin), 
+       1px Hairline Seams, High-Contrast Monochrome
+       ------------------------------------------------------------------------- */
+    :root {
+      --bg: #FFFFFF;
+      --text: #111111;
+      --text-muted: #666666;
+      --text-subtle: #8E8E93;
+      --border: #E0E0E0;
+      --surface: #FFFFFF;
+      --surface-hover: #F8F8F8;
+      --surface-active: #EEEEEE;
+      --strikethrough: rgba(0, 0, 0, 0.25);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* Quiet Night (Black & White) */
+    [data-theme="night"] {
+      --bg: #000000;
+      --text: #FFFFFF;
+      --text-muted: #888888;
+      --text-subtle: #555555;
+      --border: #262626;
+      --surface: #000000;
+      --surface-hover: #121212;
+      --surface-active: #1C1C1C;
+      --strikethrough: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Text Scaling Tiers with Pronounced Jumps (Large is Default) */
+    [data-text-scale="large"] {
+      --font-slab: 28px;
+      --font-header: 26px;
+      --font-title: 22px;
+      --font-body: 18px;
+      --font-meta: 14px;
+      --line-height-body: 1.6;
+      --pad-slab: 36px 24px;
+      --pad-card: 22px 20px;
+    }
+
+    [data-text-scale="regular"] {
+      --font-slab: 20px;
+      --font-header: 19px;
+      --font-title: 16px;
+      --font-body: 13px;
+      --font-meta: 11px;
+      --line-height-body: 1.5;
+      --pad-slab: 26px 18px;
+      --pad-card: 16px 14px;
+    }
+
+    [data-text-scale="compact"] {
+      --font-slab: 15px;
+      --font-header: 14.5px;
+      --font-title: 12.5px;
+      --font-body: 10.5px;
+      --font-meta: 9px;
+      --line-height-body: 1.4;
+      --pad-slab: 18px 14px;
+      --pad-card: 11px 10px;
+    }
+
+    /* Reset & Base Geometry */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      border-radius: 0 !important;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: #1a1a1a;
+      color: var(--text);
+      font-family: var(--font-family);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Frame simulating mobile viewport */
+    #mobile-viewport {
+      width: 100%;
+      max-width: 440px;
+      height: 100vh;
+      max-height: 900px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+    }
+
+    /* Navigation Bar */
+    #top-bar {
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+      padding: 0;
+      z-index: 50;
+    }
+
+    .top-bar-action {
+      height: 54px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-size: var(--font-body);
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+
+    .top-bar-action:hover {
+      background: var(--surface-hover);
+    }
+
+    .top-bar-action:active {
+      background: var(--surface-active);
+    }
+
+    #top-bar-title {
+      font-size: var(--font-header);
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      text-align: center;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 8px;
+    }
+
+    /* App Screen Container */
+    #content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg);
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      min-height: 100%;
+      background: var(--bg);
+      animation: fadeIn 0.15s ease-in-out;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0.85; }
+      to { opacity: 1; }
+    }
+
+    /* -------------------------------------------------------------------------
+       1. Blank Home Screen: Strictly 3 Contiguous Vertical Action Slabs
+       Zero hero heading, zero logo, zero app wordmark, zero explanatory text
+       ------------------------------------------------------------------------- */
+    #screen-home {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+    }
+
+    #screen-home.active {
+      display: flex;
+    }
+
+    .home-slab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      padding: var(--pad-slab);
+      font-size: var(--font-slab);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      transition: background 0.1s ease;
+    }
+
+    .home-slab:last-child {
+      border-bottom: none;
+    }
+
+    .home-slab:hover {
+      background: var(--surface-hover);
+    }
+
+    .home-slab:active {
+      background: var(--surface-active);
+    }
+
+    /* -------------------------------------------------------------------------
+       2. Full-Screen Prayer Mode ("Start praying")
+       Full-Screen Sanctuary: 0 buttons, 0 tiles, 0 grid lines
+       Heading: 'Praying for [Entity]'
+       Typographic prayer points with whitespace
+       ------------------------------------------------------------------------- */
+    #screen-pray {
+      position: absolute;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: none;
+      flex-direction: column;
+      padding: 0;
+      overflow-y: auto;
+      cursor: default;
+    }
+
+    #screen-pray.active {
+      display: flex;
+    }
+
+    /* Gestural zones for touch / click */
+    #pray-gesture-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      pointer-events: auto;
+    }
+
+    #pray-zone-prev {
+      width: 25%;
+      height: 100%;
+      cursor: w-resize;
+    }
+
+    #pray-zone-next {
+      width: 75%;
+      height: 100%;
+      cursor: e-resize;
+    }
+
+    #pray-zone-top-exit {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      z-index: 20;
+      cursor: n-resize;
+    }
+
+    #pray-canvas {
+      position: relative;
+      z-index: 5;
+      padding: 48px 28px 48px 28px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      pointer-events: none; /* Allows gestures on overlay */
+    }
+
+    #pray-heading {
+      font-size: var(--font-header);
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 32px;
+      line-height: 1.3;
+    }
+
+    .prayer-point-entry {
+      margin-bottom: 36px;
+    }
+
+    .prayer-point-title {
+      font-size: var(--font-title);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+    }
+
+    .prayer-point-body {
+      font-size: var(--font-body);
+      line-height: var(--line-height-body);
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    .answered-section {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .answered-heading {
+      font-size: var(--font-meta);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+    }
+
+    .answered-entry {
+      margin-bottom: 20px;
+    }
+
+    .answered-title {
+      font-size: var(--font-title);
+      font-weight: 500;
+      color: var(--text-muted);
+      text-decoration: line-through;
+      margin-bottom: 6px;
+    }
+
+    .answered-body {
+      font-size: var(--font-body);
+      line-height: var(--line-height-body);
+      color: var(--text-subtle);
+      text-decoration: line-through;
+    }
+
+    /* Unobtrusive gestural hint at the bottom */
+    #pray-nav-hint {
+      margin-top: auto;
+      padding-top: 32px;
+      font-size: var(--font-meta);
+      color: var(--text-subtle);
+      display: flex;
+      justify-content: space-between;
+      letter-spacing: 0.02em;
+    }
+
+    /* -------------------------------------------------------------------------
+       3. Open Journal: Directory & Management Vault
+       People | Groups | General
+       Contiguous flat tiles, 1px hairlines, zero gap
+       ------------------------------------------------------------------------- */
+    .section-header {
+      padding: 14px 20px;
+      background: var(--surface-hover);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--font-meta);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .entity-tile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--pad-card);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      font-size: var(--font-title);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .entity-tile:hover {
+      background: var(--surface-hover);
+    }
+
+    .entity-tile:active {
+      background: var(--surface-active);
+    }
+
+    .tile-arrow {
+      color: var(--text-subtle);
+      font-size: var(--font-body);
+    }
+
+    /* -------------------------------------------------------------------------
+       4. Entity Detail Screen
+       Unnumbered petitions, tap-to-toggle answered state
+       ------------------------------------------------------------------------- */
+    .action-bar-tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 20px;
+      background: var(--surface-hover);
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      font-size: var(--font-body);
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+
+    .action-bar-tile:hover {
+      background: var(--surface-active);
+    }
+
+    .detail-petition-card {
+      padding: var(--pad-card);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      background: var(--bg);
+      transition: background 0.1s ease;
+    }
+
+    .detail-petition-card:hover {
+      background: var(--surface-hover);
+    }
+
+    .detail-petition-card.is-answered .detail-petition-title {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .detail-petition-card.is-answered .detail-petition-body {
+      text-decoration: line-through;
+      color: var(--text-subtle);
+    }
+
+    .detail-petition-title {
+      font-size: var(--font-title);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .detail-petition-body {
+      font-size: var(--font-body);
+      line-height: var(--line-height-body);
+      color: var(--text);
+    }
+
+    /* -------------------------------------------------------------------------
+       5. Log Prayer Points: Entity Selection & Creation (Step 0)
+       Mandatory initial selection/creation of Person or Group
+       ------------------------------------------------------------------------- */
+    .create-entity-box {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-hover);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: var(--font-body);
+      font-family: inherit;
+      outline: none;
+    }
+
+    .text-input:focus {
+      border-color: var(--text);
+    }
+
+    .radio-row {
+      display: flex;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .radio-btn {
+      flex: 1;
+      padding: 12px 10px;
+      text-align: center;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--font-meta);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .radio-btn.selected {
+      background: var(--text);
+      color: var(--bg);
+    }
+
+    .btn-submit {
+      padding: 14px 20px;
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      font-size: var(--font-body);
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-submit:active {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      padding: 14px 20px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      font-size: var(--font-body);
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+    }
+
+    /* -------------------------------------------------------------------------
+       6. Capture Modes: Direct Entry vs. Guide Me
+       ------------------------------------------------------------------------- */
+    .target-context-banner {
+      padding: 16px 20px;
+      background: var(--surface-hover);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--font-meta);
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-label {
+      padding: 12px 20px 4px 20px;
+      font-size: var(--font-meta);
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .form-textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 12px 20px 20px 20px;
+      background: var(--bg);
+      border: none;
+      color: var(--text);
+      font-size: var(--font-body);
+      font-family: inherit;
+      line-height: var(--line-height-body);
+      resize: vertical;
+      outline: none;
+    }
+
+    .candidate-card {
+      padding: var(--pad-card);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    .candidate-title {
+      font-size: var(--font-title);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .candidate-body {
+      font-size: var(--font-body);
+      line-height: var(--line-height-body);
+      color: var(--text);
+    }
+
+    /* -------------------------------------------------------------------------
+       7. Settings Screen
+       Theme, Text Scale, Dialect, Historic Prayers
+       ------------------------------------------------------------------------- */
+    .settings-group {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-option-tile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--pad-card);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text);
+      font-size: var(--font-body);
+      font-weight: 500;
+    }
+
+    .settings-option-tile:last-child {
+      border-bottom: none;
+    }
+
+    .settings-option-tile:hover {
+      background: var(--surface-hover);
+    }
+
+    .settings-check {
+      font-weight: 700;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mobile Viewport Frame -->
+  <div id="mobile-viewport">
+
+    <!-- Top Navigation Bar -->
+    <header id="top-bar">
+      <button class="top-bar-action" id="top-bar-back" style="visibility: hidden;">← Back</button>
+      <h1 id="top-bar-title"></h1>
+      <button class="top-bar-action" id="top-bar-action-right" style="visibility: hidden;">Settings</button>
+    </header>
+
+    <!-- Main Content Area -->
+    <main id="content-area">
+
+      <!-- =====================================================================
+           SCREEN: Blank Home Screen
+           Strictly 3 centered contiguous vertical action slabs.
+           Zero hero heading, zero logo, zero app wordmark, zero explanatory text.
+           ===================================================================== -->
+      <section id="screen-home" class="screen active">
+        <button class="home-slab" id="btn-home-pray">Start praying</button>
+        <button class="home-slab" id="btn-home-journal">Open Journal</button>
+        <button class="home-slab" id="btn-home-log">Log prayer points</button>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Full-Screen Prayer Mode ("Start praying")
+           Strictly passive, 0 buttons, 0 tiles, 0 grid lines.
+           Heading: 'Praying for [Entity]'
+           Pure typographic presentation with gestural navigation.
+           ===================================================================== -->
+      <section id="screen-pray" class="screen">
+        <!-- Gesture Overlay: Left 25% Prev, Right 75% Next, Top 54px Exit -->
+        <div id="pray-gesture-overlay">
+          <div id="pray-zone-top-exit" title="Tap top edge to exit to Home"></div>
+          <div id="pray-zone-prev" title="Tap left to return to previous topic"></div>
+          <div id="pray-zone-next" title="Tap right to advance to next topic"></div>
+        </div>
+
+        <div id="pray-canvas">
+          <h2 id="pray-heading">Praying for Sarah</h2>
+          <div id="pray-points-container">
+            <!-- Active prayer points rendered typographically here -->
+          </div>
+
+          <div id="pray-answered-container" class="answered-section" style="display: none;">
+            <div class="answered-heading">Answered Petitions</div>
+            <div id="pray-answered-list"></div>
+          </div>
+
+          <div id="pray-nav-hint">
+            <span>← Tap left for prev</span>
+            <span>Tap top / Esc to exit</span>
+            <span>Tap right for next →</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Open Journal (Root Directory)
+           People | Groups | General
+           Minimal contextual data exposure: entity rows without tally counters.
+           ===================================================================== -->
+      <section id="screen-journal" class="screen">
+        <div class="section-header">People</div>
+        <div id="journal-people-list">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="section-header">Groups</div>
+        <div id="journal-groups-list">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="section-header">General</div>
+        <div id="journal-general-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Entity Detail View
+           Unnumbered petitions, tap to toggle answered state.
+           ===================================================================== -->
+      <section id="screen-entity-detail" class="screen">
+        <div class="action-bar-tile" id="btn-entity-log-point">+ Log prayer point</div>
+        <div id="entity-petitions-list">
+          <!-- Petitions rendered here -->
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Log Prayer Points - Step 0 (Select or Create Entity)
+           Mandatory target entity resolution upfront.
+           ===================================================================== -->
+      <section id="screen-log-step0" class="screen">
+        <div class="create-entity-box">
+          <input type="text" class="text-input" id="new-entity-name" placeholder="Name (e.g. David, Small Group)">
+          <div class="radio-row">
+            <button class="radio-btn selected" id="radio-root-people">People</button>
+            <button class="radio-btn" id="radio-root-groups">Groups</button>
+          </div>
+          <button class="btn-submit" id="btn-create-entity">Create & Continue</button>
+        </div>
+
+        <div class="section-header">Or Select Existing</div>
+        <div id="log-picker-list">
+          <!-- Existing entities rendered here -->
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Log Prayer Points - Step 1 (Capture Mode Selection)
+           Direct Entry vs. Guide Me
+           ===================================================================== -->
+      <section id="screen-log-step1" class="screen">
+        <div class="target-context-banner" id="log-target-banner">Target: Sarah</div>
+        <button class="home-slab" id="btn-pathway-direct" style="border-bottom: 1px solid var(--border);">Direct Entry</button>
+        <button class="home-slab" id="btn-pathway-guide">Guide Me</button>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Direct Entry
+           Clean text pad pre-bound to target entity.
+           ===================================================================== -->
+      <section id="screen-log-direct" class="screen">
+        <div class="target-context-banner" id="direct-target-banner">Target: Sarah</div>
+        <div class="form-group">
+          <label class="form-label">Petition Title (2–6 words)</label>
+          <input type="text" class="text-input" id="direct-input-title" placeholder="e.g. Sustained endurance in trial" style="border: none; padding: 12px 20px;">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label">Details / Scriptural Burden</label>
+          <textarea class="form-textarea" id="direct-input-body" placeholder="Record the specific burden or request..."></textarea>
+        </div>
+        <button class="btn-submit" id="btn-direct-save">Save Prayer Point</button>
+        <button class="btn-secondary" id="btn-direct-cancel">Cancel</button>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: Guide Me (AI Distillation Workflow)
+           Step 1: Open Heart -> Step 2: Neutral Distillation -> Step 3: Candidate Review
+           ===================================================================== -->
+      <section id="screen-log-guide" class="screen">
+        <div class="target-context-banner" id="guide-target-banner">Target: Sarah</div>
+
+        <!-- Sub-step 1: Open Heart -->
+        <div id="guide-substep-1" style="display: flex; flex-direction: column; flex: 1;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label" id="guide-heart-label">Who or what is on your heart?</label>
+            <textarea class="form-textarea" id="guide-raw-input" placeholder="Express your thoughts or concerns freely..."></textarea>
+          </div>
+          <button class="btn-submit" id="btn-guide-continue">Continue</button>
+          <button class="btn-secondary" id="btn-guide-cancel-1">Cancel</button>
+        </div>
+
+        <!-- Sub-step 2: Neutral Distillation Inquiry (1 question, max 2 turns) -->
+        <div id="guide-substep-2" style="display: none; flex-direction: column; flex: 1;">
+          <div class="form-group" style="flex: 1; padding: 20px;">
+            <div style="font-size: var(--font-meta); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Clarifying Inquiry</div>
+            <div id="guide-question-text" style="font-size: var(--font-title); font-weight: 500; line-height: 1.4; margin-bottom: 24px; color: var(--text);">
+              What specific burden or trial is weighing on you most heavily right now?
+            </div>
+            <input type="text" class="text-input" id="guide-clarification-input" placeholder="Type your response...">
+          </div>
+          <button class="btn-submit" id="btn-guide-answer">Submit Response</button>
+          <button class="btn-secondary" id="btn-guide-skip-q">Skip to Suggestions</button>
+        </div>
+
+        <!-- Sub-step 3: Candidate Points Review (strictly 2 candidate points) -->
+        <div id="guide-substep-3" style="display: none; flex-direction: column; flex: 1;">
+          <div class="section-header">Candidate Petitions (Review & Commit)</div>
+          <div id="guide-candidates-container">
+            <!-- 2 candidate cards rendered here -->
+          </div>
+          <button class="btn-submit" id="btn-guide-save-candidates">Save to Entity Vault</button>
+          <button class="btn-secondary" id="btn-guide-request-more">Suggest 2 More</button>
+          <button class="btn-secondary" id="btn-guide-cancel-3">Cancel</button>
+        </div>
+      </section>
+
+      <!-- =====================================================================
+           SCREEN: App Settings
+           Theme, Text Scaling, Dialect, Historic Prayer Blending
+           ===================================================================== -->
+      <section id="screen-settings" class="screen">
+        <div class="section-header">Theme Mode</div>
+        <div class="settings-group">
+          <div class="settings-option-tile" id="opt-theme-light">
+            <span>Morning Light (Default)</span>
+            <span class="settings-check" id="check-theme-light">✓</span>
+          </div>
+          <div class="settings-option-tile" id="opt-theme-night">
+            <span>Quiet Night</span>
+            <span class="settings-check" id="check-theme-night" style="display: none;">✓</span>
+          </div>
+        </div>
+
+        <div class="section-header">Text Scaling</div>
+        <div class="settings-group">
+          <div class="settings-option-tile" id="opt-scale-large">
+            <span>Large (Default)</span>
+            <span class="settings-check" id="check-scale-large">✓</span>
+          </div>
+          <div class="settings-option-tile" id="opt-scale-regular">
+            <span>Regular</span>
+            <span class="settings-check" id="check-scale-regular" style="display: none;">✓</span>
+          </div>
+          <div class="settings-option-tile" id="opt-scale-compact">
+            <span>Compact</span>
+            <span class="settings-check" id="check-scale-compact" style="display: none;">✓</span>
+          </div>
+        </div>
+
+        <div class="section-header">Language & Dialect</div>
+        <div class="settings-group">
+          <div class="settings-option-tile" id="opt-lang-uk">
+            <span>English (Australian / UK) (Default)</span>
+            <span class="settings-check" id="check-lang-uk">✓</span>
+          </div>
+          <div class="settings-option-tile" id="opt-lang-us">
+            <span>US English</span>
+            <span class="settings-check" id="check-lang-us" style="display: none;">✓</span>
+          </div>
+        </div>
+
+        <div class="section-header">Historic Reformed Prayers</div>
+        <div class="settings-group">
+          <div class="settings-option-tile" id="opt-historic-dedicated">
+            <span>Dedicated in General (Default)</span>
+            <span class="settings-check" id="check-historic-dedicated">✓</span>
+          </div>
+          <div class="settings-option-tile" id="opt-historic-blended">
+            <span>Blend into Daily Rotation</span>
+            <span class="settings-check" id="check-historic-blended" style="display: none;">✓</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Interactive JavaScript Application Engine -->
+  <script>
+    (function() {
+      // -----------------------------------------------------------------------
+      // In-Memory Data Store (Simulating SQLite Vault)
+      // -----------------------------------------------------------------------
+      const state = {
+        theme: 'light',
+        textScale: 'large',
+        language: 'en-AU',
+        historicMode: 'dedicated', // 'dedicated' or 'blended'
+
+        // Anti-neglect queue tracking
+        entities: [
+          { id: 1, name: 'Sarah', root: 'PEOPLE', interacted_count: 3, last_interacted_at: '2026-09-01T08:00:00Z' },
+          { id: 2, name: 'David', root: 'PEOPLE', interacted_count: 1, last_interacted_at: '2026-08-25T10:00:00Z' },
+          { id: 3, name: 'Me', root: 'PEOPLE', interacted_count: 5, last_interacted_at: '2026-09-06T09:00:00Z' },
+          { id: 4, name: 'Parish Council', root: 'GROUPS', interacted_count: 0, last_interacted_at: null },
+          { id: 5, name: 'Youth Ministry Team', root: 'GROUPS', interacted_count: 2, last_interacted_at: '2026-08-30T19:00:00Z' },
+          { id: 6, name: 'Persecuted Church in Central Asia', root: 'GENERAL', interacted_count: 0, last_interacted_at: null },
+          { id: 7, name: 'Historic Prayers', root: 'GENERAL', interacted_count: 4, last_interacted_at: '2026-09-05T07:00:00Z' }
+        ],
+
+        prayers: [
+          // Sarah
+          { id: 101, entity_id: 1, title: 'Chemotherapy endurance & peace', body: 'Patience through bodily weakness; presence of Christ in isolation; sustained trust in God\'s sovereign goodness.', status: 'ACTIVE' },
+          { id: 102, entity_id: 1, title: 'Surgical recovery & tissue healing', body: 'Complication-free healing; skill for surgeons; rest without unceasing anxiety.', status: 'ACTIVE' },
+          { id: 103, entity_id: 1, title: 'Clear biopsy margins', body: 'Pathology confirmed clean margins; thanksgiving for answered intercession.', status: 'ANSWERED' },
+
+          // David
+          { id: 201, entity_id: 2, title: 'Faithfulness under workplace scrutiny', body: 'Integrity when pressured to compromise; bold, gentle witness to colleagues.', status: 'ACTIVE' },
+
+          // Me
+          { id: 301, entity_id: 3, title: 'Patience with children & gentle speech', body: 'Restraint when fatigued; putting off sinful anger; reflecting Christ\'s gentleness.', status: 'ACTIVE' },
+
+          // Parish Council
+          { id: 401, entity_id: 4, title: 'Wisdom in pastoral appointments', body: 'Doctrinal discernment; unity across leaders; raising faithful elders.', status: 'ACTIVE' },
+
+          // Youth Ministry Team
+          { id: 501, entity_id: 5, title: 'Discipleship of high schoolers', body: 'Clear teaching of Scripture; protection against secular cynicism; authentic repentance.', status: 'ACTIVE' },
+
+          // Persecuted Church
+          { id: 601, entity_id: 6, title: 'Endurance under state surveillance', body: 'Courage for underground pastors; uncompromised gospel preaching; preservation of secret assemblies.', status: 'ACTIVE' },
+
+          // Historic Prayers
+          { id: 701, entity_id: 7, title: 'The Lord\'s Prayer', body: 'Our Father in heaven, hallowed be your name. Your kingdom come, your will be done, on earth as it is in heaven. Give us this day our daily bread, and forgive us our debts, as we also have forgiven our debtors. And lead us not into temptation, but deliver us from evil. For yours is the kingdom and the power and the glory forever. Amen.', status: 'ACTIVE' },
+          { id: 702, entity_id: 7, title: 'BCP Collect for Peace', body: 'O God, who art the author of peace and lover of concord, in knowledge of whom standeth our eternal life, whose service is perfect freedom; Defend us thy humble servants in all assaults of our enemies; that we, surely trusting in thy defence, may not fear the power of any adversaries; through the might of Jesus Christ our Lord. Amen.', status: 'ACTIVE' },
+          { id: 703, entity_id: 7, title: 'The Apostles\' Creed', body: 'I believe in God, the Father almighty, creator of heaven and earth. I believe in Jesus Christ, his only Son, our Lord, who was conceived by the Holy Spirit and born of the virgin Mary. He suffered under Pontius Pilate, was crucified, died, and was buried; he descended to the dead. On the third day he rose again; he ascended into heaven, he is seated at the right hand of the Father, and he will come to judge the living and the dead. I believe in the Holy Spirit, the holy catholic church, the communion of saints, the forgiveness of sins, the resurrection of the body, and the life everlasting. Amen.', status: 'ACTIVE' }
+        ],
+
+        // Active Session Navigation State
+        currentScreen: 'screen-home',
+        prayerQueue: [],
+        currentPrayerIndex: 0,
+        selectedEntityId: null,
+        createdEntityRoot: 'PEOPLE',
+
+        // "Guide Me" Session State
+        guideMoreRequested: false
+      };
+
+      // -----------------------------------------------------------------------
+      // DOM Elements
+      // -----------------------------------------------------------------------
+      const topBar = document.getElementById('top-bar');
+      const topBarBack = document.getElementById('top-bar-back');
+      const topBarTitle = document.getElementById('top-bar-title');
+      const topBarRight = document.getElementById('top-bar-action-right');
+
+      // Screens
+      const screens = {
+        'screen-home': document.getElementById('screen-home'),
+        'screen-pray': document.getElementById('screen-pray'),
+        'screen-journal': document.getElementById('screen-journal'),
+        'screen-entity-detail': document.getElementById('screen-entity-detail'),
+        'screen-log-step0': document.getElementById('screen-log-step0'),
+        'screen-log-step1': document.getElementById('screen-log-step1'),
+        'screen-log-direct': document.getElementById('screen-log-direct'),
+        'screen-log-guide': document.getElementById('screen-log-guide'),
+        'screen-settings': document.getElementById('screen-settings')
+      };
+
+      // -----------------------------------------------------------------------
+      // Screen Transition Controller
+      // -----------------------------------------------------------------------
+      function showScreen(screenId, params = {}) {
+        state.currentScreen = screenId;
+
+        // Hide all screens
+        Object.values(screens).forEach(scr => scr.classList.remove('active'));
+
+        // Reset top bar defaults
+        topBar.style.display = 'flex';
+        topBarBack.style.visibility = 'visible';
+        topBarRight.style.visibility = 'hidden';
+
+        if (screenId === 'screen-home') {
+          topBar.style.display = 'none'; // Pristine blank canvas on launch
+        } else if (screenId === 'screen-pray') {
+          topBar.style.display = 'none'; // 100% full screen, no buttons, no borders
+          renderPrayerTopic();
+        } else if (screenId === 'screen-journal') {
+          topBarTitle.textContent = 'Journal';
+          topBarRight.style.visibility = 'visible';
+          topBarRight.textContent = 'Settings';
+          renderJournal();
+        } else if (screenId === 'screen-entity-detail') {
+          const entity = state.entities.find(e => e.id === state.selectedEntityId);
+          topBarTitle.textContent = entity ? entity.name : 'Journal';
+          renderEntityDetail();
+        } else if (screenId === 'screen-log-step0') {
+          topBarTitle.textContent = 'Log prayer points';
+          renderLogStep0();
+        } else if (screenId === 'screen-log-step1') {
+          const entity = state.entities.find(e => e.id === state.selectedEntityId);
+          topBarTitle.textContent = entity ? entity.name : 'Log prayer points';
+          document.getElementById('log-target-banner').textContent = `Target: ${entity ? entity.name : ''}`;
+        } else if (screenId === 'screen-log-direct') {
+          const entity = state.entities.find(e => e.id === state.selectedEntityId);
+          topBarTitle.textContent = 'Direct Entry';
+          document.getElementById('direct-target-banner').textContent = `Target: ${entity ? entity.name : ''}`;
+          document.getElementById('direct-input-title').value = '';
+          document.getElementById('direct-input-body').value = '';
+        } else if (screenId === 'screen-log-guide') {
+          const entity = state.entities.find(e => e.id === state.selectedEntityId);
+          topBarTitle.textContent = 'Guide Me';
+          document.getElementById('guide-target-banner').textContent = `Target: ${entity ? entity.name : ''}`;
+          document.getElementById('guide-heart-label').textContent = `Who or what is on your heart regarding ${entity ? entity.name : ''}?`;
+          document.getElementById('guide-raw-input').value = '';
+          state.guideMoreRequested = false;
+          showGuideSubstep(1);
+        } else if (screenId === 'screen-settings') {
+          topBarTitle.textContent = 'Settings';
+          updateSettingsUI();
+        }
+
+        screens[screenId].classList.add('active');
+        screens[screenId].scrollTop = 0;
+      }
+
+      // -----------------------------------------------------------------------
+      // 1. Home Navigation Wiring
+      // -----------------------------------------------------------------------
+      document.getElementById('btn-home-pray').addEventListener('click', () => {
+        buildBalancedPrayerQueue();
+        state.currentPrayerIndex = 0;
+        showScreen('screen-pray');
+      });
+
+      document.getElementById('btn-home-journal').addEventListener('click', () => {
+        showScreen('screen-journal');
+      });
+
+      document.getElementById('btn-home-log').addEventListener('click', () => {
+        showScreen('screen-log-step0');
+      });
+
+      // Top Bar Actions
+      topBarBack.addEventListener('click', () => {
+        if (state.currentScreen === 'screen-journal') {
+          showScreen('screen-home');
+        } else if (state.currentScreen === 'screen-entity-detail') {
+          showScreen('screen-journal');
+        } else if (state.currentScreen === 'screen-log-step0') {
+          showScreen('screen-home');
+        } else if (state.currentScreen === 'screen-log-step1') {
+          showScreen('screen-log-step0');
+        } else if (state.currentScreen === 'screen-log-direct' || state.currentScreen === 'screen-log-guide') {
+          showScreen('screen-log-step1');
+        } else if (state.currentScreen === 'screen-settings') {
+          showScreen('screen-journal');
+        } else {
+          showScreen('screen-home');
+        }
+      });
+
+      topBarRight.addEventListener('click', () => {
+        if (state.currentScreen === 'screen-journal') {
+          showScreen('screen-settings');
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // 2. Full-Screen Prayer Mode Engine ("Start praying")
+      // Balanced Anti-Neglect Queue & Natural Gestural Navigation
+      // -----------------------------------------------------------------------
+      function buildBalancedPrayerQueue() {
+        // Find all entities with at least one active prayer
+        const activeEntities = state.entities.filter(e => {
+          return state.prayers.some(p => p.entity_id === e.id && p.status === 'ACTIVE');
+        });
+
+        // Anti-Neglect Algorithm:
+        // 1. Never-interacted topics first (last_interacted_at is null)
+        // 2. Oldest interacted topics next
+        // 3. Lowest interacted_count
+        activeEntities.sort((a, b) => {
+          if (a.last_interacted_at === null && b.last_interacted_at !== null) return -1;
+          if (a.last_interacted_at !== null && b.last_interacted_at === null) return 1;
+          if (a.last_interacted_at && b.last_interacted_at) {
+            const dateDiff = new Date(a.last_interacted_at) - new Date(b.last_interacted_at);
+            if (dateDiff !== 0) return dateDiff;
+          }
+          return a.interacted_count - b.interacted_count;
+        });
+
+        state.prayerQueue = activeEntities;
+      }
+
+      function renderPrayerTopic() {
+        if (state.prayerQueue.length === 0) {
+          document.getElementById('pray-heading').textContent = 'No prayer points found';
+          document.getElementById('pray-points-container').innerHTML = `
+            <div class="prayer-point-entry">
+              <div class="prayer-point-title">Begin by logging a prayer point</div>
+              <div class="prayer-point-body">Tap top edge or press Escape to return to the home screen.</div>
+            </div>
+          `;
+          document.getElementById('pray-answered-container').style.display = 'none';
+          return;
+        }
+
+        const entity = state.prayerQueue[state.currentPrayerIndex];
+
+        // Silently touch interaction stats
+        entity.interacted_count += 1;
+        entity.last_interacted_at = new Date().toISOString();
+
+        // Strict Heading: "Praying for [Entity]"
+        document.getElementById('pray-heading').textContent = `Praying for ${entity.name}`;
+
+        // Fetch active prayers
+        const activePrayers = state.prayers.filter(p => p.entity_id === entity.id && p.status === 'ACTIVE');
+        const answeredPrayers = state.prayers.filter(p => p.entity_id === entity.id && p.status === 'ANSWERED');
+
+        const pointsContainer = document.getElementById('pray-points-container');
+        pointsContainer.innerHTML = '';
+
+        // Render Active Petitions (Pure Typographic Whitespace, Unnumbered)
+        activePrayers.forEach(p => {
+          const entry = document.createElement('div');
+          entry.className = 'prayer-point-entry';
+          entry.innerHTML = `
+            <div class="prayer-point-title">${escapeHtml(p.title)}</div>
+            <div class="prayer-point-body">${escapeHtml(p.body)}</div>
+          `;
+          pointsContainer.appendChild(entry);
+        });
+
+        // Answered Section (Softly rendered below, no tiles, muted strikethrough)
+        const answeredContainer = document.getElementById('pray-answered-container');
+        const answeredList = document.getElementById('pray-answered-list');
+        answeredList.innerHTML = '';
+
+        if (answeredPrayers.length > 0) {
+          answeredContainer.style.display = 'block';
+          answeredPrayers.forEach(p => {
+            const entry = document.createElement('div');
+            entry.className = 'answered-entry';
+            entry.innerHTML = `
+              <div class="answered-title">${escapeHtml(p.title)}</div>
+              <div class="answered-body">${escapeHtml(p.body)}</div>
+            `;
+            answeredList.appendChild(entry);
+          });
+        } else {
+          answeredContainer.style.display = 'none';
+        }
+      }
+
+      function nextPrayerTopic() {
+        if (state.prayerQueue.length === 0) return;
+        state.currentPrayerIndex = (state.currentPrayerIndex + 1) % state.prayerQueue.length;
+        renderPrayerTopic();
+        screens['screen-pray'].scrollTop = 0;
+      }
+
+      function prevPrayerTopic() {
+        if (state.prayerQueue.length === 0) return;
+        state.currentPrayerIndex = (state.currentPrayerIndex - 1 + state.prayerQueue.length) % state.prayerQueue.length;
+        renderPrayerTopic();
+        screens['screen-pray'].scrollTop = 0;
+      }
+
+      function exitPrayerMode() {
+        showScreen('screen-home');
+      }
+
+      // Gestural Zone Event Listeners
+      document.getElementById('pray-zone-next').addEventListener('click', nextPrayerTopic);
+      document.getElementById('pray-zone-prev').addEventListener('click', prevPrayerTopic);
+      document.getElementById('pray-zone-top-exit').addEventListener('click', exitPrayerMode);
+
+      // Keyboard navigation for prayer mode
+      window.addEventListener('keydown', (e) => {
+        if (state.currentScreen !== 'screen-pray') return;
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          nextPrayerTopic();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          prevPrayerTopic();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          exitPrayerMode();
+        }
+      });
+
+      // -----------------------------------------------------------------------
+      // 3. Open Journal: Directory & Entity Detail
+      // -----------------------------------------------------------------------
+      function renderJournal() {
+        const peopleList = document.getElementById('journal-people-list');
+        const groupsList = document.getElementById('journal-groups-list');
+        const generalList = document.getElementById('journal-general-list');
+
+        peopleList.innerHTML = '';
+        groupsList.innerHTML = '';
+        generalList.innerHTML = '';
+
+        state.entities.forEach(entity => {
+          const tile = document.createElement('div');
+          tile.className = 'entity-tile';
+          // Minimal Contextual Data Exposure: clean name only, no database tally counters!
+          tile.innerHTML = `
+            <span>${escapeHtml(entity.name)}</span>
+            <span class="tile-arrow">→</span>
+          `;
+          tile.addEventListener('click', () => {
+            state.selectedEntityId = entity.id;
+            showScreen('screen-entity-detail');
+          });
+
+          if (entity.root === 'PEOPLE') {
+            peopleList.appendChild(tile);
+          } else if (entity.root === 'GROUPS') {
+            groupsList.appendChild(tile);
+          } else if (entity.root === 'GENERAL') {
+            generalList.appendChild(tile);
+          }
+        });
+      }
+
+      function renderEntityDetail() {
+        const list = document.getElementById('entity-petitions-list');
+        list.innerHTML = '';
+
+        const petitions = state.prayers.filter(p => p.entity_id === state.selectedEntityId);
+
+        if (petitions.length === 0) {
+          list.innerHTML = `
+            <div style="padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: var(--font-body);">
+              No prayer points recorded yet.
+            </div>
+          `;
+          return;
+        }
+
+        petitions.forEach(p => {
+          const card = document.createElement('div');
+          card.className = `detail-petition-card ${p.status === 'ANSWERED' ? 'is-answered' : ''}`;
+          // Strictly unnumbered!
+          card.innerHTML = `
+            <div class="detail-petition-title">${escapeHtml(p.title)}</div>
+            <div class="detail-petition-body">${escapeHtml(p.body)}</div>
+          `;
+
+          // Tap to toggle Answered status
+          card.addEventListener('click', () => {
+            p.status = p.status === 'ACTIVE' ? 'ANSWERED' : 'ACTIVE';
+            renderEntityDetail();
+          });
+
+          list.appendChild(card);
+        });
+      }
+
+      // In-Directory Quick Log
+      document.getElementById('btn-entity-log-point').addEventListener('click', () => {
+        showScreen('screen-log-step1');
+      });
+
+      // -----------------------------------------------------------------------
+      // 4. Log Prayer Points: Entity Selection (Step 0) & Pathways
+      // -----------------------------------------------------------------------
+      function renderLogStep0() {
+        const pickerList = document.getElementById('log-picker-list');
+        pickerList.innerHTML = '';
+
+        state.entities.forEach(entity => {
+          const tile = document.createElement('div');
+          tile.className = 'entity-tile';
+          tile.innerHTML = `
+            <span>${escapeHtml(entity.name)}</span>
+            <span class="tile-arrow">→</span>
+          `;
+          tile.addEventListener('click', () => {
+            state.selectedEntityId = entity.id;
+            showScreen('screen-log-step1');
+          });
+          pickerList.appendChild(tile);
+        });
+
+        // Reset new entity form
+        document.getElementById('new-entity-name').value = '';
+        state.createdEntityRoot = 'PEOPLE';
+        document.getElementById('radio-root-people').classList.add('selected');
+        document.getElementById('radio-root-groups').classList.remove('selected');
+      }
+
+      document.getElementById('radio-root-people').addEventListener('click', () => {
+        state.createdEntityRoot = 'PEOPLE';
+        document.getElementById('radio-root-people').classList.add('selected');
+        document.getElementById('radio-root-groups').classList.remove('selected');
+      });
+
+      document.getElementById('radio-root-groups').addEventListener('click', () => {
+        state.createdEntityRoot = 'GROUPS';
+        document.getElementById('radio-root-groups').classList.add('selected');
+        document.getElementById('radio-root-people').classList.remove('selected');
+      });
+
+      document.getElementById('btn-create-entity').addEventListener('click', () => {
+        const name = document.getElementById('new-entity-name').value.trim();
+        if (!name) return;
+
+        const newEntity = {
+          id: Date.now(),
+          name: name,
+          root: state.createdEntityRoot,
+          interacted_count: 0,
+          last_interacted_at: null
+        };
+        state.entities.unshift(newEntity);
+        state.selectedEntityId = newEntity.id;
+        showScreen('screen-log-step1');
+      });
+
+      // Pathway Selection (Step 1)
+      document.getElementById('btn-pathway-direct').addEventListener('click', () => {
+        showScreen('screen-log-direct');
+      });
+
+      document.getElementById('btn-pathway-guide').addEventListener('click', () => {
+        showScreen('screen-log-guide');
+      });
+
+      // Pathway A: Direct Entry
+      document.getElementById('btn-direct-save').addEventListener('click', () => {
+        const title = document.getElementById('direct-input-title').value.trim();
+        const body = document.getElementById('direct-input-body').value.trim();
+        if (!title) return;
+
+        state.prayers.unshift({
+          id: Date.now(),
+          entity_id: state.selectedEntityId,
+          title: title,
+          body: body || title,
+          status: 'ACTIVE'
+        });
+
+        showScreen('screen-entity-detail');
+      });
+
+      document.getElementById('btn-direct-cancel').addEventListener('click', () => {
+        showScreen('screen-log-step1');
+      });
+
+      // Pathway B: Guide Me Workflow
+      function showGuideSubstep(stepNum) {
+        document.getElementById('guide-substep-1').style.display = stepNum === 1 ? 'flex' : 'none';
+        document.getElementById('guide-substep-2').style.display = stepNum === 2 ? 'flex' : 'none';
+        document.getElementById('guide-substep-3').style.display = stepNum === 3 ? 'flex' : 'none';
+      }
+
+      document.getElementById('btn-guide-cancel-1').addEventListener('click', () => {
+        showScreen('screen-log-step1');
+      });
+
+      document.getElementById('btn-guide-continue').addEventListener('click', () => {
+        const input = document.getElementById('guide-raw-input').value.trim();
+        if (!input) return;
+        // Step 2: Show single objective question (6-12 words, neutral)
+        document.getElementById('guide-clarification-input').value = '';
+        showGuideSubstep(2);
+      });
+
+      document.getElementById('btn-guide-answer').addEventListener('click', () => {
+        renderCandidateReview();
+        showGuideSubstep(3);
+      });
+
+      document.getElementById('btn-guide-skip-q').addEventListener('click', () => {
+        // Unconditional skipping immediately transitions to candidate review!
+        renderCandidateReview();
+        showGuideSubstep(3);
+      });
+
+      function renderCandidateReview(isAlternate = false) {
+        const entity = state.entities.find(e => e.id === state.selectedEntityId);
+        const entityName = entity ? entity.name : 'Target';
+        const container = document.getElementById('guide-candidates-container');
+        container.innerHTML = '';
+
+        // Strictly and exactly 2 candidate points!
+        // 2-6 word titles; telegraphic descriptions <= 25 words; 2-3 clause semicolon pattern.
+        const candidates = isAlternate ? [
+          {
+            title: `Steadfast peace & faith`,
+            body: `Presence of Christ in acute trial; preservation against bitterness; quiet joy in God's promises.`
+          },
+          {
+            title: `Daily strength & discernment`,
+            body: `Endurance through bodily fatigue; clarity for difficult decisions; submission to God's sovereign care.`
+          }
+        ] : [
+          {
+            title: `Healing & physical relief`,
+            body: `Relief from acute physical suffering; wisdom for attending physicians; resting in God's sovereign timing.`
+          },
+          {
+            title: `Persevering hope in Christ`,
+            body: `Protection against despair; anchoring soul in gospel promises; grateful heart amidst trial.`
+          }
+        ];
+
+        candidates.forEach(c => {
+          const card = document.createElement('div');
+          card.className = 'candidate-card';
+          card.innerHTML = `
+            <div class="candidate-title">${escapeHtml(c.title)}</div>
+            <div class="candidate-body">${escapeHtml(c.body)}</div>
+          `;
+          container.appendChild(card);
+        });
+
+        // Store active candidates for saving
+        state.activeCandidates = candidates;
+      }
+
+      document.getElementById('btn-guide-request-more').addEventListener('click', (e) => {
+        if (state.guideMoreRequested) return;
+        state.guideMoreRequested = true;
+        e.target.style.display = 'none'; // Strictly one-time action per session
+        renderCandidateReview(true);
+      });
+
+      document.getElementById('btn-guide-save-candidates').addEventListener('click', () => {
+        if (state.activeCandidates) {
+          state.activeCandidates.forEach(c => {
+            state.prayers.unshift({
+              id: Date.now() + Math.random(),
+              entity_id: state.selectedEntityId,
+              title: c.title,
+              body: c.body,
+              status: 'ACTIVE'
+            });
+          });
+        }
+        showScreen('screen-entity-detail');
+      });
+
+      document.getElementById('btn-guide-cancel-3').addEventListener('click', () => {
+        showScreen('screen-log-step1');
+      });
+
+      // -----------------------------------------------------------------------
+      // 5. Settings Controller
+      // -----------------------------------------------------------------------
+      function updateSettingsUI() {
+        // Theme Checks
+        document.getElementById('check-theme-light').style.display = state.theme === 'light' ? 'inline' : 'none';
+        document.getElementById('check-theme-night').style.display = state.theme === 'night' ? 'inline' : 'none';
+
+        // Text Scale Checks
+        document.getElementById('check-scale-large').style.display = state.textScale === 'large' ? 'inline' : 'none';
+        document.getElementById('check-scale-regular').style.display = state.textScale === 'regular' ? 'inline' : 'none';
+        document.getElementById('check-scale-compact').style.display = state.textScale === 'compact' ? 'inline' : 'none';
+
+        // Dialect Checks
+        document.getElementById('check-lang-uk').style.display = state.language === 'en-AU' ? 'inline' : 'none';
+        document.getElementById('check-lang-us').style.display = state.language === 'en-US' ? 'inline' : 'none';
+
+        // Historic Checks
+        document.getElementById('check-historic-dedicated').style.display = state.historicMode === 'dedicated' ? 'inline' : 'none';
+        document.getElementById('check-historic-blended').style.display = state.historicMode === 'blended' ? 'inline' : 'none';
+      }
+
+      document.getElementById('opt-theme-light').addEventListener('click', () => {
+        state.theme = 'light';
+        document.documentElement.setAttribute('data-theme', 'light');
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-theme-night').addEventListener('click', () => {
+        state.theme = 'night';
+        document.documentElement.setAttribute('data-theme', 'night');
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-scale-large').addEventListener('click', () => {
+        state.textScale = 'large';
+        document.documentElement.setAttribute('data-text-scale', 'large');
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-scale-regular').addEventListener('click', () => {
+        state.textScale = 'regular';
+        document.documentElement.setAttribute('data-text-scale', 'regular');
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-scale-compact').addEventListener('click', () => {
+        state.textScale = 'compact';
+        document.documentElement.setAttribute('data-text-scale', 'compact');
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-lang-uk').addEventListener('click', () => {
+        state.language = 'en-AU';
+        document.documentElement.lang = 'en-AU';
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-lang-us').addEventListener('click', () => {
+        state.language = 'en-US';
+        document.documentElement.lang = 'en-US';
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-historic-dedicated').addEventListener('click', () => {
+        state.historicMode = 'dedicated';
+        updateSettingsUI();
+      });
+
+      document.getElementById('opt-historic-blended').addEventListener('click', () => {
+        state.historicMode = 'blended';
+        updateSettingsUI();
+      });
+
+      // Utility
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      // Initial Launch: Blank Home Screen
+      showScreen('screen-home');
+    })();
+  </script>
+</body>
+</html>
