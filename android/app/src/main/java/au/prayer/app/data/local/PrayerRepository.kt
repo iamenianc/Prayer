@@ -84,6 +84,29 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         }
     }
 
+    fun updateEntity(
+        id: String,
+        displayName: String,
+        rootCode: RootCode? = null,
+        contextDescription: String? = null
+    ) {
+        val values = ContentValues().apply {
+            put(PrayerDatabaseHelper.COL_ENTITY_NAME, displayName.trim())
+            if (rootCode != null) {
+                put(PrayerDatabaseHelper.COL_ENTITY_ROOT, rootCode.name)
+            }
+            if (contextDescription != null) {
+                put(PrayerDatabaseHelper.COL_ENTITY_CONTEXT, contextDescription.trim())
+            }
+        }
+        db.update(
+            PrayerDatabaseHelper.TABLE_ENTITIES,
+            values,
+            "${PrayerDatabaseHelper.COL_ENTITY_ID} = ?",
+            arrayOf(id)
+        )
+    }
+
     fun deleteEntity(id: String) {
         db.delete(
             PrayerDatabaseHelper.TABLE_POINTS,

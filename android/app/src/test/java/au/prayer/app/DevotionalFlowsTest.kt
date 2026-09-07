@@ -19,9 +19,17 @@ class DevotionalFlowsTest {
         assertEquals(RootCode.PEOPLE, person.rootCode)
         assertEquals("Sarah", person.displayName)
 
+        val personalMe = IndividualEntity(rootCode = RootCode.PEOPLE, displayName = "Me", contextDescription = "Personal sanctification and health")
+        assertEquals(RootCode.PEOPLE, personalMe.rootCode)
+        assertEquals("Me", personalMe.displayName)
+
         val group = IndividualEntity(rootCode = RootCode.GROUPS, displayName = "Parish Council")
         assertEquals(RootCode.GROUPS, group.rootCode)
         assertEquals("Parish Council", group.displayName)
+
+        val general = IndividualEntity(rootCode = RootCode.GENERAL, displayName = "Global Church & Mission")
+        assertEquals(RootCode.GENERAL, general.rootCode)
+        assertEquals("Global Church & Mission", general.displayName)
     }
 
     @Test
@@ -35,9 +43,35 @@ class DevotionalFlowsTest {
     }
 
     @Test
-    fun `test direct entry empty text title fallback`() {
-        val title = apiClient.generateOfflineFallbackTitle("")
-        assertEquals("Petition", title)
+    fun `test direct entry offline fallback title edge cases`() {
+        // Empty text
+        assertEquals("Prayer Point", apiClient.generateOfflineFallbackTitle(""))
+        assertEquals("Prayer Point", apiClient.generateOfflineFallbackTitle("   "))
+        assertEquals("Prayer Point", apiClient.generateOfflineFallbackTitle("\n\t  \n"))
+
+        // Bullet symbols only
+        assertEquals("Prayer Point", apiClient.generateOfflineFallbackTitle("•"))
+        assertEquals("Prayer Point", apiClient.generateOfflineFallbackTitle("• • •"))
+
+        // Single word
+        assertEquals("Healing", apiClient.generateOfflineFallbackTitle("• Healing"))
+        assertEquals("Comfort", apiClient.generateOfflineFallbackTitle("Comfort"))
+
+        // Exactly 2, 3, and 4 words
+        assertEquals("Family Peace", apiClient.generateOfflineFallbackTitle("• Family Peace"))
+        assertEquals("Comfort In Sorrow", apiClient.generateOfflineFallbackTitle("• Comfort In Sorrow"))
+        assertEquals("Strength For Daily Walk", apiClient.generateOfflineFallbackTitle("• Strength For Daily Walk"))
+
+        // 5+ words: strictly truncated to first 4 words
+        val longInput = "• God sovereignly grant wisdom to our church elders during transition"
+        val fallback = apiClient.generateOfflineFallbackTitle(longInput)
+        assertEquals("God sovereignly grant wisdom", fallback)
+        assertEquals(4, fallback.split("\\s+".toRegex()).size)
+
+        // Multiple leading bullets and tabs
+        val messyInput = "•••\t  Gospel boldness among neighbors and coworkers"
+        val messyFallback = apiClient.generateOfflineFallbackTitle(messyInput)
+        assertEquals("Gospel boldness among neighbors", messyFallback)
     }
 
     @Test
@@ -49,6 +83,18 @@ class DevotionalFlowsTest {
         val inputWithNewline = "• Pray for wisdom\n"
         val formatted = formatNextLine(inputWithNewline)
         assertEquals("• Pray for wisdom\n• ", formatted)
+    }
+
+    @Test
+    fun `test auto bullet point empty bullet clearing logic`() {
+        // Clearing an empty bullet when user presses Enter or Backspace on "• "
+        fun handleBackspaceOnEmptyBullet(current: String): String {
+            val trimmed = current.trimEnd()
+            return if (trimmed.endsWith("•")) trimmed.removeSuffix("•").trimEnd() else current
+        }
+
+        assertEquals("", handleBackspaceOnEmptyBullet("• "))
+        assertEquals("• First point", handleBackspaceOnEmptyBullet("• First point\n• "))
     }
 
     @Test
@@ -79,30 +125,104 @@ class DevotionalFlowsTest {
 
             val descWords = card.description.split("\\s+".toRegex()).size
             assertTrue("Description must be telegraphic <= 25 words: $descWords", descWords <= 25)
+
+            // Telegraphic constraints: no w/ or /w abbreviations
+            assertFalse("Must not use 'w/' abbreviation: '${card.description}'", card.description.contains("w/"))
+            assertFalse("Must not use '/w' abbreviation: '${card.description}'", card.description.contains("/w"))
+
+            // Must avoid redundant prefixes
+            assertFalse("Must not start with 'Pray for'", card.title.startsWith("Pray for", ignoreCase = true))
+            assertFalse("Must not start with 'Ask God to'", card.title.startsWith("Ask God to", ignoreCase = true))
         }
     }
 
     @Test
-    fun `test saved petition editing and permanent deletion contract`() {
+    fun `test saved prayer point editing and permanent deletion contract`() {
         val initialPoint = PrayerPoint(
             entityId = "entity-1",
             title = "Old Title",
-            description = "• Initial petition content",
+            description = "• Initial prayer point content",
             status = PrayerStatus.ACTIVE
         )
 
-        // Editing title and body
+        // Verify initial state
+        assertEquals(PrayerStatus.ACTIVE, initialPoint.status)
+        assertNull(initialPoint.answeredAt)
+        assertNull(initialPoint.answeredTestimony)
+
+        // Editing title and body and transitioning to ANSWERED
+        val answeredTime = System.currentTimeMillis()
         val editedPoint = initialPoint.copy(
             title = "Customized Title",
-            description = "• Updated pastoral petition",
+            description = "• Updated pastoral prayer point",
             status = PrayerStatus.ANSWERED,
-            answeredAt = System.currentTimeMillis(),
+            answeredAt = answeredTime,
             answeredTestimony = "Praise God for His faithful provision"
         )
 
         assertEquals("Customized Title", editedPoint.title)
         assertEquals(PrayerStatus.ANSWERED, editedPoint.status)
-        assertNotNull(editedPoint.answeredAt)
+        assertEquals(answeredTime, editedPoint.answeredAt)
         assertEquals("Praise God for His faithful provision", editedPoint.answeredTestimony)
+
+        // Transitioning back to ACTIVE clears answered fields
+        val reactivatedPoint = editedPoint.copy(
+            status = PrayerStatus.ACTIVE,
+            answeredAt = null,
+            answeredTestimony = null
+        )
+        assertEquals(PrayerStatus.ACTIVE, reactivatedPoint.status)
+        assertNull(reactivatedPoint.answeredAt)
+        assertNull(reactivatedPoint.answeredTestimony)
+    }
+
+    @Test
+    fun `test entity update and sphere transition contract`() {
+        val initialEntity = IndividualEntity(
+            rootCode = RootCode.PEOPLE,
+            displayName = "David"
+        )
+        assertEquals(RootCode.PEOPLE, initialEntity.rootCode)
+        assertEquals("David", initialEntity.displayName)
+
+        // Renaming entity
+        val renamed = initialEntity.copy(displayName = "David Jenkins")
+        assertEquals("David Jenkins", renamed.displayName)
+        assertEquals(RootCode.PEOPLE, renamed.rootCode)
+
+        // Transitioning sphere from PEOPLE to GROUPS
+        val groupEntity = renamed.copy(rootCode = RootCode.GROUPS, displayName = "Jenkins Family")
+        assertEquals(RootCode.GROUPS, groupEntity.rootCode)
+        assertEquals("Jenkins Family", groupEntity.displayName)
+    }
+
+    @Test
+    fun `test prayer record quick toggle from active to answered and back`() {
+        val activePoint = PrayerPoint(
+            entityId = "e-1",
+            title = "Daily Strength",
+            description = "• Walking faithfully in trial",
+            status = PrayerStatus.ACTIVE
+        )
+        assertEquals(PrayerStatus.ACTIVE, activePoint.status)
+        assertNull(activePoint.answeredAt)
+
+        // Quick toggle to ANSWERED
+        val answeredPoint = activePoint.copy(
+            status = PrayerStatus.ANSWERED,
+            answeredAt = 1000L
+        )
+        assertEquals(PrayerStatus.ANSWERED, answeredPoint.status)
+        assertEquals(1000L, answeredPoint.answeredAt)
+
+        // Quick toggle back to ACTIVE
+        val toggledBack = answeredPoint.copy(
+            status = PrayerStatus.ACTIVE,
+            answeredAt = null,
+            answeredTestimony = null
+        )
+        assertEquals(PrayerStatus.ACTIVE, toggledBack.status)
+        assertNull(toggledBack.answeredAt)
+        assertNull(toggledBack.answeredTestimony)
     }
 }

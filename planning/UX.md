@@ -14,12 +14,12 @@
 The Prayer app is conceived as a quiet, sacred personal vault. Most consumer apps rely on vibrant colors, badges, notifications, and social feeds designed to capture and monetize user attention. In contrast, this app is designed to **give attention back to the user's interior life, personal relationships, and communion with God**.
 
 ### 1.1 Core Experience Pillars
-- **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly three options: **Start praying**, **Open Journal**, and **Log prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
+- **Radical Simplicity & Blank Entry**: The application opens to a serene, completely uncluttered screen with strictly three options: **Start praying**, **Open Journal**, and **Add prayer points**. There are no distracting dashboards, activity feeds, or cluttered widgets on launch.
 - **Strictly Passive Full-Screen Prayer Mode**: When in Prayer mode (*Start praying*), the UI transitions into an immersive, full-screen sanctuary: strictly zero buttons, zero card tiles, and zero grid lines. There are no check-off boxes, editing tools, or progress bars. The view presents exclusively the name of the entity being prayed for preceded by "Praying for" (e.g., *Praying for Sarah*), followed directly by the prayer points in serene typographic whitespace.
-- **Zero-Gap Contiguous Geometry**: In navigation, logging, and journal views, every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
+- **Zero-Gap Contiguous Geometry**: In navigation, prayer entry, and journal views, every surface, tile, card, and button is strictly adjacent to its neighbors, leaving zero visible gaps, floating margins, or padding gutters between UI elements. Tiles share 1px hairline boundary seams to form a continuous, unified architectural plane. Rounded corners, curved pill shapes, drop shadows, and bubble cards are strictly prohibited.
 - **Reverent & Solemn**: The interface feels like an architectural tablet or solemn liturgical folio. Content is communicated through crisp typography, ample whitespace, and subtle hairline dividing rules.
 - **Austere Simplicity (Zero Explanatory / Tutorial Text)**: As an unyielding design principle, the application shall never display explanatory, onboarding, or tutorial-like text on its UI elements. Buttons, tiles, and headers present strictly functional labels without descriptive sub-captions or instructional crutches.
-- **Strict Prohibition of Ordinal / Sequential Labels ("Point 1", "Point 2")**: As an absolute design principle, the application shall never code, render, or display arbitrary sequential counters, numeric badges, or ordinal enumerations (e.g., *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, *Item 1*) anywhere in the UI. Petitions before Almighty God are sacred burdens of prayer, never numbered tickets or items on a bureaucratic checklist. Each petition is recognized and presented exclusively by its meaningful title and descriptive content.
+- **Strict Prohibition of Ordinal / Sequential Labels ("Point 1", "Point 2")**: As an absolute design principle, the application shall never code, render, or display arbitrary sequential counters, numeric badges, or ordinal enumerations (e.g., *Point 1*, *Point 2*, *Point 1 of N*, *Item 1*) anywhere in the UI. Prayer points before Almighty God are sacred burdens of prayer, never numbered tickets or items on a bureaucratic checklist. Each prayer point is recognized and presented exclusively by its meaningful title and descriptive content.
 - **Minimal Contextual Data Exposure**: Just because data is stored, calculated, or available in the backend does not mean it has value to show to the user. The interface shall strictly expose only the absolute least amount of data relevant to the immediate devotional context. Progress counters (`Topic 1 of 8`), database tallies (`7 points (5 active)`), entity taxonomy tags, and queue sequence metrics are ruthlessly suppressed from devotional and navigation views.
 - **Sequestered Configuration (Zero Clutter)**: The interface is never cluttered with configuration, settings, or display options. All user preferences reside in a dedicated Settings panel navigated to only when needed from the Journal, preserving an austere, quiet devotional space.
 - **Zero Emojis & Zero Gamification**: Emojis, streak counters, celebration popups, badges, and animations are strictly excluded to preserve dignity and respect.
@@ -46,24 +46,55 @@ Users can toggle between two high-contrast modes depending on environment and pr
 - **No Decorative Icons**: Pure typographic hierarchy and delicate hairline rules.
 - **Subdued Answered State**: In the Journal, when a prayer is answered, the text softens with a subtle strikethrough, visually signaling gratitude and completion while preserving the historical record.
 
-### 2.4 Lexicon & Devotional Terminology Standard (Translating Functional Concepts to Sacred Language)
+### 2.4 Material 3 Compliance, 8dp Spacing Rhythm & Motion Dynamics
+- **Material 3 Alignment with 0dp Planar Contract**:
+  - The design system leverages modern Android Material 3 foundations (`androidx.compose.material3`) while strictly preserving the solemn, non-commercial 0dp aesthetic.
+  - All Material 3 shape tokens are overridden to `FlatSquareShape` (`RoundedCornerShape(0.dp)`), ensuring that M3 surfaces, dialogs, progress bars, text fields, and cards maintain crisp right angles.
+  - Standard M3 component hierarchy:
+    - Root layouts leverage M3 `Scaffold` paired with a global `SnackbarHost` for accessible, reverent feedback (e.g. confirming saved prayer points or updates).
+    - Top headers implement M3 `TopAppBar` (`TopAppBarDefaults`) with standard `IconButton` actions and 56dp height.
+    - Text inputs implement M3 `OutlinedTextField` with `shape = FlatSquareShape`, animated floating labels, active focus rings, and high-contrast monochrome border colors.
+    - Card surfaces use M3 `OutlinedCard` with 0dp corners, 0.5dp hairline borders, and generous padding.
+    - Buttons employ M3 `Button`, `OutlinedButton`, and `TextButton` with `FlatSquareShape` and bounded ripple effects.
+- **Strict 8dp Spacing Grid & Touch Target Ergonomics (`PrayerSpacing`)**:
+  - All layouts strictly adhere to the formal 8dp spacing grid tokens (`PrayerSpacing`):
+    - `extraSmall = 4.dp`: inline caption gaps, subtle metadata separation.
+    - `small = 8.dp`: sub-component spacing, chip padding, field labels.
+    - `medium = 16.dp`: standard screen edge padding, card inner padding, list item gaps.
+    - `large = 24.dp`: section separation, dialog padding, card margins.
+    - `extraLarge = 32.dp`: sanctuary horizontal breathing margins, topic header clearance.
+    - `huge = 48.dp`: accessibility touch target minimum constraint (`minTouchTarget = 48.dp`).
+    - `primaryActionHeight = 56.dp`: primary action slabs and bottom buttons.
+    - `sanctuaryBottom = 72.dp`: contemplative bottom clearance above navigation pills.
+  - Window insets are strictly managed via `Modifier.safeDrawingPadding()`, guaranteeing that content naturally avoids notches, camera cutouts, and gesture pills across all fold postures on Samsung Galaxy Flip devices.
+- **Solemn Devotional Motion Mechanics**:
+  - **Staggered Launch Entrance**: Home screen action slabs glide gracefully into view with staggered fade-and-settle animations (0ms, 60ms, 120ms delays with `FastOutSlowInEasing`).
+  - **Liturgical Page-Turn Navigation**: Advancing or retreating between prayer topics in Sanctuary mode uses horizontal slide animations (`AnimatedContent`) with soft crossfades and `FastOutSlowInEasing` (350ms duration). This mimics the deliberate, sacred physical act of turning pages in an Anglican psalter or Book of Common Prayer.
+  - **Directional Sub-Screen Transitions**: Navigating deeper into Journal hierarchies slides in from the right; returning slides out to the right (`slideInHorizontally` + `fadeIn` / `slideOutHorizontally` + `fadeOut` with `tween(320, easing = FastOutSlowInEasing)`). Entering Sanctuary prayer uses a solemn crossfade paired with subtle 24dp vertical settling.
+  - **List Item Animations**: Dynamic additions, updates, and reordering in Journal lists use `Modifier.animateItem()` for fluid visual continuity.
+  - **Candidate Cards Materialization**: AI-generated prayer points glide into view using staggered `AnimatedVisibility` (fade-in + slide-up).
+  - **Animated Guidance Progress**: AI inference uses M3 `LinearProgressIndicator` accompanied by animated status transitions ("Attuning...", "Distilling thoughts...", "Formulating prayer points...") via `AnimatedContent`.
+  - **Soft Expansion**: Answered prayer sections and sub-views reveal their content smoothly via vertical expansion (`AnimatedVisibility(enter = expandVertically + fadeIn, exit = shrinkVertically + fadeOut)`).
+  - **Interactive State Animations**: Status toggles (Active $\leftrightarrow$ Answered) and settings selections animate colors smoothly via `animateColorAsState`.
+
+### 2.5 Lexicon & Devotional Terminology Standard (Translating Functional Concepts to Sacred Language)
 
 The application maintains an intentional, uncompromising distinction between **underlying functional/database concepts** (used by developers and data schemas) and **devotional app language** (experienced by the believer). Raw engineering jargon, military or marketing terms (such as *"target"*), database primitives (*"entity"*, *"record"*, *"row"*), and bureaucratic ticketing nomenclature (*"item"*, *"status"*, *"resolution"*) are strictly translated into reverent, personal, and liturgically grounded terminology:
 
 | Functional / Database Concept | Meaningful App Language | Theological & Liturgical Rationale |
 | :--- | :--- | :--- |
-| **Target / Target Entity (`entity_id`)** | **`Praying for [Name]`** (in prayer & logging) / **`Person or group`** | Human beings, congregations, and ministries are sacred souls and fellowships held before the Throne of Grace, never clinical "targets" or abstract "entities". |
+| **Target / Target Entity (`entity_id`)** | **`Praying for [Name]`** (in prayer & adding) / **`Person or group`** | Human beings, congregations, and ministries are sacred souls and fellowships held before the Throne of Grace, never clinical "targets" or abstract "entities". |
 | **Entity Selection / Step 0 Prompt** | **`Who are you praying for?`** | Replaces clinical selection procedures with a pastoral, relational inquiry. |
 | **Create Entity Action** | **`Add a person or group`** $\rightarrow$ **`Add & continue`** | Replaces database object instantiation with natural relational entry. |
 | **Picker Source Section** | **`From your journal`** (never *"Or Select Existing"*) | Acknowledges the user's ongoing relational journal rather than a generic database table. |
-| **Prayer Point / Record / Row / Item** | **`Petition`** or **`Prayer`** (or unadorned substantive title) | Petitions before God are solemn intercessory burdens, never items on a checklist or tickets in a queue. |
-| **Ordinal Numbers (`Point 1`, `Point 2`)** | **Strictly Prohibited** (Pure title & description) | Every petition is a distinct, earnest plea; numbering reduces sacred intercession to administrative accounting. |
-| **Capture Modes / Pathway Choice** | **`Direct Entry`** vs. **`Guide Me`** | Clean, honest choice between immediate manual recording and assisted articulation. |
+| **Prayer Point / Record / Row / Item** | **`Prayer Point`** or **`Prayer`** (or unadorned substantive title) | Prayer points before God are solemn intercessory burdens, never items on a checklist or tickets in a queue. |
+| **Ordinal Numbers (`Point 1`, `Point 2`)** | **Strictly Prohibited** (Pure title & description) | Every prayer point is a distinct, earnest plea; numbering reduces sacred intercession to administrative accounting. |
+| **Capture Modes / Pathway Choice** | **`Lined Notepad`** & **`Prayer Assistant`** | Integrated direct writing on authentic ruled notepad with pushed-down assisted distillation. |
 | **AI Raw Reflection / User Input** | **`What is on your heart?`** | Welcomes honest personal reflection rather than demanding form data. |
 | **Clarifying Inquiry / Distillation Turn** | **`Clarifying question`** $\rightarrow$ Action: **`Continue`** | Softens AI pipeline jargon into a gentle, focused conversational touchpoint. |
-| **Skip Question Action** | **`Skip to petitions`** (never *"Skip Question Binary"*) | Directly conveys destination without clinical process terminology. |
-| **Candidate Points / Review & Commit** | **`Review petitions`** / **`Petitions for [Name]`** | Focuses on the prayer content rather than AI generation status. |
-| **Commit to Database Action** | **`Save to [Name]`** / **`Save petitions`** (never *"Save to Entity Vault"*) | Affirms the relational destination in the user's journal rather than disk persistence. |
+| **Skip Question Action** | **`Skip to prayer points`** (never *"Skip Question Binary"*) | Directly conveys destination without clinical process terminology. |
+| **Candidate Points / Review & Commit** | **`Review prayer points`** / **`Prayer points for [Name]`** | Focuses on the prayer content rather than AI generation status. |
+| **Commit to Database Action** | **`Save to [Name]`** / **`Save prayer points`** (never *"Save to Entity Vault"*) | Affirms the relational destination in the user's journal rather than disk persistence. |
 | **Secondary AI Generation** | **`Suggest 2 more`** (strictly one-time action) | Restrained, functional action without gamified generation prompts. |
 | **Active Prayer State** | Clean, unadorned typography | Default posture of ongoing, watchful intercession. |
 | **Answered Prayer State** | **`Answered`** (with soft strikethrough in Journal) | Cultivates thanksgiving (*eucharistia*) and praise for God's faithfulness; not a "closed ticket". |
@@ -78,10 +109,10 @@ The application maintains an intentional, uncompromising distinction between **u
 
 ```mermaid
 graph TD
-    Launch([App Launch]) --> Home["Blank Home Screen<br/>(1. Start praying | 2. Open Journal | 3. Log prayer points)"]
+    Launch([App Launch]) --> Home["Blank Home Screen<br/>(1. Start praying | 2. Open Journal | 3. Add prayer points)"]
     Home -->|"Tap 'Start praying'"| PraySession["Full-Screen Prayer Mode<br/>(No Buttons, No Tiles, 'Praying for [Name]')"]
-    Home -->|"Tap 'Log prayer points'"| LogStep0["Who are you praying for?<br/>(Add or Choose Person/Group)"]
-    LogStep0 -->|"Selected Focus"| LogStep1["Praying for [Name]<br/>('Direct Entry' or 'Guide Me')"]
+    Home -->|"Tap 'Add prayer points'"| AddStep0["Who are you praying for?<br/>(Add or Choose Person/Group)"]
+    AddStep0 -->|"Selected Focus"| AddStep1["Praying for [Name]<br/>(Lined Notepad & 'Prayer Assistant')"]
     Home -->|"Tap 'Open Journal' / Swipe Left"| Journal["Journal Directory<br/>(People | Groups | General)"]
     
     Journal --> PeopleRoot["People Root<br/>(Personal & Distinct Relational Sphere)"]
@@ -94,13 +125,13 @@ graph TD
 Upon launch, the user meets an uncluttered, contiguous canvas featuring strictly three centered flat action tiles with unadorned labels and zero explanatory sub-text:
 1. **Start praying**
 2. **Open Journal**
-3. **Log prayer points**
+3. **Add prayer points**
 
 The home screen features strictly zero hero headers, wordmarks, app logos, or arbitrary header titles. The three action slabs divide the screen vertically and contiguously edge-to-edge.
 
 ### 3.2 The Journal (Open Journal / Swipe Left)
 Tapping **Open Journal** (or swiping left from the blank home screen) glides into the structured Journal and management vault, rooted in three foundational domains:
-1. **`People`**: Exclusively and strictly specific, distinct individual relationships (e.g., spouse, children, parents, a single named friend/neighbor, and personal petitions under *Me*—including personal health, job trials, or spiritual sanctification situated within a workplace or hospital).
+1. **`People`**: Exclusively and strictly specific, distinct individual relationships (e.g., spouse, children, parents, a single named friend/neighbor, and personal prayer points under *Me*—including personal health, job trials, or spiritual sanctification situated within a workplace or hospital).
 2. **`Groups`**: Collectives, communities, and shared peer/work environments (e.g., work colleagues, office team, church congregation, small group, committee, ministry).
 3. **`General`**: Broad topics, global concerns, personal spiritual disciplines, and the preloaded collection of historic Reformed prayers.
 
@@ -126,9 +157,9 @@ graph LR
    - The top navigation bar, bottom action dock, and on-screen buttons are completely suppressed (`display: none`).
    - The canvas contains **no boxy card tiles, no borders, and no grid lines**.
    - **Heading**: The screen begins with a clean, reverent heading stating the name of the entity preceded by "Praying for" (e.g., `Praying for Sarah`, `Praying for Parish Council`).
-   - **Prayer Points**: Directly underneath, each petition is presented with its title and body separated by generous typographic whitespace.
-   - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: Contemplation views and prayer lists present strictly the petition title and description. Coding or rendering useless sequential labels or numeric badges (such as *Point 1*, *Point 2*, *Point 1 of N*, *Petition 1*, status tags, or ticket categories) is strictly prohibited.
-   - **Expandable Answered Petitions**: Answered prayer points for that topic are rendered softly beneath active petitions without boxy tiles or borders.
+   - **Prayer Points**: Directly underneath, each prayer point is presented with its title and body separated by generous typographic whitespace.
+   - **Design Principle: Strict Prohibition of Ordinal Labels ("Point 1", "Point 2")**: Contemplation views and prayer lists present strictly the prayer point title and description. Coding or rendering useless sequential labels or numeric badges (such as *Point 1*, *Point 2*, *Point 1 of N*, status tags, or ticket categories) is strictly prohibited.
+   - **Expandable Answered Prayer Points**: Answered prayer points for that topic are rendered softly beneath active prayer points without boxy tiles or borders.
 3. **Buttonless Gestural Navigation (Swipe-First Mobile Ergonomics)**:
    - Because on-screen buttons are completely eliminated to preserve solemn contemplation, topic progression leverages the full tactile capability of smartphones:
      - **Swipe Left (`ΔX < -40px`) / Tap right 75% / ArrowRight**: Advances to next prayer topic. Primary thumb action on mobile.
@@ -143,79 +174,79 @@ graph LR
      - The Lord's Prayer
      - Classic Anglican Book of Common Prayer (BCP) collects
      - The Apostles' Creed
-   - Once the user logs personal prayers, these historic prayers permanently reside under `General → Historic Prayers`, with a user toggle to either blend them into daily prayer rotations or keep them accessible strictly on demand.
+   - Once the user adds personal prayers, these historic prayers permanently reside under `General → Historic Prayers`, with a user toggle to either blend them into daily prayer rotations or keep them accessible strictly on demand.
 
 ---
 
-### 4.2 Journey 2: "Log Prayer Points" (Capture & Articulation)
+### 4.2 Journey 2: "Add Prayer Points" (Capture & Articulation)
 
-Tapping **Log prayer points** from the home screen initiates a structured, person- and group-first workflow. Because every petition in the application belongs to a specific person, group, or general concern (`INDIVIDUAL_ENTITY` under `People`, `Groups`, or `General`), **the initial step strictly asks who is on the user's heart before capturing petitions**:
+Tapping **Add prayer points** from the home screen initiates a structured, person- and group-first workflow. Because every prayer point in the application belongs to a specific person, group, or general concern (`INDIVIDUAL_ENTITY` under `People`, `Groups`, or `General`), **the initial step strictly asks who is on the user's heart before capturing prayer points**:
 
 ```mermaid
 graph TD
-    TapLog["Tap 'Log prayer points'"] --> Step0["Initial Step: Who are you praying for?<br/>(Add or Choose Person/Group)"]
+    TapAdd["Tap 'Add prayer points'"] --> Step0["Initial Step: Who are you praying for?<br/>(Add or Choose Person/Group)"]
     
     Step0 -->|"Choose from Journal"| FocusSelected["Praying for [Name]<br/>(e.g., Sarah / Parish Council)"]
     Step0 -->|"Add Person / Group"| CreateNew["Add Person / Group Tile<br/>(Name + People or Groups)"]
     CreateNew --> FocusSelected
     
-    FocusSelected --> PickPath{"Choose Pathway"}
+    FocusSelected --> LinedNotepad["Integrated Lined Notepad Canvas<br/>(Ruled notepad lines, auto-bullets, Save)"]
+    LinedNotepad --> CommitDirect["Save to [Name]"]
     
-    PickPath -->|"Direct Entry"| DirectPad["Empty Text Pad<br/>(Immediate petition entry)"]
-    DirectPad --> CommitDirect["Save to [Name]"]
-    
-    PickPath -->|"'Guide me'"| Step1["Step 1: Open Heart<br/>'What is on your heart?'"]
+    FocusSelected -->|"Tap 'Prayer Assistant' (pushed down)"| Step1["Step 1: Open Heart<br/>'What is on your heart?'"]
     Step1 --> Step2["Step 2: Clarifying Question<br/>(1 open-ended question; max 2 turns)"]
     Step2 -->|"Answer (up to 2 turns)"| Step2
-    Step2 -->|"Skip to petitions / Finished"| Step3["Step 3: Review Petitions<br/>(2 concise petitions tailored to [Name])"]
+    Step2 -->|"Skip to prayer points / Finished"| Step3["Step 3: Review Prayer Points<br/>(2 concise prayer points tailored to [Name])"]
     Step3 -->|"Save to [Name]"| CommitGuided["Saved to [Name] in Journal"]
 ```
 
 #### Step 0: Mandatory Initial Step — "Who are you praying for?"
-Before drafting petitions, the user specifies the person or group:
+Before drafting prayer points, the user specifies the person or group:
 1. **"From your journal" Quick-Picker**: An edge-to-edge list of recent people and groups grouped by `People`, `Groups`, and `General`. Tapping any name immediately binds the context (*Praying for [Name]*) and advances to capture mode.
 2. **"Add a person or group" Tile**: A contiguous hairline creation area at the top of the list allowing immediate entry:
    - Enter name (e.g., *"David"*, *"Youth Ministry"*).
    - Select sphere (`People` or `Groups`).
-   - Tapping **Add & continue** creates the person/group locally and proceeds immediately into logging.
+   - Tapping **Add & continue** creates the person/group locally and proceeds immediately into adding prayer points.
 
 ---
 
-#### Pathway A: Direct Entry (Elimination of Title Input, Auto-Bullets & Post-Commit Auto-Titling)
-A clean, distraction-free text canvas pre-bound to the chosen person or group:
-- **Zero Title Field**: The user is never prompted for or shown a title field when logging new prayer points. The view presents strictly a single, unadorned text pad bound to the target person or group.
+#### Pathway A: Integrated Lined Notepad (Direct Writing, Ruled Lines, Auto-Bullets & Post-Commit Auto-Titling)
+Selecting an entity immediately reveals a dedicated, contemplative lined notepad for writing prayer points directly—removing the intermediary "Direct Entry" button:
+- **Authentic Physical Notepad Ruled Lines**: The entire writing surface is rendered with subtle horizontal ruled lines spaced evenly with the font line-height (32sp / 32dp), providing the tactile reverence of pen and paper on a personal devotional pad.
+- **Pushed-Down Secondary Action**: The lined notepad expands vertically to take up the vast majority of the screen (`Modifier.weight(1f)`), pushing the secondary **"Prayer Assistant"** button down to a 72dp action slab at the very bottom of the screen.
+- **Zero Title Field**: The user is never prompted for or shown a title field when adding new prayer points. The view presents strictly an unadorned ruled text canvas bound to the target person or group.
 - **Auto Bullet-Point Writing Pad**: The writing pad automatically formats input into bullet points:
   - Focus or initial activation auto-seeds the pad with a bullet prefix (`• `).
   - Pressing line space (<kbd>Enter</kbd> / <kbd>Return</kbd>) automatically generates a new bullet on the subsequent line (`\n• `).
   - Pressing <kbd>Enter</kbd> or <kbd>Backspace</kbd> on an empty bullet removes the bullet cleanly to allow ending lists without friction.
-- **Immediate Local Save**: Tapping **Save to [Name]** immediately commits the text to the encrypted local SQLite database.
-- **Post-Committal Branched AI Title Generation**: After local saving, an asynchronous lightweight branch of the AI engine generates a concise 2–6 word petition title in the background, updating the record (`UPDATE PRAYER_POINT SET title = ?`).
+- **Immediate Local Save**: When prayer points are typed, a primary action button **Save to [Name]** appears immediately beneath the notepad (and a complementary "Save" action is enabled in the top header), immediately committing the text to the encrypted local SQLite database.
+- **Post-Committal Branched AI Title Generation**: After local saving, an asynchronous lightweight branch of the AI engine generates a concise 2–6 word prayer point title in the background, updating the record (`UPDATE PRAYER_POINT SET title = ?`).
 - **Theological Validation Exemption**: Because this branch performs exclusively the straightforward summarization of user-committed text into a brief label, theological validation is not required.
-- **Offline Fallback**: When offline, the petition is stored with a truncated text preview as an interim label until background connectivity generates the permanent title.
+- **Offline Fallback**: When offline, the prayer point is stored with a truncated text preview as an interim label until background connectivity generates the permanent title.
 
 ---
 
-#### Pathway B: "Guide Me" (Objective AI-Assisted Articulation)
+#### Pathway B: "Prayer Assistant" (Objective AI-Assisted Articulation)
 Designed for when thoughts regarding the selected person or group are tangled, heavy, or difficult to articulate:
 - **App Auto-Conversion to JSON**: The mobile app transparently packages the user's reflection, the pre-selected entity context (`root` and `group`), and turn progression into a structured JSON payload sent across the wire.
-- **Privacy Gate & Pre-Specified Root Bypass**: Because the entity is selected upfront, personal entity names are masked on-device prior to network transmission. The upstream model is explicitly instructed that the category context is pre-specified (`suggested_root: null`), tailoring candidate petitions strictly to the selected person or group without redundant categorization prompts.
+- **Privacy Gate & Pre-Specified Root Bypass**: Because the entity is selected upfront, personal entity names are masked on-device prior to network transmission. The upstream model is explicitly instructed that the category context is pre-specified (`suggested_root: null`), tailoring candidate prayer points strictly to the selected person or group without redundant categorization prompts.
 - **Step 2 (Neutral Distillation)**:
   - The client masks personal entity names prior to sending. The suggestion engine analyzes the raw entry and asks clarifying questions **one at a time**.
   - **Tone & Style**: Strictly neutral, concise, and objective. **Not a therapy bot**—zero artificial empathy, zero psychological framing, and zero conversational filler.
   - **Open-Ended Inquiries & Actionable Clarity**: Questions expect the user to provide the substance. It must not use leading questions or assume intent unless the user explicitly asks for suggestions. If a clear actionable point is not obvious from the user's reflection, the system must never jump to speculative prayer cards; it promptly poses strictly one concise question (6–12 words) in natural, plain English without bureaucratic templates. It distinguishes between internal emotional states (asking plainly what is causing the feeling, e.g., *"What is making you feel anxious right now?"*) and external entities/topics (asking plainly what is happening, e.g., *"What is going on with your boss that you'd like to pray about?"*). When multiple competing crises are presented simultaneously, the engine performs concise burden triage (*"Which of these is weighing on you most heavily right now?"*).
-  - **Skip Question Binary**: While a clarifying inquiry is default-mandatory, the engine evaluates a `skip_question` binary flag, advancing directly to Step 3 petitions only when initial input is already exceptionally comprehensive and unambiguous.
+  - **Skip Question Binary**: While a clarifying inquiry is default-mandatory, the engine evaluates a `skip_question` binary flag, advancing directly to Step 3 prayer points only when initial input is already exceptionally comprehensive and unambiguous.
   - **Unconditional Question Skipping**: The user can skip any question the app asks at any point. Skipping immediately guarantees that no more questions will be asked during that session; the flow bypasses all remaining inquiry and transitions directly to Step 3 (Review & Commit).
-  - **Bounded Interaction**: Hard ceiling of **maximum 2 question turns**. A prominent **"Skip to petitions"** (or **"Skip"**) action is always provided on every question.
-- **Step 3 (Review & Action — Flat Tessellated Petitions)**:
-  - Presents strictly and exactly **2 concise candidate petitions** (never 1, never 3), rendered as flat, geometric rectangular tiles with sharp 90-degree right angles, zero curved edges, and zero drop shadows.
+  - **Bounded Interaction**: Hard ceiling of **maximum 2 question turns**. A prominent **"Skip to prayer points"** (or **"Skip"**) action is always provided on every question.
+- **Step 3 (Review & Action — Flat Tessellated Prayer Points)**:
+  - Presents strictly and exactly **2 concise candidate prayer points** (never 1, never 3), rendered as flat, geometric rectangular tiles with sharp 90-degree right angles, zero curved edges, and zero drop shadows.
   - Grounded strictly in facts provided by the user; the assistant never presumes or fabricates illnesses, cancer, or medical crises.
   - **Contextual Pre-specification Bypass**: When `root` (and optional `group`) was already prespecified upon entry, category suggestions are omitted entirely ("suggestion isn't needed"). The cards directly reflect the pre-selected context without asking the user to confirm or re-categorize. When entry was uncontextualized, suggested root categories (`People`, `Groups`, `General`) are presented.
   - Entity name suggestions are strictly not required and omitted for privacy; assignment to the person or group is performed locally on-device.
-  - **Objective Petitions, Never Scripted Prayers**: Candidate cards show discrete, telegraphic petitions and burdens—never pre-written prayers addressing God directly (no "Father God...", "Lord...", or second-person prayer prose). The user does the praying; the cards organize the petitions.
+  - **Objective Prayer Points, Never Scripted Prayers**: Candidate cards show discrete, telegraphic prayer points and burdens—never pre-written prayers addressing God directly (no "Father God...", "Lord...", or second-person prayer prose). The user does the praying; the cards organize the prayer points.
   - **Telegraphic Card Aesthetics & Strict Brevity**: Phrased in compact shorthand (using symbols like `&`, `→`, `↑`, standard abbreviations like `govt`, and omitting filler articles/auxiliary verbs; the abbreviation `w/` or `/w` is strictly excluded in favor of "with" or omission) to maximize glanceability and minimize screen clutter on mobile cards. Strictly constrained to **2–6 word titles** (targeting 2–4 words, hard ceiling of 6 words) and a hard ceiling of **maximum 20–25 words per description** (never lengthy multi-sentence paragraphs). Employs a preferred **2-to-3 clause semicolon pattern** (Clause 1: immediate need/action; Clause 2: heart posture/spiritual fruit; Clause 3: submission to God's sovereign will/peace) to enhance visual hierarchy and scannability on mobile screens.
   - **Resilience Across Wordiness & Emotional Load**: The distillation experience is stress-tested against a 100-case benchmark dataset ([`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json)) ensuring that whether the user enters a 5-word cryptic fragment or a 250-word emotional ramble, the candidate cards consistently honor the 2–6 word title and $\le$ 25-word telegraphic description standard, with verified live responses documented in [`api/test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/BENCHMARK_RESULTS.md) and textual quality evaluated in [`api/test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/AI_GENERATED_TEXT_REPORT.md).
-  - User controls are strictly limited to focused actions: **Save to [Name]**, **"Suggest 2 more"** (strictly one-time action per session; disabled or hidden once invoked to prevent decision paralysis), **Back**, and **Cancel**.
-- **Graceful Quota & Offline Fallback**: If network connectivity is unavailable or the daily operational quota is exhausted, the UI quietly presents: *"The assistant is currently unavailable. You can record your prayer points directly."* Users are seamlessly transitioned to direct manual recording without disruption.
+  - **Two-Tier Model Experience**: To ensure prayer points feel personal, thoughtful, and spiritually grounded rather than mechanical or formulaic, the backend employs a Two-Tier pipeline: Tier 1 (`temperature: 1.0`, `top_p: 0.95`, `max_tokens: 9000`) generates natural, thoughtful, sober drafts without clinical triage tags or cheesy/overly poetic melodrama, while Tier 2 (`temperature: 0.1`, `max_tokens: 9000`) compresses and verifies the text into the crisp 2-to-3 clause semicolon pattern with 2–6 word titles, guaranteeing both heartfelt resonance and scannable mobile brevity.
+  - **Graceful Quota & Offline Fallback**: If network connectivity is unavailable or the daily operational quota is exhausted, the UI quietly presents: *"The assistant is currently unavailable. You can record your prayer points directly."* Users are seamlessly transitioned to direct manual recording without disruption.
 
 ---
 
@@ -224,19 +255,19 @@ Designed for when thoughts regarding the selected person or group are tangled, h
 Tapping **Open Journal** (or swiping left from the home screen) opens the complete management journal:
 1. **Hierarchy Browsing**:
    - Drill into **`People`**, **`Groups`**, or **`General`** to see all associated entities and active prayer points.
-2. **Editing Saved Petitions (Click-Once Entry & Title Editing)**:
-   - **Click Once to Start Editing**: In the Entity Detail view, clicking or tapping any saved prayer point once immediately transitions into edit mode for that petition.
-   - **Editable Title**: The petition title (initially auto-generated upon creation) is fully exposed and editable. Users can freely modify, refine, or rename the title to reflect evolving pastoral circumstances.
-   - **Editable Body & Auto-Bullets**: The petition body is fully editable, maintaining the auto bullet-point behavior (line space triggers a new bullet).
-   - **Status & Thanksgiving Toggle**: Within the editor, users can mark the petition as `Active` or `Answered` (with an optional thanksgiving note). Answered points in the list display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
-3. **Permanent Deletion (`Delete petition`)**:
-   - Believers can permanently remove petitions that have ended or were logged in error.
-   - Tapping **Delete petition** reveals a stark, planar confirmation prompt (*"Delete this petition? This cannot be undone."*).
+2. **Editing Saved Prayer Points (Click-Once Entry & Title Editing)**:
+   - **Click Once to Start Editing**: In the Entity Detail view, clicking or tapping any saved prayer point once immediately transitions into edit mode for that prayer point.
+   - **Editable Title**: The prayer point title (initially auto-generated upon creation) is fully exposed and editable. Users can freely modify, refine, or rename the title to reflect evolving pastoral circumstances.
+   - **Editable Body & Auto-Bullets**: The prayer point body is fully editable, maintaining the auto bullet-point behavior (line space triggers a new bullet).
+   - **Status & Thanksgiving Toggle**: Within the editor, users can mark the prayer point as `Active` or `Answered` (with an optional thanksgiving note). Answered points in the list display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
+3. **Permanent Deletion (`Delete prayer point`)**:
+   - Believers can permanently remove prayer points that have ended or were added in error.
+   - Tapping **Delete prayer point** reveals a stark, planar confirmation prompt (*"Delete this prayer point? This cannot be undone."*).
    - Confirming permanently purges the record from local SQLite storage (`DELETE FROM PRAYER_POINT WHERE id = ?`).
-   - Editor controls: **Save changes**, **Cancel**, and **Delete petition**.
+   - Editor controls: **Save changes**, **Cancel**, and **Delete prayer point**.
 4. **Settings Access**:
    - Theme toggle (*Morning Light* [Default] vs. *Quiet Night*).
-   - **Text Scaling**: Dedicated three-tier selector with pronounced, distinct jumps (**Large** *(Default)*, **Regular**, and **Compact**). The **Large** default features prominent, high-presence typography (28px home buttons, 22px card titles, 18px petitions) for effortless, strain-free devotional contemplation. **Regular** offers balanced density (20px buttons, 16px card titles, 13px petitions), and **Compact** provides high-density scannability (15px buttons, 12.5px card titles, 10.5px petitions).
+   - **Text Scaling**: Dedicated three-tier selector with pronounced, distinct jumps (**Large** *(Default)*, **Regular**, and **Compact**). The **Large** default features prominent, high-presence typography (28px home buttons, 22px card titles, 18px prayer points) for effortless, strain-free devotional contemplation. **Regular** offers balanced density (20px buttons, 16px card titles, 13px prayer points), and **Compact** provides high-density scannability (15px buttons, 12.5px card titles, 10.5px prayer points).
    - **Language / Dialect configuration**: Dedicated selector between **English (Australian / UK)** *(Default)* and **US English**. Switching immediately adjusts UI copy, prayer collects, and distillation orthography.
    - Historic Reformed prayers rotation toggle (blend into daily rotation vs. library-only).
    - Local encrypted database backup and export.
@@ -257,15 +288,36 @@ In the buttonless, gridless prayer canvas, navigation between topics is governed
 - **Accessibility Fallbacks**: Tapping the right 75% of the screen, tapping the left 25%, tapping the top edge, and hardware keyboard arrows (`ArrowLeft`, `ArrowRight`, `Escape`, `Space`) remain operational as complementary fallbacks.
 
 ### 5.2 List & Card Swipe Actions (Journal & Entity Detail)
-In directory and petition views, individual cards support native mobile list swipe gestures:
+In directory and prayer point views, individual cards support native mobile list swipe gestures:
 - **Swipe Card Right (`ΔX > +60px`)**: Instant status toggle between `ACTIVE` and `ANSWERED`. Provides immediate tactile satisfaction without forcing the user into edit mode just to mark answered prayer.
 - **Swipe Card Left (`ΔX < -60px`)**: Reveals destructive management action (**Permanent Delete**), presenting an immediate planar confirmation dialog.
-- **Tap / Single Click**: Opens the full Petition Editor for title and body refinement.
+- **Tap / Single Click**: Opens the full Prayer Point Editor for title and body refinement.
 
-### 5.3 Global Navigation & Edge-Swipe Back
-- **Swipe Right from Left Screen Edge (`X ≤ 25px, ΔX ≥ 50px`)**: Universal back navigation. Navigates back one hierarchical level from any sub-screen (Entity Detail → Journal → Home; Direct Entry / Guide Me → Step 0 → Home; Settings → Journal). Eliminates the need to reach for the top-left back button.
+### 5.3 Long-Press Responsiveness & Planar Contextual Actions
+Across all touch-first views, long-pressing interactive devotional records or entities delivers an immediate, subtle tactile haptic vibration (10–15ms system `LongPress`) and surfaces stark, planar contextual action dialogs complying with the 0dp, zero-curved-edge architectural contract:
+1. **People & Groups (Journal & Add-Flow Selection)**:
+   - **Long Press Trigger**: Holding any person or group tile in the Journal directory or Add-flow quick picker (`LogStep.SELECT_ENTITY`) triggers haptic feedback and reveals a planar context menu:
+     - **`+ Add prayer point`**: Immediately initiates adding a new prayer point anchored to this person or group.
+     - **`Edit name & category`**: Opens an in-place editing dialog to rename the person/group or change their sphere (`People` $\leftrightarrow$ `Groups`). (Protected/hidden for preloaded historic collections).
+     - **`Delete`**: Surfaces a planar confirmation dialog (*"Delete this person or group and all associated prayer points? This cannot be undone."*), permanently removing the entity and cascading deletion across all associated prayer points.
+2. **Individual Prayer Records (Journal Entity Detail)**:
+   - **Long Press Trigger**: Holding any saved prayer point tile in an entity detail list triggers haptic feedback and surfaces:
+     - **`Mark as Answered` / `Mark as Active`**: Instant status toggle without requiring navigation into the full editor.
+     - **`Edit prayer point`**: Navigates directly into the title, body, and thanksgiving editor.
+     - **`Delete`**: Surfaces a planar confirmation dialog (*"Delete this prayer point? This cannot be undone."*) to permanently purge the record.
+3. **Full-Screen Sanctuary Prayer Mode**:
+   - **Long Press Trigger**: Holding any active or answered prayer point in full-screen sanctuary mode triggers haptic feedback and surfaces a quiet, solemn dialog:
+     - **`Mark as Answered` / `Mark as Active`**: Allows the believer to record answered prayer in real time during devotion without leaving sanctuary mode.
+     - **`Dismiss`**: Closes the dialog and immediately resumes contemplative focus.
 
-### 5.4 Home Screen Gestural Pathway
+### 5.4 Global Navigation, LIFO Back Stack & Edge-Swipe Back
+- **Last-In, First-Out (LIFO) Back Stack Architecture**: All navigation follows a strict LIFO hierarchy preserving nested context across sub-screens:
+  - Adding flows initiated from within an entity detail screen (`Journal` $\rightarrow$ `EntityDetail` $\rightarrow$ `LogPrayer`) pop back directly to that entity's detail view in the Journal, rather than abruptly collapsing to Home.
+  - Multi-tier sub-stacks (e.g. `JournalView` in `JournalScreen` and `LogStep` in `LogPrayerScreen`) handle granular view navigation independently before delegating to top-level application navigation.
+- **Swipe Right from Left Screen Edge (`Xstart ≤ 25dp, ΔX ≥ 50dp, |ΔX| ≥ 1.5|ΔY|`)**: Universal edge-swipe back navigation. Mimics the physical act of turning back a leaf in a devotional journal or prayer book. Seamlessly navigates back one hierarchical level from any sub-screen (`SanctuaryPrayerScreen` $\rightarrow$ `Home`, `EntityDetail` $\rightarrow$ `Journal` $\rightarrow$ `Home`, `LogStep.PrayerAssistant` $\rightarrow$ `LogStep.CaptureMethod` $\rightarrow$ `LogStep.TargetSelection` $\rightarrow$ `Home`).
+- **Unified Platform & Gestural Back Traversal**: Edge-swipe right is fully harmonized with the Android system back handler (`BackHandler`), ensuring identical, predictable LIFO traversal regardless of whether the user taps the hardware/system back button, invokes system gesture navigation, or uses the in-app edge swipe.
+
+### 5.5 Home Screen Gestural Pathway
 - **Swipe Left on Home Canvas (`ΔX < -50px`)**: Directly slides into the Journal directory, providing immediate, fluid access to the spiritual records vault.
 
 ---
@@ -273,11 +325,11 @@ In directory and petition views, individual cards support native mobile list swi
 ## 6. Mobile Ergonomics & Accessibility
 
 - **Samsung Galaxy Flip & Foldable Ergonomics**:
-  - **Tall Aspect Ratio (22:9 / 21.9:9)**: Optimized for tall vertical viewports (such as 360x740dp to 412x960dp on Galaxy Z Flip). Slabs stretch edge-to-edge; prayer sanctuary mode centers petitions comfortably within the natural upper and middle reading zones.
+  - **Tall Aspect Ratio (22:9 / 21.9:9)**: Optimized for tall vertical viewports (such as 360x740dp to 412x960dp on Galaxy Z Flip). Slabs stretch edge-to-edge; prayer sanctuary mode centers prayer points comfortably within the natural upper and middle reading zones.
   - **Single-Handed Thumb Zone**: Primary controls, bottom action slabs, and swipe triggers sit within the lower 60% thumb sweep radius, allowing complete operation without awkward finger gymnastics.
   - **Foldable Posture & Flex Mode**: When placed in half-folded flex posture on a flat surface or bedside table, the top screen maintains the reverent contemplation canvas while touch/swipe zones remain active on the bottom panel.
 - **Thumb-Zone Navigation**: Primary actions (*Save*, *Cancel*, swipe gestures) sit comfortably within the natural thumb sweep radius on modern smartphone screens.
-- **Frictionless Entry**: Zero account creation, zero login, and zero API key configuration. Users are able to pray or log within one second of opening the app.
+- **Frictionless Entry**: Zero account creation, zero login, and zero API key configuration. Users are able to pray or add prayer points within one second of opening the app.
 - **Instant Local Performance**: All read and write operations interact directly with the embedded SQLite database on device, guaranteeing zero network lag or loading spinners.
 - **Haptic Feedback**: Light system haptics (10–15ms) accompany successful swipe triggers (topic advance, answered toggle, delete reveal) to provide silent, non-distracting tactile reassurance.
 
@@ -293,3 +345,5 @@ To guarantee that the austere, non-commercial, liturgical visual identity is nev
 5. **Full-Screen Buttonless Sanctuary Invariant**: Automated assertion verifying that in `screen-pray`, `#top-bar` and all buttons are suppressed (`display: none`), with zero card borders or gridlines.
 6. **Tactile Gesture Discrimination Testing**: Synthetic touch event simulation testing horizontal topic advance ($\Delta X \le -40\text{px}$), return ($\Delta X \ge +40\text{px}$), swipe-down exit ($\Delta Y \ge +60\text{px}$ in upper screen), and diagonal rejection ($|\Delta X| < 1.5 |\Delta Y|$).
 7. **Negative Lexicon & Anti-Ordinal Audit**: Programmatic scanning of rendered text across all views asserting zero forbidden clinical terms (`target`, `entity`, `ticket`, `commit`, `sqlite`) and zero ordinal labels (`Point 1`, `Item 1`, `Point 1 of N`).
+
+In the production native Android client ([`android/app/src/test/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/test)), these contract tests are replicated and verified natively in Kotlin (`LayoutGeometryTest.kt`, `GestureEngineTest.kt`, `LifoBackStackTest.kt`, `LexiconContractTest.kt`, `DevotionalFlowsTest.kt`, `AntiNeglectQueueTest.kt`, `TheologicalGuardrailsTest.kt`, `PrayerApiClientTest.kt`, and `DataModelsTest.kt`), totaling 64 automated tests passing with 100% compliance.

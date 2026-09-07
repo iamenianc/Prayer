@@ -118,7 +118,7 @@ class PrayerApiClient(
         val clean = text.replace("•", "").trim()
         val words = clean.split("\\s+".toRegex()).filter { it.isNotBlank() }
         return if (words.isEmpty()) {
-            "Petition"
+            "Prayer Point"
         } else {
             words.take(4).joinToString(" ")
         }

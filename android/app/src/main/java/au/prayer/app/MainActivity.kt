@@ -3,9 +3,18 @@ package au.prayer.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
@@ -13,6 +22,7 @@ import au.prayer.app.data.local.PrayerDatabaseHelper
 import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.*
 import au.prayer.app.network.PrayerApiClient
+import au.prayer.app.ui.navigation.LifoBackStack
 import au.prayer.app.ui.screens.*
 import au.prayer.app.ui.theme.*
 import kotlinx.coroutines.launch
@@ -32,12 +42,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         dbHelper = PrayerDatabaseHelper(this)
         repository = PrayerRepository(dbHelper)
 
         setContent {
-            var screenState by remember { mutableStateOf(ScreenState.HOME) }
+            val backStack = remember { LifoBackStack(ScreenState.HOME) }
+            val screenState = backStack.current
             var appConfig by remember { mutableStateOf(repository.getConfig()) }
             var allEntities by remember { mutableStateOf(repository.getAllEntities()) }
             var preselectedEntity by remember { mutableStateOf<IndividualEntity?>(null) }
@@ -45,6 +57,10 @@ class MainActivity : ComponentActivity() {
             // Prayer sanctuary session state
             var prayerTopics by remember { mutableStateOf<List<TopicWithPoints>>(emptyList()) }
             var currentTopicIndex by remember { mutableIntStateOf(0) }
+
+            // Global Snackbar Host State for subtle feedback
+            val snackbarHostState = remember { SnackbarHostState() }
+            val coroutineScope = rememberCoroutineScope()
 
             // Dynamic theme and typography resolution
             val colors = if (appConfig.themeMode == ThemeMode.QUIET_NIGHT) QuietNightColors else MorningLightColors
@@ -60,114 +76,249 @@ class MainActivity : ComponentActivity() {
                 if (prayerTopics.isNotEmpty()) {
                     repository.recordTopicInteraction(prayerTopics[0].entity.id)
                 }
-                screenState = ScreenState.SANCTUARY_PRAYER
+                backStack.push(ScreenState.SANCTUARY_PRAYER)
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(colors.background)
-            ) {
-                when (screenState) {
-                    ScreenState.HOME -> {
-                        HomeScreen(
-                            colors = colors,
-                            typography = typography,
-                            onStartPraying = { startPrayerSession() },
-                            onOpenJournal = { screenState = ScreenState.JOURNAL },
-                            onLogPrayerPoints = {
-                                preselectedEntity = null
-                                screenState = ScreenState.LOG_PRAYER
-                            }
-                        )
+            PrayerTheme(themeMode = appConfig.themeMode, textScale = appConfig.textScale) {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = colors.background,
+                    contentColor = colors.textPrimary,
+                    snackbarHost = {
+                        SnackbarHost(snackbarHostState) { data ->
+                            Snackbar(
+                                snackbarData = data,
+                                shape = FlatSquareShape,
+                                containerColor = colors.textPrimary,
+                                contentColor = colors.background
+                            )
+                        }
                     }
-
-                    ScreenState.SANCTUARY_PRAYER -> {
-                        SanctuaryPrayerScreen(
-                            topics = prayerTopics,
-                            currentIndex = currentTopicIndex,
-                            colors = colors,
-                            typography = typography,
-                            onNextTopic = {
-                                if (currentTopicIndex < prayerTopics.size - 1) {
-                                    currentTopicIndex += 1
-                                    repository.recordTopicInteraction(prayerTopics[currentTopicIndex].entity.id)
-                                } else {
-                                    // Session complete or loop
-                                    screenState = ScreenState.HOME
-                                }
-                            },
-                            onPrevTopic = {
-                                if (currentTopicIndex > 0) {
-                                    currentTopicIndex -= 1
-                                }
-                            },
-                            onExit = { screenState = ScreenState.HOME }
-                        )
-                    }
-
-                    ScreenState.LOG_PRAYER -> {
-                        LogPrayerScreen(
-                            initialEntity = preselectedEntity,
-                            allEntities = allEntities,
-                            colors = colors,
-                            typography = typography,
-                            apiClient = apiClient,
-                            onCreateEntity = { rootCode, name ->
-                                val entity = repository.createEntity(rootCode, name)
-                                refreshEntities()
-                                entity
-                            },
-                            onSavePetition = { entityId, body, initialTitle ->
-                                val savedPoint = repository.savePrayerPoint(
-                                    entityId = entityId,
-                                    title = initialTitle ?: apiClient.generateOfflineFallbackTitle(body),
-                                    description = body
-                                )
-                                // Asynchronous post-commit background auto-titling
-                                lifecycleScope.launch {
-                                    val result = apiClient.generateTitle(body)
-                                    result.onSuccess { cleanTitle ->
-                                        if (cleanTitle.isNotBlank()) {
-                                            repository.updatePrayerPointTitle(savedPoint.id, cleanTitle)
-                                        }
+                ) { innerPadding ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .background(colors.background)
+                    ) {
+                        AnimatedContent(
+                            targetState = screenState,
+                            transitionSpec = {
+                                when {
+                                    // Entering Sanctuary Prayer from Home: solemn fade and gentle upward settling
+                                    targetState == ScreenState.SANCTUARY_PRAYER -> {
+                                        (fadeIn(animationSpec = tween(350, easing = FastOutSlowInEasing)) +
+                                                slideInVertically(animationSpec = tween(350, easing = FastOutSlowInEasing)) { it / 8 })
+                                            .togetherWith(
+                                                fadeOut(animationSpec = tween(250, easing = FastOutSlowInEasing))
+                                            )
+                                    }
+                                    // Exiting Sanctuary Prayer to Home: smooth fade out and downward settling
+                                    initialState == ScreenState.SANCTUARY_PRAYER -> {
+                                        fadeIn(animationSpec = tween(250, easing = FastOutSlowInEasing))
+                                            .togetherWith(
+                                                fadeOut(animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+                                                        slideOutVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) { it / 8 }
+                                            )
+                                    }
+                                    // Transitioning from Home to Journal or Add Prayer Points: slide in from right with fade
+                                    initialState == ScreenState.HOME && (targetState == ScreenState.JOURNAL || targetState == ScreenState.LOG_PRAYER) -> {
+                                        (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
+                                                fadeIn(animationSpec = tween(300)))
+                                            .togetherWith(
+                                                slideOutHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
+                                                        fadeOut(animationSpec = tween(200))
+                                            )
+                                    }
+                                    // Returning from Journal or Add Prayer Points to Home: slide in from left with fade
+                                    (initialState == ScreenState.JOURNAL || initialState == ScreenState.LOG_PRAYER) && targetState == ScreenState.HOME -> {
+                                        (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
+                                                fadeIn(animationSpec = tween(300)))
+                                            .togetherWith(
+                                                slideOutHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
+                                                        fadeOut(animationSpec = tween(200))
+                                            )
+                                    }
+                                    // Transitioning between Journal and Add Prayer Points (sub-stack navigation):
+                                    initialState == ScreenState.JOURNAL && targetState == ScreenState.LOG_PRAYER -> {
+                                        (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
+                                                fadeIn(animationSpec = tween(300)))
+                                            .togetherWith(
+                                                slideOutHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
+                                                        fadeOut(animationSpec = tween(200))
+                                            )
+                                    }
+                                    initialState == ScreenState.LOG_PRAYER && targetState == ScreenState.JOURNAL -> {
+                                        (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
+                                                fadeIn(animationSpec = tween(300)))
+                                            .togetherWith(
+                                                slideOutHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
+                                                        fadeOut(animationSpec = tween(200))
+                                            )
+                                    }
+                                    // Default crossfade
+                                    else -> {
+                                        fadeIn(animationSpec = tween(250))
+                                            .togetherWith(fadeOut(animationSpec = tween(200)))
                                     }
                                 }
-                                refreshEntities()
                             },
-                            onBackToHome = { screenState = ScreenState.HOME }
-                        )
-                    }
+                            label = "ScreenStateTransition",
+                            modifier = Modifier.fillMaxSize()
+                        ) { targetScreen ->
+                            when (targetScreen) {
+                                ScreenState.HOME -> {
+                                    HomeScreen(
+                                        colors = colors,
+                                        typography = typography,
+                                        onStartPraying = { startPrayerSession() },
+                                        onOpenJournal = { backStack.push(ScreenState.JOURNAL) },
+                                        onAddPrayerPoints = {
+                                            preselectedEntity = null
+                                            backStack.push(ScreenState.LOG_PRAYER)
+                                        }
+                                    )
+                                }
 
-                    ScreenState.JOURNAL -> {
-                        JournalScreen(
-                            entities = allEntities,
-                            colors = colors,
-                            typography = typography,
-                            config = appConfig,
-                            onUpdateConfig = { updated ->
-                                appConfig = updated
-                                repository.saveConfig(updated)
-                            },
-                            getPointsForEntity = { entityId ->
-                                repository.getPointsForEntity(entityId)
-                            },
-                            onUpdatePrayerPoint = { id, title, desc, status, testimony ->
-                                repository.updatePrayerPoint(id, title, desc, status, testimony)
-                            },
-                            onDeletePrayerPoint = { id ->
-                                repository.deletePrayerPoint(id)
-                            },
-                            onDeleteEntity = { id ->
-                                repository.deleteEntity(id)
-                                refreshEntities()
-                            },
-                            onLogForEntity = { entity ->
-                                preselectedEntity = entity
-                                screenState = ScreenState.LOG_PRAYER
-                            },
-                            onBackToHome = { screenState = ScreenState.HOME }
-                        )
+                                ScreenState.SANCTUARY_PRAYER -> {
+                                    SanctuaryPrayerScreen(
+                                        topics = prayerTopics,
+                                        currentIndex = currentTopicIndex,
+                                        colors = colors,
+                                        typography = typography,
+                                        onNextTopic = {
+                                            if (currentTopicIndex < prayerTopics.size - 1) {
+                                                currentTopicIndex += 1
+                                                repository.recordTopicInteraction(prayerTopics[currentTopicIndex].entity.id)
+                                            } else {
+                                                backStack.pop()
+                                            }
+                                        },
+                                        onPrevTopic = {
+                                            if (currentTopicIndex > 0) {
+                                                currentTopicIndex -= 1
+                                            }
+                                        },
+                                        onExit = { backStack.pop() },
+                                        onToggleAnswered = { pointId ->
+                                            val currentTopic = prayerTopics.getOrNull(currentTopicIndex)
+                                            if (currentTopic != null) {
+                                                val allPoints = currentTopic.activePoints + currentTopic.answeredPoints
+                                                val point = allPoints.find { it.id == pointId }
+                                                if (point != null) {
+                                                    val newStatus = if (point.status == PrayerStatus.ACTIVE) PrayerStatus.ANSWERED else PrayerStatus.ACTIVE
+                                                    repository.updatePrayerPoint(point.id, point.title, point.description, newStatus, point.answeredTestimony)
+                                                    prayerTopics = repository.getContemplativeTopics(blendHistoric = appConfig.blendHistoricPrayers)
+                                                    coroutineScope.launch {
+                                                        snackbarHostState.showSnackbar(if (newStatus == PrayerStatus.ANSWERED) "Marked as answered" else "Marked as active")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+
+                                ScreenState.LOG_PRAYER -> {
+                                    LogPrayerScreen(
+                                        initialEntity = preselectedEntity,
+                                        allEntities = allEntities,
+                                        colors = colors,
+                                        typography = typography,
+                                        apiClient = apiClient,
+                                        onCreateEntity = { rootCode, name ->
+                                            val entity = repository.createEntity(rootCode, name)
+                                            refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Added to ${rootCode.displayTitle}")
+                                            }
+                                            entity
+                                        },
+                                        onSavePrayerPoint = { entityId, body, initialTitle ->
+                                            val savedPoint = repository.savePrayerPoint(
+                                                entityId = entityId,
+                                                title = initialTitle ?: apiClient.generateOfflineFallbackTitle(body),
+                                                description = body
+                                            )
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Saved prayer point")
+                                            }
+                                            // Asynchronous post-commit background auto-titling
+                                            lifecycleScope.launch {
+                                                val result = apiClient.generateTitle(body)
+                                                result.onSuccess { cleanTitle ->
+                                                    if (cleanTitle.isNotBlank()) {
+                                                        repository.updatePrayerPointTitle(savedPoint.id, cleanTitle)
+                                                    }
+                                                }
+                                            }
+                                            refreshEntities()
+                                        },
+                                        onUpdateEntity = { id, name, rootCode ->
+                                            repository.updateEntity(id, name, rootCode)
+                                            refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Updated")
+                                            }
+                                        },
+                                        onDeleteEntity = { id ->
+                                            repository.deleteEntity(id)
+                                            refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Deleted")
+                                            }
+                                        },
+                                        onBackToHome = { backStack.pop() }
+                                    )
+                                }
+
+                                ScreenState.JOURNAL -> {
+                                    JournalScreen(
+                                        entities = allEntities,
+                                        colors = colors,
+                                        typography = typography,
+                                        config = appConfig,
+                                        onUpdateConfig = { updated ->
+                                            appConfig = updated
+                                            repository.saveConfig(updated)
+                                        },
+                                        getPointsForEntity = { entityId ->
+                                            repository.getPointsForEntity(entityId)
+                                        },
+                                        onUpdatePrayerPoint = { id, title, desc, status, testimony ->
+                                            repository.updatePrayerPoint(id, title, desc, status, testimony)
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Changes saved")
+                                            }
+                                        },
+                                        onDeletePrayerPoint = { id ->
+                                            repository.deletePrayerPoint(id)
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Prayer point deleted")
+                                            }
+                                        },
+                                        onDeleteEntity = { id ->
+                                            repository.deleteEntity(id)
+                                            refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Deleted")
+                                            }
+                                        },
+                                        onUpdateEntity = { id, name, rootCode ->
+                                            repository.updateEntity(id, name, rootCode)
+                                            refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Updated")
+                                            }
+                                        },
+                                        onAddForEntity = { entity ->
+                                            preselectedEntity = entity
+                                            backStack.push(ScreenState.LOG_PRAYER)
+                                        },
+                                        onBackToHome = { backStack.pop() }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

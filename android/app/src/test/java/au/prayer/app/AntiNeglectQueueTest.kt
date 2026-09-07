@@ -1,11 +1,27 @@
 package au.prayer.app
 
 import au.prayer.app.data.models.*
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 
 class AntiNeglectQueueTest {
+
+    // Mirroring the exact SQL ORDER BY contract from PrayerRepository:
+    // e.last_interacted_at IS NOT NULL ASC, e.last_interacted_at ASC, e.interacted_count ASC
+    private val antiNeglectComparator = Comparator<IndividualEntity> { a, b ->
+        val aNull = a.lastInteractedAt == null
+        val bNull = b.lastInteractedAt == null
+
+        if (aNull && !bNull) return@Comparator -1
+        if (!aNull && bNull) return@Comparator 1
+
+        if (!aNull && !bNull) {
+            val timeComp = a.lastInteractedAt!!.compareTo(b.lastInteractedAt!!)
+            if (timeComp != 0) return@Comparator timeComp
+        }
+
+        a.interactedCount.compareTo(b.interactedCount)
+    }
 
     @Test
     fun `test anti-neglect queue sorting priority order`() {
@@ -37,30 +53,81 @@ class AntiNeglectQueueTest {
         )
 
         val rawList = listOf(prayedRecently, neverPrayed, prayedLongAgo, prayedRecentlyLowCount)
-
-        // Comparator mirroring SQL:
-        // e.last_interacted_at IS NOT NULL ASC, e.last_interacted_at ASC, e.interacted_count ASC
-        val comparator = Comparator<IndividualEntity> { a, b ->
-            val aNull = a.lastInteractedAt == null
-            val bNull = b.lastInteractedAt == null
-
-            if (aNull && !bNull) return@Comparator -1
-            if (!aNull && bNull) return@Comparator 1
-
-            if (!aNull && !bNull) {
-                val timeComp = a.lastInteractedAt!!.compareTo(b.lastInteractedAt!!)
-                if (timeComp != 0) return@Comparator timeComp
-            }
-
-            a.interactedCount.compareTo(b.interactedCount)
-        }
-
-        val sorted = rawList.sortedWith(comparator)
+        val sorted = rawList.sortedWith(antiNeglectComparator)
 
         assertEquals("Never Prayed", sorted[0].displayName)
         assertEquals("Prayed Long Ago", sorted[1].displayName)
         assertEquals("Prayed Recently Low Count", sorted[2].displayName)
         assertEquals("Prayed Recently", sorted[3].displayName)
+    }
+
+    @Test
+    fun `test never interacted entities always prioritize ahead of interacted entities regardless of count`() {
+        val now = System.currentTimeMillis()
+
+        val neverPrayedHighCount = IndividualEntity(
+            displayName = "Never Prayed But High Count",
+            rootCode = RootCode.PEOPLE,
+            interactedCount = 10,
+            lastInteractedAt = null
+        )
+        val prayedJustNowLowCount = IndividualEntity(
+            displayName = "Prayed Just Now Low Count",
+            rootCode = RootCode.PEOPLE,
+            interactedCount = 1,
+            lastInteractedAt = now
+        )
+
+        val list = listOf(prayedJustNowLowCount, neverPrayedHighCount)
+        val sorted = list.sortedWith(antiNeglectComparator)
+
+        assertEquals("Never interacted entity must always sort first", neverPrayedHighCount, sorted[0])
+        assertEquals(prayedJustNowLowCount, sorted[1])
+    }
+
+    @Test
+    fun `test tie-breaking between never-interacted entities uses interactedCount ASC`() {
+        val neverPrayedLow = IndividualEntity(
+            displayName = "Never Prayed Count 0",
+            rootCode = RootCode.PEOPLE,
+            interactedCount = 0,
+            lastInteractedAt = null
+        )
+        val neverPrayedHigh = IndividualEntity(
+            displayName = "Never Prayed Count 3",
+            rootCode = RootCode.PEOPLE,
+            interactedCount = 3,
+            lastInteractedAt = null
+        )
+
+        val list = listOf(neverPrayedHigh, neverPrayedLow)
+        val sorted = list.sortedWith(antiNeglectComparator)
+
+        assertEquals(neverPrayedLow, sorted[0])
+        assertEquals(neverPrayedHigh, sorted[1])
+    }
+
+    @Test
+    fun `test tie-breaking between equal timestamps uses interactedCount ASC`() {
+        val fixedTime = 1700000000000L
+        val entityA = IndividualEntity(
+            displayName = "Entity A (count 4)",
+            rootCode = RootCode.PEOPLE,
+            interactedCount = 4,
+            lastInteractedAt = fixedTime
+        )
+        val entityB = IndividualEntity(
+            displayName = "Entity B (count 1)",
+            rootCode = RootCode.PEOPLE,
+            interactedCount = 1,
+            lastInteractedAt = fixedTime
+        )
+
+        val list = listOf(entityA, entityB)
+        val sorted = list.sortedWith(antiNeglectComparator)
+
+        assertEquals("Entity with lower count should break tie", entityB, sorted[0])
+        assertEquals(entityA, sorted[1])
     }
 
     @Test
@@ -77,7 +144,15 @@ class AntiNeglectQueueTest {
         assertTrue("Must include The Lord's Prayer", titles.contains("The Lord's Prayer"))
         assertTrue("Must include Collect for Peace", titles.contains("Collect for Peace"))
         assertTrue("Must include Collect for Grace", titles.contains("Collect for Grace"))
+        assertTrue("Must include Collect for Purity", titles.contains("Collect for Purity"))
         assertTrue("Must include The Apostles' Creed", titles.contains("The Apostles' Creed"))
+
+        // Verify all historic prayer points belong to the historic entity
+        historicPoints.forEach { point ->
+            assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, point.entityId)
+            assertEquals(PrayerStatus.HISTORIC, point.status)
+            assertTrue("Description must not be blank", point.description.isNotBlank())
+        }
     }
 
     @Test
@@ -97,5 +172,64 @@ class AntiNeglectQueueTest {
 
         assertEquals(4, updated.interactedCount)
         assertEquals(now, updated.lastInteractedAt)
+    }
+
+    @Test
+    fun `test historic prayers blending contract`() {
+        val userEntity = IndividualEntity(
+            id = "user-1",
+            displayName = "Sarah",
+            rootCode = RootCode.PEOPLE
+        )
+        val historicEntity = PreloadedContent.getHistoricEntity()
+
+        // Scenario 1: Zero user entities -> Fallback to historic
+        fun resolveEntities(userList: List<IndividualEntity>, blendHistoric: Boolean): List<IndividualEntity> {
+            return if (userList.isEmpty() || blendHistoric) {
+                if (userList.isEmpty()) listOf(historicEntity) else userList + historicEntity
+            } else {
+                userList
+            }
+        }
+
+        val zeroState = resolveEntities(emptyList(), blendHistoric = false)
+        assertEquals(1, zeroState.size)
+        assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, zeroState[0].id)
+
+        // Scenario 2: Personal prayers exist, blendHistoric = false -> User prayers only
+        val personalOnly = resolveEntities(listOf(userEntity), blendHistoric = false)
+        assertEquals(1, personalOnly.size)
+        assertEquals("Sarah", personalOnly[0].displayName)
+
+        // Scenario 3: Personal prayers exist, blendHistoric = true -> User prayers + historic blended
+        val blended = resolveEntities(listOf(userEntity), blendHistoric = true)
+        assertEquals(2, blended.size)
+        assertTrue(blended.any { it.id == "user-1" })
+        assertTrue(blended.any { it.id == PreloadedContent.HISTORIC_ENTITY_ID })
+    }
+
+    @Test
+    fun `test topic filtering excludes topics with zero active prayer points`() {
+        val entityWithActive = IndividualEntity(id = "e-1", displayName = "Active Burden", rootCode = RootCode.PEOPLE)
+        val entityWithOnlyAnswered = IndividualEntity(id = "e-2", displayName = "Fully Answered", rootCode = RootCode.PEOPLE)
+        val entityWithArchived = IndividualEntity(id = "e-3", displayName = "Archived Burden", rootCode = RootCode.PEOPLE)
+
+        val pointsMap = mapOf(
+            "e-1" to listOf(PrayerPoint(entityId = "e-1", title = "P1", description = "D1", status = PrayerStatus.ACTIVE)),
+            "e-2" to listOf(PrayerPoint(entityId = "e-2", title = "P2", description = "D2", status = PrayerStatus.ANSWERED)),
+            "e-3" to listOf(PrayerPoint(entityId = "e-3", title = "P3", description = "D3", status = PrayerStatus.ARCHIVED))
+        )
+
+        val allEntities = listOf(entityWithActive, entityWithOnlyAnswered, entityWithArchived)
+
+        val queue = allEntities.mapNotNull { entity ->
+            val points = pointsMap[entity.id] ?: emptyList()
+            val active = points.filter { it.status == PrayerStatus.ACTIVE || it.status == PrayerStatus.HISTORIC }
+            val answered = points.filter { it.status == PrayerStatus.ANSWERED }
+            if (active.isNotEmpty()) TopicWithPoints(entity, active, answered) else null
+        }
+
+        assertEquals(1, queue.size)
+        assertEquals("Active Burden", queue[0].entity.displayName)
     }
 }

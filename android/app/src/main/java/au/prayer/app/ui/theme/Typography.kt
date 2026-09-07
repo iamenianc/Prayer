@@ -9,8 +9,8 @@ import au.prayer.app.data.models.TextScale
 data class PrayerTypography(
     val homeAction: TextStyle,
     val topicTitle: TextStyle,
-    val petitionTitle: TextStyle,
-    val petitionBody: TextStyle,
+    val prayerPointTitle: TextStyle,
+    val prayerPointBody: TextStyle,
     val caption: TextStyle,
     val button: TextStyle
 )
@@ -30,12 +30,12 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
                 fontSize = 28.sp,
                 letterSpacing = 0.3.sp
             ),
-            petitionTitle = TextStyle(
+            prayerPointTitle = TextStyle(
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 22.sp
             ),
-            petitionBody = TextStyle(
+            prayerPointBody = TextStyle(
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Normal,
                 fontSize = 18.sp,
@@ -65,12 +65,12 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
                 fontSize = 22.sp,
                 letterSpacing = 0.3.sp
             ),
-            petitionTitle = TextStyle(
+            prayerPointTitle = TextStyle(
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 18.sp
             ),
-            petitionBody = TextStyle(
+            prayerPointBody = TextStyle(
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Normal,
                 fontSize = 15.sp,
@@ -100,12 +100,12 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
                 fontSize = 18.sp,
                 letterSpacing = 0.3.sp
             ),
-            petitionTitle = TextStyle(
+            prayerPointTitle = TextStyle(
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp
             ),
-            petitionBody = TextStyle(
+            prayerPointBody = TextStyle(
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Normal,
                 fontSize = 13.sp,
@@ -123,4 +123,24 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
             )
         )
     }
+}
+
+fun getMaterialTypography(prayerTypography: PrayerTypography): androidx.compose.material3.Typography {
+    return androidx.compose.material3.Typography(
+        displayLarge = prayerTypography.topicTitle,
+        displayMedium = prayerTypography.topicTitle,
+        displaySmall = prayerTypography.homeAction,
+        headlineLarge = prayerTypography.homeAction,
+        headlineMedium = prayerTypography.homeAction,
+        headlineSmall = prayerTypography.prayerPointTitle,
+        titleLarge = prayerTypography.prayerPointTitle,
+        titleMedium = prayerTypography.prayerPointTitle,
+        titleSmall = prayerTypography.prayerPointTitle,
+        bodyLarge = prayerTypography.prayerPointBody,
+        bodyMedium = prayerTypography.prayerPointBody,
+        bodySmall = prayerTypography.caption,
+        labelLarge = prayerTypography.button,
+        labelMedium = prayerTypography.button,
+        labelSmall = prayerTypography.caption
+    )
 }

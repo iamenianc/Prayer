@@ -7,7 +7,7 @@ This repository maintains three distinct domains:
 1. **Planning, Conceptualization & Product Specification (`planning/`)**:
    - The architectural foundation and product specification (*Pray Without Ceasing*).
    - **Strategic Focus**: Product requirements, domain modeling, user workflows, system architecture, feature roadmaps, and scenario analysis.
-   - **Liturgical Integrity**: Maintains `beliefs.md`, `BRD.md`, `technical.md`, and `UX.md` as living doctrinal and system contracts.
+   - **Liturgical Integrity**: Maintains `beliefs.md`, `BRD.md`, `technical.md`, `UX.md`, and `codebase_knowledge_graph.md` as living doctrinal and system contracts.
 
 2. **AI Agent API Production Code (`api/`)**:
    - The serverless proxy and inference engine supporting the companion app is **active production code**.
@@ -95,6 +95,7 @@ Prayer/
 │   ├── BRD.md                         # Business requirements document
 │   ├── technical.md                   # Technical decisions & architecture reference
 │   ├── UX.md                          # UX & product design specification
+│   ├── codebase_knowledge_graph.md    # Architecture map & cross-layer knowledge graph
 │   ├── prototype.html                 # Reference prototype (decommissioned)
 │   ├── test_runner.html               # In-browser spec & layout contract validator
 │   └── tests/                         # Automated Playwright layout & gesture test suite

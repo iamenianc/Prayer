@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Interactive PowerShell client for testing the Prayer Distillation Engine ("Guide Me" flow).
+    Interactive PowerShell client for testing the Prayer Distillation Engine ("Prayer Assistant" flow).
 .DESCRIPTION
     Sends reflections to the Cloudflare Worker proxy, prints the EXACT JSON payload
     delivered to the mobile app over the wire, and displays candidate prayer cards.

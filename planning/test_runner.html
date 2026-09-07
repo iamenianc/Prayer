@@ -408,6 +408,23 @@
                 if (style.getPropertyValue('--font-body').trim() !== '10.5px') throw new Error('Compact font-body != 10.5px');
                 doc.documentElement.setAttribute('data-text-scale', 'large'); // reset to default
               }
+            },
+            {
+              id: "text_bounds_wrapping_zoom",
+              desc: "Text stays within bounds, wraps correctly, and maintains zero horizontal overflow across all text zoom scales",
+              fn: (doc, app) => {
+                const scales = ['compact', 'regular', 'large'];
+                for (const scale of scales) {
+                  doc.documentElement.setAttribute('data-text-scale', scale);
+                  const elements = doc.querySelectorAll('.home-slab-text, .prayer-point-title, .prayer-point-body');
+                  for (const el of elements) {
+                    if (el.scrollWidth > el.clientWidth + 1) {
+                      throw new Error(`Text in <${el.className}> overflows bounds at scale ${scale}: scrollWidth=${el.scrollWidth}, clientWidth=${el.clientWidth}`);
+                    }
+                  }
+                }
+                doc.documentElement.setAttribute('data-text-scale', 'large'); // reset
+              }
             }
           ]
         },

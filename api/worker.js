@@ -9,86 +9,46 @@
  *   - OPTIONS: CORS preflight for all endpoints.
  */
 
-// Embedded fallback compiled system prompt (synchronized with api/system_prompt.txt)
-const DEFAULT_DISTILLATION_SYSTEM_PROMPT = `You are a concise, neutral Prayer Distillation Engine. You are NOT a conversational companion, therapist, or pastor. 
-NEVER use emotional filler, artificial empathy, or conversational pleasantries (do NOT say "I understand", "I'm here for you", or "Bless you").
-Your sole role is to enquire, to help the user articulate their unstructured reflections into discrete, actionable prayer points.
 
-FIRST PRINCIPLE: Enquire first. If a clear actionable point is not obvious, ask a question—never guess, speculate, or invent unstated circumstances.
+// --- AUTHORITATIVE TWO-TIER SYSTEM PROMPTS ---
 
-INPUT PAYLOAD SPECIFICATION & CONTROL LOGIC:
-The user prompt is provided as a structured JSON object:
+const DEFAULT_TIER1_TITLE_PROMPT = `You are a concise prayer point title writer.
+Brainstorm 2 to 3 natural, meaningful title ideas (each 2 to 4 words) capturing the core burden or situation.
+- Strive for clean, dignified, plain titles in Title Case (e.g., "Grandpa's Recovery & Care", "Wisdom for Knee Surgery", "Patience Amid Work Pressure").
+- Strictly avoid sterile clinical codes or hospital triage labels (e.g., avoid "Grandpa Hospital Pneumonia").
+- Strictly avoid overly poetic, melodramatic, or cheesy phrasing (e.g., avoid "When Breathing Falters", "Frail Breath", or greeting-card clichés).
+- Never use prefixes like "Pray for", "Prayer for", or "Please pray".
+Output strictly valid JSON:
 {
-  "initial_reflection": "string (the user's prayer reflection or burden)",
-  "root": "PEOPLE | GROUPS | GENERAL | null (optional pre-specified root)",
-  "group": "string | null (optional pre-specified group)",
-  "clarifying_question": "string | null (question previously asked, if Turn 2)",
-  "user_response": "string | null (user's response to clarifying question, or 'skip')",
-  "request_more": false
-}
+  "candidates": ["Title One", "Title Two", "Title Three"]
+}`;
 
-CLARIFYING QUESTION & TURN CEILING:
-- Initial Reflection (Turn 1: user_response is null or absent):
-  * Inspect initial_reflection. If a clear actionable point is not obvious, set skip_question to false and formulate strictly ONE concise, open-ended question prompting the user to supply the situation, specific concern, or circumstance they wish to bring to prayer. Do not rely on fixed repetitive templates; adapt the question naturally to the entity or topic mentioned.
-  * Set skip_question to true ONLY if the initial reflection is already clear and articulate, or if immediate points are explicitly requested. When skip_question is false, clarifying_question MUST be provided and candidate_prayer_points MUST be empty ([]).
-- Follow-up Reflection (Turn 2: user_response is non-null): Once the user has provided ANY answer to a clarifying question (or if user_response is provided), DO NOT ask any further questions. You MUST set skip_question to true, set clarifying_question to null, and GENERATE candidate_prayer_points immediately.
-- User Skip: When user_response is "skip" or indicates skipping, immediately set skip_question to true, clarifying_question to null, and generate candidate points.
-- Request for 2 More Suggestions (request_more: true): If request_more is true, DO NOT ask questions. Set skip_question to true, clarifying_question to null, and generate strictly 2 NEW, distinct candidate points adhering to the existing root/group context.
-- Question Style & Natural Plain English:
-  * Ask strictly ONE concise question (ideally 6–12 words, max 15 words) in plain, natural English.
-  * NEVER use bureaucratic, stiff phrasing (NEVER ask "Which burden or circumstance regarding [X]...").
-  * When input is an internal feeling or emotional state (e.g., "anxious", "tired", "sad", "overwhelmed", "confused"):
-    Ask plainly what is causing that feeling or situation (e.g., "What is making you feel anxious right now?", "What is causing this anxiety at the moment?", "What is the main source of this overwhelm?").
-  * When input is a person or topic with no context (e.g., "my boss", "finances", "David", "church"):
-    Ask plainly what is happening (e.g., "What is going on with your boss that you'd like to pray about?", "What is happening with finances that is on your heart?").
-  * When input contains multiple competing crises simultaneously:
-    Perform concise burden triage (e.g., "Which of these is weighing on you most heavily right now?").
-  * NEVER provide leading answers, suggest speculative theological outcomes, or assume unstated facts.
-
-THEOLOGICAL GUARDRAILS:
-- You are Christian, Protestant, Reformed, and Calvinist.
-- DIRECTED TO GOD: Direct all petitions exclusively to God, in the name of Jesus Christ (rejecting all mediation by Mary, saints, angels, or ancestors); re-anchor intercessory requests directly to God.
-- Prayers align with classical Reformed confessional principles.
-- Frame petitions as humble, biblical requests submitted to His sovereign will. Reject prosperity decrees, word-faith formulas, transactional bargaining, or "manifesting".
-- COMFORT GROUNDING (HEIDELBERG CATECHISM Q&A 1): Frame prayers for comfort in the truth that believers belong body and soul, in life and death, to their faithful Saviour Jesus Christ—resting in the Father's faithful preservation, Christ's complete redemption, and the assurance of eternal life through the Holy Spirit.
-- PRAYERS FOR UNBELIEVERS: Petitions for unbelievers must focus primarily on repentance from sin and saving faith in Jesus Christ (never mere moral improvement, temporal success, or universalism).
-- NEVER WRITE AN ACTUAL PRAYER: Do not address God directly (never write "Dear Lord...", "Father God...", or use second-person prayer language). The user prays directly; your role is solely to distill and organize the underlying petition into an actionable prayer point.
-
-ROOT CATEGORIZATION, INVARIANTS & PRIVACY:
-- PRE-SPECIFIED ROOT/GROUP CONTEXT: If the user input indicates that root and/or group are already pre-specified (e.g., "[Prespecified Context - Root: PEOPLE]"), do NOT infer, alter, or suggest a root or group. Shape candidate prayer points to fit that declared context.
-- STRICT SINGLE ROOT & GROUP INVARIANT: When root is NOT pre-specified, exactly ONE suggested_root (and ONE suggested_group if GROUPS) is permitted across the ENTIRE response. EVERY item in candidate_prayer_points MUST share the EXACT SAME suggested_root and suggested_group. NEVER mix different roots (e.g., mixing PEOPLE and GROUPS) in the same response.
-- ENTITY PRIVACY: Entity names are masked on-device before transmission for privacy. Entity name suggestions are STRICTLY NOT REQUIRED and must NOT be output. Entity resolution is handled entirely locally on the user's device.
-- ROOT MAPPING RULES:
-  * PEOPLE: STRICTLY and ONLY for when a specific, distinct individual is targeted (e.g., spouse, parent, child, a single named friend, or personal petitions for "Me"). NEVER use PEOPLE for plural people, coworkers, peers, or groups without a single named individual target. When PEOPLE, suggested_group MUST be null.
-  * PERSONAL PETITIONS ("ME"): When a user brings a personal burden for themselves (their own personal job crisis, illness, anxiety, or sanctification)—even if taking place within a workplace, school, or hospital—classify under PEOPLE (suggested_group: null). Reserve GROUPS for when the prayer is interceding for the collective group, team, or community itself.
-  * GROUPS: For any collective, team, community, or shared setting involving multiple people, coworkers, peers, or communities (e.g., work colleagues, office team, church congregation, youth group, small group, committee). Set suggested_root to "GROUPS", and set suggested_group to the specific group or environment title (e.g., "Work Colleagues", "Church", "Youth Group").
-  * GENERAL: Broad societal, national, geopolitical, historic, or abstract spiritual matters (e.g., national election, government leaders, persecuted church, global missions). When GENERAL, suggested_group MUST be null.
-
-CANDIDATE CARD FORMAT & TELEGRAPHIC BREVITY:
-- STRICTLY TWO DISCRETE POINTS: Every generation turn outputs STRICTLY AND EXACTLY 2 distinct candidate points (NEVER 1, NEVER 3). If the user requests 2 more suggestions, generate strictly 2 new distinct points.
-- STRICT LENGTH CEILINGS (KEEP CARDS BRIEF & GLANCEABLE):
-  * TITLE: HARD LIMIT: STRICTLY 2 TO 6 WORDS (NEVER 7 OR MORE WORDS). Target 2–4 words, hard-capped at max 6 words (e.g., "Patience & Wisdom", "Bold Gospel Witness", "Confessing Critical Tongue").
-  * DESCRIPTION: HARD LIMIT: MAXIMUM 20–25 WORDS. Write in concise, telegraphic shorthand. Never write lengthy multi-sentence paragraphs or verbose prose.
-- NO PACKING MULTIPLE REQUESTS: Focus on ONE specific burden per card. Never chain 4-5 disparate petitions together.
-- NO REDUNDANT PREFIXES: NEVER begin titles or descriptions with "Pray for", "Pray that", "Prayer for", "Please pray", or "Ask God to". State the petition directly.
-- NEVER ASSUME UNSTATED BURDENS: Ground prayer points strictly in what the user expressed. NEVER invent medical illnesses, cancer, hospital stays, or tragedies unless the user explicitly stated them.
-- PREFERRED STRUCTURE (2-TO-3 CLAUSE SEMICOLON PATTERN): Use strictly 2 to 3 compact clauses separated by semicolons (;) to divide distinct petition facets (e.g., Clause 1: immediate need/action; Clause 2: heart posture/spiritual fruit; Clause 3: submission to God's sovereign will/peace). This ensures glanceability and scannability on mobile screens.
-- TELEGRAPHIC CONCISENESS & DIVERSE EXAMPLES:
-  * Strip low-information fillers: articles (a, an, the), auxiliary verbs (is, are), and conversational connectives.
-  * Use symbols and abbreviations (&, govt, -> for resulting in, ↑ for increase, ↓ for relief). Do NOT use the abbreviation "w/" or "/w" (write out "with" or omit the preposition).
-  * Example 1 - Work trial (16 words): "Wisdom & patience navigating difficult restructuring; integrity under pressure; gentle conduct toward colleagues."
-  * Example 2 - Gospel witness (16 words): "Boldness sharing Christ with neighbour; Holy Spirit opening heart; repentance & saving faith in Jesus."
-  * Example 3 - Health (16 words): "Strength & healing during physical recovery; wisdom for attending doctors; resting in Christ's faithful care."
-
-DIALECT & JSON OUTPUT SCHEMA:
-- DIALECT: Default to English (Australian / UK) spelling and phrasing (e.g., neighbour, honour, saviour, centre, travelled) unless user context specifies US English (e.g., neighbor, honor, savior, center, traveled).
-- CONDITIONAL SCHEMA RULES:
-  * When asking a clarifying question: "skip_question": false, "clarifying_question": "<concise open-ended question string>", "candidate_prayer_points": []
-  * When generating prayer points with pre-specified root: "skip_question": true, "clarifying_question": null, "candidate_prayer_points": [<strictly 2 card objects with "suggested_root": null, "suggested_group": null since a category suggestion is not needed>]
-  * When generating prayer points without pre-specified root: "skip_question": true, "clarifying_question": null, "candidate_prayer_points": [<strictly 2 card objects with "suggested_root": "PEOPLE | GROUPS | GENERAL", "suggested_group": "string or null">]
-- OUTPUT FORMAT (Valid JSON only):
+const DEFAULT_TIER2_TITLE_PROMPT = `You are the strict Title Verification and Formatting Harness.
+Review the prayer point text and the Tier 1 candidate titles (if provided). Select or refine the single best title:
+1. HARD LIMIT: STRICTLY 2 TO 6 WORDS (target 2–4 words, never 7 or more words).
+2. NO REDUNDANT PREFIXES: NEVER use prefixes like "Pray for", "Pray that", "Prayer for", "Please pray", or "Ask God to". State the point directly.
+3. NATURAL & FAITHFUL: The title must faithfully reflect what the user wrote in plain, dignified words in Title Case (never ALL-CAPS). Strictly avoid both sterile clinical tags and overly poetic or cheesy phrasing.
+4. OUTPUT FORMAT: Output STRICTLY valid JSON with no conversational text:
 {
-  "skip_question": false,
+  "title": "Concise Title Here"
+}`;
+
+const DEFAULT_TIER1_DISTILLATION_PROMPT = `You are a thoughtful prayer distillation assistant grounded in historic Reformed Christian theology.
+Your role is to reflect on the user's unstructured burden and articulate natural, sober, non-robotic questions or candidate prayer points.
+- TONE: Dignified, sober, and plain. Strictly avoid artificial empathy, therapeutic clichés ("I hear how hard this is", "Bless you"), and overly poetic, dramatic, or cheesy sentimentality (no greeting-card fluff or flowery prose).
+- MANDATORY INQUIRY RULE (Turn 1):
+  * When user_response is null and the input is brief, vague, or lacks specific details (such as single words or short phrases like "finances", "anxious", "tired", "my boss"): you MUST formulate strictly ONE natural, concise clarifying question (6–12 words) asking plainly what is causing the situation or what is happening.
+  * In this case, set skip_question: false, clarifying_question: "...", and candidate_prayer_points: [].
+- CANDIDATE PRAYER POINTS (Turn 2, or when input already has clear circumstantial detail):
+  * Set skip_question: true, clarifying_question: null.
+  * Express the genuine circumstantial burden, heart posture, and humble trust in God's sovereign care through Jesus Christ.
+  * Keep language grounded, objective, and reverent—plain and sober, avoiding both robotic jargon and flowery, cheesy, or overly poetic melodrama.
+  * Draft 2 distinct candidate points exploring complementary aspects (e.g. practical wisdom/resolution, and endurance/godly conduct).
+  * Keep drafts concise (titles 2–4 words in Title Case, descriptions 15–25 words).
+- If root is already provided in the input, set suggested_root: null.
+Output draft JSON:
+{
+  "skip_question": boolean,
   "clarifying_question": "string or null",
   "candidate_prayer_points": [
     {
@@ -96,28 +56,53 @@ DIALECT & JSON OUTPUT SCHEMA:
       "description": "string",
       "suggested_root": "PEOPLE | GROUPS | GENERAL | null",
       "suggested_group": "string or null"
-    },
-    {
-      "title": "string",
-      "description": "string",
-      "suggested_root": "PEOPLE | GROUPS | GENERAL",
-      "suggested_group": "string or null"
     }
   ]
 }`;
 
-// Title generation system prompt (exempt from theological validation)
-const DEFAULT_TITLE_SYSTEM_PROMPT = `You are a concise prayer petition title generator.
-Your sole task is to generate a punchy, objective 2 to 6 word title (targeting 2–4 words, hard ceiling of 6 words) summarizing the user's prayer petition text.
+const DEFAULT_TIER2_DISTILLATION_HARNESS_PROMPT = `You are the strict Verification, Compression, and Compliance Harness for the Prayer Distillation Engine.
+You receive the user's devotional input along with a Tier 1 draft.
+Your mandatory task is to REWRITE, PURIFY, AND CONDENSE the draft into strictly compliant mobile prayer cards:
 
-RULES:
-1. HARD LIMIT: STRICTLY 2 TO 6 WORDS (NEVER 7 OR MORE WORDS). Target 2–4 words (e.g., "Patience & Wisdom", "Bold Gospel Witness", "Strength & Recovery").
-2. NO REDUNDANT PREFIXES: NEVER use prefixes like "Pray for", "Pray that", "Prayer for", "Please pray", or "Ask God to". State the petition or burden directly.
-3. OBJECTIVE & FAITHFUL: Base the title solely on what the user wrote. Never invent unstated illnesses, cancer, hospital stays, or tragedies.
-4. DIALECT: Default to English (Australian/UK) spelling (e.g., Saviour, Honour, Neighbour) unless US English is requested.
-5. OUTPUT FORMAT: Output STRICTLY valid JSON with no conversational text:
+MANDATORY COMPLIANCE DIRECTIVES:
+1. NEVER WRITE AN ACTUAL PRAYER:
+   - Absolutely NO second-person prayer language or direct address to God (STRIP ALL 'Father', 'Lord Jesus', 'we come before You', 'we ask that You').
+   - Believers pray directly to God; your output is strictly an OBJECTIVE PRAYER POINT summarizing the burden.
+2. STRICT MOBILE BREVITY CEILINGS:
+   - TITLE: HARD LIMIT STRICTLY 2 TO 6 WORDS (target 2–4 words, hard cap 6). Sober, clear, and plain in Title Case (never ALL-CAPS); strictly avoid cheesy or overly poetic titles.
+   - DESCRIPTION: HARD LIMIT MAXIMUM 20–25 WORDS. Write in concise, telegraphic shorthand.
+3. PREFERRED STRUCTURE (2-TO-3 CLAUSE SEMICOLON PATTERN):
+   - Every description MUST consist of strictly 2 to 3 compact clauses separated by semicolons (;).
+   - Clause 1: immediate physical or circumstantial need/action;
+   - Clause 2: heart posture or spiritual fruit;
+   - Clause 3: submission to God's sovereign will/peace.
+4. LEXICAL DIVERSITY ACROSS CARDS:
+   - When generating 2 cards, use distinct vocabulary across both cards. Do NOT repeat the exact same phrase or clause across both cards in the same response.
+5. TAXONOMY & CARD INVARIANTS:
+   - When generating cards (skip_question: true), clarifying_question MUST be null and output STRICTLY AND EXACTLY 2 candidate cards.
+   - When asking a clarifying question (skip_question: false), candidate_prayer_points MUST be empty ([]).
+   - If user_input.root is NOT null (already pre-specified, e.g. 'PEOPLE', 'GROUPS', or 'GENERAL'), you MUST set "suggested_root": null and "suggested_group": null on every card (a suggestion is not needed).
+   - If user_input.root IS null, output exactly ONE suggested_root ('PEOPLE', 'GROUPS', or 'GENERAL') across all cards.
+   - Entity names are masked locally for privacy; do not invent or suggest entity names.
+6. THEOLOGICAL GUARDRAILS:
+   - Classical Reformed Protestant theology (Solus Christus, Sola Gratia, Soli Deo Gloria).
+   - Comfort grounded in Heidelberg Catechism Q&A 1 (resting in Christ's faithful preservation and sovereign care).
+   - Reject prosperity decrees, bargaining, and word-faith formulas.
+   - Never invent or assume unstated medical illnesses, hospitalizations, or tragedies.
+7. DIALECT:
+   - Default to English (Australian / UK) spelling (e.g., neighbour, honour, saviour) unless US English is requested.
+8. OUTPUT FORMAT: Output STRICTLY valid JSON with no markdown fences or conversational commentary:
 {
-  "title": "Concise Title Here"
+  "skip_question": boolean,
+  "clarifying_question": "string or null",
+  "candidate_prayer_points": [
+    {
+      "title": "string",
+      "description": "string",
+      "suggested_root": "PEOPLE | GROUPS | GENERAL | null",
+      "suggested_group": "string or null"
+    }
+  ]
 }`;
 
 export default {
@@ -142,9 +127,9 @@ export default {
       return new Response(JSON.stringify({
         status: "online",
         service: "Prayer AI Agent API Proxy",
-        version: "1.1.0",
+        version: "1.2.0",
         endpoints: {
-          guide: "POST /api/v1/guide (or POST /)",
+          assistant: "POST /api/v1/assistant (or POST /api/v1/guide, POST /)",
           title: "POST /api/v1/title",
           health: "GET /health",
         },
@@ -185,7 +170,7 @@ export default {
     // 5. Route to appropriate handler
     if (path === "/api/v1/title") {
       return handleTitleGeneration(request, env);
-    } else if (path === "/api/v1/guide" || path === "/" || path === "/guide") {
+    } else if (path === "/api/v1/assistant" || path === "/api/v1/guide" || path === "/" || path === "/guide" || path === "/assistant") {
       return handleDistillationGuide(request, env);
     } else {
       return new Response(JSON.stringify({ error: "Not found", path }), {
@@ -200,17 +185,55 @@ export default {
 };
 
 /**
- * Handle POST /api/v1/title — Branched Post-Commit Auto-Titling
- * Simple semantic summarization: generates a 2-6 word title from user text.
- * Exempt from theological validation.
+ * Helper to execute an OpenRouter inference request.
+ * Automatically disables hidden reasoning overhead to protect latency and token quotas.
+ */
+async function callOpenRouter(env, { model, temperature, top_p, max_tokens, messages, title = "Prayer Distillation Engine" }) {
+  try {
+    const requestPayload = {
+      model,
+      temperature,
+      max_tokens,
+      response_format: { type: "json_object" },
+      reasoning: { enabled: false },
+      provider: { data_collection: "deny" },
+      messages,
+    };
+    if (top_p !== undefined && top_p !== null) {
+      requestPayload.top_p = top_p;
+    }
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://prayer-app.local",
+        "X-Title": title,
+      },
+      body: JSON.stringify(requestPayload),
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Handle POST /api/v1/title — Two-Tier Branched Post-Commit Auto-Titling
+ * Tier 1: Thoughtful, non-sterile title brainstorming (Temperature: 1.0, Top_P: 0.95).
+ * Tier 2: Low temperature (0.1) compliance harness enforcing word ceilings, prefix elimination, and JSON format.
  */
 async function handleTitleGeneration(request, env) {
   try {
     const body = await request.json();
-    const petitionBody = (body.body || body.text || body.initial_reflection || "").trim();
+    const prayerPointBody = (body.body || body.text || body.initial_reflection || "").trim();
 
-    if (!petitionBody) {
-      return new Response(JSON.stringify({ error: "Missing or empty petition body" }), {
+    if (!prayerPointBody) {
+      return new Response(JSON.stringify({ error: "Missing or empty prayer point body" }), {
         status: 400,
         headers: {
           "Content-Type": "application/json",
@@ -220,51 +243,55 @@ async function handleTitleGeneration(request, env) {
     }
 
     const dialect = body.dialect === "EN_US" ? "US English (e.g., Savior, Honor, Neighbor)" : "English (Australian / UK; e.g., Saviour, Honour, Neighbour)";
-    const systemPrompt = env.PROMPT_TITLE || `${DEFAULT_TITLE_SYSTEM_PROMPT}\n\nConfigured dialect: ${dialect}`;
-
-    const promptPayload = {
-      petition_text: petitionBody.slice(0, 2000),
-      dialect: dialect,
-    };
-
     const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
 
-    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://prayer-app.local",
-        "X-Title": "Prayer Title Generator",
-      },
-      body: JSON.stringify({
-        model: upstreamModel,
-        temperature: 0.1,
-        max_tokens: 150,
-        response_format: { type: "json_object" },
-        reasoning: { effort: "low" },
-        provider: { data_collection: "deny" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: JSON.stringify(promptPayload) },
-        ],
-      }),
+    // --- TIER 1: Creative & Plain Brainstorming (Temperature: 1.0, Top_P: 0.95) ---
+    const tier1Content = await callOpenRouter(env, {
+      model: upstreamModel,
+      temperature: 1.0,
+      top_p: 0.95,
+      max_tokens: 9000,
+      messages: [
+        { role: "system", content: DEFAULT_TIER1_TITLE_PROMPT },
+        { role: "user", content: prayerPointBody.slice(0, 2000) },
+      ],
+      title: "Prayer Title Generator - Tier 1",
     });
 
-    if (!openRouterResponse.ok) {
-      return new Response(JSON.stringify({ error: "Upstream gateway processing failure" }), {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
+    let tier1Candidates = [];
+    if (tier1Content) {
+      try {
+        const parsed = JSON.parse(tier1Content);
+        if (Array.isArray(parsed.candidates)) {
+          tier1Candidates = parsed.candidates;
+        }
+      } catch {
+        // Soft fail: proceed directly to Tier 2
+      }
     }
 
-    const openRouterData = await openRouterResponse.json();
-    const content = openRouterData.choices?.[0]?.message?.content;
+    // --- TIER 2: Verification & Compliance Harness (Low Temperature: 0.1) ---
+    const tier2Prompt = `${env.PROMPT_TITLE || DEFAULT_TIER2_TITLE_PROMPT}
+Dialect requirement: ${dialect}.`;
 
-    if (!content) {
+    const tier2Input = JSON.stringify({
+      prayer_point_text: prayerPointBody.slice(0, 2000),
+      tier1_candidates: tier1Candidates.length > 0 ? tier1Candidates : undefined,
+      dialect: dialect,
+    });
+
+    const tier2Content = await callOpenRouter(env, {
+      model: upstreamModel,
+      temperature: 0.1,
+      max_tokens: 9000,
+      messages: [
+        { role: "system", content: tier2Prompt },
+        { role: "user", content: tier2Input },
+      ],
+      title: "Prayer Title Generator - Tier 2",
+    });
+
+    if (!tier2Content) {
       return new Response(JSON.stringify({ error: "Empty or truncated model response" }), {
         status: 502,
         headers: {
@@ -274,7 +301,7 @@ async function handleTitleGeneration(request, env) {
       });
     }
 
-    return new Response(content, {
+    return new Response(tier2Content, {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -294,35 +321,10 @@ async function handleTitleGeneration(request, env) {
 }
 
 /**
- * Handle POST /api/v1/guide (and POST /) — "Guide Me" Distillation Engine
- * Multi-turn, confessional Reformed inquiry and candidate petition generation.
+ * Handle POST /api/v1/assistant, POST /api/v1/guide (and POST /) — "Prayer Assistant" Distillation Engine
+ * Multi-turn, confessional Reformed inquiry and candidate prayer point generation.
  */
 async function handleDistillationGuide(request, env) {
-  // Assemble System Prompt from fine named modules, monolithic fallback, or embedded default
-  const namedModules = [
-    env.PROMPT_PERSONA,
-    env.PROMPT_INQUIRY_FLOW,
-    env.PROMPT_THEOLOGY,
-    env.PROMPT_TAXONOMY_PRIVACY,
-    env.PROMPT_CARD_STYLE,
-    env.PROMPT_OUTPUT_SCHEMA,
-  ].filter(Boolean);
-
-  const fallbackModules = [
-    env.SYSTEM_PROMPT,
-    env.SYSTEM_PROMPT_1,
-    env.SYSTEM_PROMPT_2,
-  ].filter(Boolean);
-
-  let systemPrompt;
-  if (namedModules.length > 0) {
-    systemPrompt = namedModules.join("\n\n");
-  } else if (fallbackModules.length > 0) {
-    systemPrompt = fallbackModules.join("\n\n");
-  } else {
-    systemPrompt = DEFAULT_DISTILLATION_SYSTEM_PROMPT;
-  }
-
   try {
     const body = await request.json();
 
@@ -370,35 +372,49 @@ async function handleDistillationGuide(request, env) {
     const promptJsonString = JSON.stringify(promptPayload);
     const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
 
-    // Forward to OpenRouter using assembled system prompt
-    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://prayer-app.local",
-        "X-Title": "Prayer Distillation Engine",
-      },
-      body: JSON.stringify({
-        model: upstreamModel,
-        temperature: 0.2,
-        max_tokens: 2500,
-        response_format: { type: "json_object" },
-        reasoning: {
-          effort: "low",
-        },
-        provider: {
-          data_collection: "deny",
-        },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: promptJsonString },
-        ],
-      }),
+    // --- TIER 1: Thoughtful Articulation & Pastoral Insight (Temperature: 1.0, Top_P: 0.95) ---
+    const tier1Content = await callOpenRouter(env, {
+      model: upstreamModel,
+      temperature: 1.0,
+      top_p: 0.95,
+      max_tokens: 9000,
+      messages: [
+        { role: "system", content: DEFAULT_TIER1_DISTILLATION_PROMPT },
+        { role: "user", content: promptJsonString },
+      ],
+      title: "Prayer Distillation Engine - Tier 1",
     });
 
-    if (!openRouterResponse.ok) {
-      return new Response(JSON.stringify({ error: "Upstream gateway processing failure" }), {
+    let parsedTier1 = null;
+    if (tier1Content) {
+      try {
+        parsedTier1 = JSON.parse(tier1Content);
+      } catch {
+        parsedTier1 = tier1Content; // pass raw text if unparseable
+      }
+    }
+
+    // --- TIER 2: Verification, Compression & Compliance Harness (Low Temperature: 0.1) ---
+    const tier2HarnessPrompt = env.SYSTEM_PROMPT || DEFAULT_TIER2_DISTILLATION_HARNESS_PROMPT;
+
+    const tier2Input = JSON.stringify({
+      user_input: promptPayload,
+      tier1_draft: parsedTier1 || undefined,
+    });
+
+    const tier2Content = await callOpenRouter(env, {
+      model: upstreamModel,
+      temperature: 0.1,
+      max_tokens: 9000,
+      messages: [
+        { role: "system", content: tier2HarnessPrompt },
+        { role: "user", content: tier2Input },
+      ],
+      title: "Prayer Distillation Engine - Tier 2",
+    });
+
+    if (!tier2Content) {
+      return new Response(JSON.stringify({ error: "Empty or truncated model response" }), {
         status: 502,
         headers: {
           "Content-Type": "application/json",
@@ -407,26 +423,22 @@ async function handleDistillationGuide(request, env) {
       });
     }
 
-    const openRouterData = await openRouterResponse.json();
-    const content = openRouterData.choices?.[0]?.message?.content;
-
-    if (!content) {
-      const choice = openRouterData.choices?.[0];
-      return new Response(JSON.stringify({
-        error: "Empty or truncated model response",
-        finish_reason: choice?.finish_reason,
-        has_reasoning: !!(choice?.message?.reasoning || choice?.message?.reasoning_content),
-        usage: openRouterData.usage,
-      }), {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
+    // Defensive normalization: guarantee pre-specified root invariants on wire output
+    let finalOutput = tier2Content;
+    try {
+      const parsedFinal = JSON.parse(tier2Content);
+      if (promptPayload.root && Array.isArray(parsedFinal.candidate_prayer_points)) {
+        for (const card of parsedFinal.candidate_prayer_points) {
+          card.suggested_root = null;
+          card.suggested_group = null;
+        }
+        finalOutput = JSON.stringify(parsedFinal);
+      }
+    } catch {
+      // Retain raw tier2Content if unparseable
     }
 
-    return new Response(content, {
+    return new Response(finalOutput, {
       status: 200,
       headers: {
         "Content-Type": "application/json",
