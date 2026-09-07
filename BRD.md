@@ -36,6 +36,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
      1. **Start praying**
      2. **Open Journal**
      3. **Log prayer points**
+   - Strictly zero hero headers, app wordmarks, or decorative headers on the launch screen; the three tiles partition the screen vertically edge-to-edge.
    - A **swipe-left gesture** also reveals the structural directory and Journal.
 
 2. **The Three Foundational Roots (`People`, `Groups`, `General`)**:
@@ -46,6 +47,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 3. **Contemplative, Passive Prayer Flow ("Start Praying")**:
    - **Zero Friction**: Direct transition into a curated queue without requiring pre-session filtering.
    - **Topic-Centric Contemplation (All Unanswered Points per Topic)**: Replaces mechanical batches with organic Topics. Each screen in *Start praying* represents a single Topic (an individual person, group, or general concern, such as *Sarah* or *Parish Council*). When a Topic is active, **all of its unanswered prayer points** are presented contiguously together on the screen as flat rectangular tiles with zero visible gaps between them.
+   - **No Metadata Clutter**: Displays strictly the petition title and description, omitting administrative clutter (such as numerical index badges, status indicators, or category tags) from prayer cards and lists.
    - **Balanced Queue Balancing & Interaction Metrics (Preventing Neglect)**: The local database retains cumulative interaction counts (`interacted_count`) and last-interacted timestamps (`last_interacted_at`) for every topic (as well as individual prayer points). The contemplation queue uses these silent metrics to balance the curated feed—prioritizing topics with the oldest interaction dates and lowest counts—so that relational persons, ministries, and general burdens do not get neglected over time.
    - **Expandable Answered Petitions**: Answered prayer points for the active topic are sequestered in a subtle, collapsed tile (e.g., `Answered (2)`), expandable on demand when the believer wishes to reflect on God's past faithfulness and offer thanksgiving, without cluttering active intercession.
    - **Strictly Passive / Read-Only**: Zero buttons, checkmarks, editing tools, or task-completion toggles during prayer. Progressing past a topic silently increments its `interacted_count` and updates its `last_interacted_at` timestamp.

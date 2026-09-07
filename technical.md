@@ -244,10 +244,11 @@ graph TD
     1. `Start praying`
     2. `Open Journal`
     3. `Log prayer points`
-  - Strictly zero explanatory sub-text, onboarding tips, or tutorial labels. Swiping left also triggers the Journal (`People`, `Groups`, `General`).
+  - Strictly zero hero headers, application title banners, wordmarks, or tutorial/explanatory labels. The three slabs occupy the viewport edge-to-edge. Swiping left also triggers the Journal (`People`, `Groups`, `General`).
 - **Passive Prayer Engine ("Start Praying")**:
   - Direct queue instantiation with zero pre-filters.
   - **Topic-Centric Contemplation Architecture**: Replaces mechanical card batches with holistic, entity-based Topics. Each screen in *Start praying* corresponds to an `INDIVIDUAL_ENTITY` (Topic). When a Topic is displayed, **all of its unanswered (active) prayer points** are retrieved from SQLite and rendered together contiguously on screen as an edge-to-edge stack.
+  - **Stripped Administrative Metadata**: Prayer cards and list items render strictly `title` and `description`. Administrative counters (e.g. `Point N of M`), status tokens (`Active`), and ticket-like labels are completely excluded from presentation to maintain solemn contemplation.
   - **Balanced Queue Curation & Anti-Neglect Algorithm**:
     - To ensure balanced intercession across all relational spheres, SQLite query ordering balances topics dynamically:
       ```sql

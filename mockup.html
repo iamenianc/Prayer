@@ -241,6 +241,9 @@
     .home-tile:active {
       background: var(--surface-active);
     }
+    .home-tile:last-child {
+      border-bottom: none;
+    }
     .home-tile-title {
       font-size: var(--fs-home-btn);
       font-weight: 500;
@@ -903,7 +906,7 @@
     <!-- Top Bar: Contiguous 3-Column Navigation -->
     <div class="top-bar">
       <button class="top-bar-btn" id="nav-left-btn" onclick="handleLeftNav()">Home</button>
-      <div class="top-bar-title" id="screen-label">Devotion</div>
+      <div class="top-bar-title" id="screen-label"></div>
       <button class="top-bar-btn" id="nav-right-btn" onclick="handleRightNav()">Journal</button>
     </div>
 
@@ -912,10 +915,6 @@
 
       <!-- ================= 1. PRISTINE HOME ================= -->
       <div class="view-screen active" id="screen-home">
-        <div class="home-hero">
-          <div class="home-hero-wordmark">Devotion</div>
-        </div>
-
         <button class="home-tile" onclick="startPrayerSession()">
           <div class="home-tile-title">Start praying</div>
         </button>
@@ -1621,8 +1620,7 @@
       if (topicQueue.length === 0) {
         host.innerHTML = `
           <div class="card-tile" style="flex:1; justify-content:center; text-align:center;">
-            <div class="card-domain">Devotion Complete</div>
-            <div class="card-headline">All Topics Observed</div>
+            <div class="card-headline">Contemplation Complete</div>
             <div class="card-body">Tap Home to conclude devotion.</div>
           </div>
         `;
@@ -1660,11 +1658,10 @@
         `;
         pointsStack.appendChild(emptyTile);
       } else {
-        topic.activePoints.forEach((pt, idx) => {
+        topic.activePoints.forEach((pt) => {
           const tile = document.createElement('div');
           tile.className = 'card-tile';
           tile.innerHTML = `
-            <div class="card-domain">Point ${idx + 1} of ${topic.activePoints.length}</div>
             <div class="card-headline">${pt.title}</div>
             <div class="card-body">${pt.desc}</div>
           `;
@@ -1689,11 +1686,10 @@
 
         const answeredStack = document.createElement('div');
         answeredStack.className = `answered-points-stack ${isExpanded ? 'expanded' : ''}`;
-        topic.answeredPoints.forEach((pt, idx) => {
+        topic.answeredPoints.forEach((pt) => {
           const ansTile = document.createElement('div');
           ansTile.className = 'answered-card-tile';
           ansTile.innerHTML = `
-            <div class="card-domain">Answered &bull; Thanksgiving</div>
             <div class="card-headline">${pt.title}</div>
             <div class="card-body">${pt.desc}</div>
           `;
@@ -1769,14 +1765,10 @@
       const container = document.getElementById('detail-points-container');
       container.innerHTML = '';
 
-      ent.points.forEach((pt, idx) => {
+      ent.points.forEach((pt) => {
         const item = document.createElement('div');
         item.className = `point-item-tile ${pt.status === 'Answered' ? 'answered' : ''}`;
         item.innerHTML = `
-          <div class="point-item-meta">
-            <span>Point ${idx + 1}</span>
-            <span>${pt.status}</span>
-          </div>
           <div class="point-item-title">${pt.title}</div>
           <div class="point-item-body">${pt.desc}</div>
         `;
@@ -1806,7 +1798,7 @@
       const rightBtn = document.getElementById('nav-right-btn');
 
       if (id === 'screen-home') {
-        label.textContent = 'Devotion';
+        label.textContent = '';
         leftBtn.style.visibility = 'hidden';
         rightBtn.textContent = 'Journal';
       } else if (id === 'screen-pray') {

@@ -73,6 +73,8 @@ Upon launch, the user meets an uncluttered, contiguous canvas featuring strictly
 2. **Open Journal**
 3. **Log prayer points**
 
+The home screen features strictly zero hero headers, wordmarks, app logos, or arbitrary header titles. The three action slabs divide the screen vertically and contiguously edge-to-edge.
+
 ### 3.2 The Journal (Open Journal / Swipe Left)
 Tapping **Open Journal** (or swiping left from the blank home screen) glides into the structured Journal and management vault, rooted in three foundational domains:
 1. **`People`**: Exclusively and strictly specific, distinct individual relationships (e.g., spouse, children, parents, a single named friend/neighbor, and personal petitions under *Me*—including personal health, job trials, or spiritual sanctification situated within a workplace or hospital).
@@ -100,6 +102,7 @@ graph LR
 2. **Topic-Centric Contemplation (All Unanswered Points per Topic)**:
    - Replaces mechanical card batches with organic, entity-based Topics.
    - When a Topic is displayed (e.g., *Sarah*), **all of her unanswered prayer points** are shown contiguously together on the screen as flat rectangular tiles with zero visible gaps. The believer holds the complete, undivided burden for that person or group before God at once.
+   - **Zero Administrative Metadata Clutter**: Contemplation cards and prayer lists present only the petition title and description. Administrative metadata—such as point index numbers (`Point 1 of N`), status tags (`Active`), and ticket-like categories—is strictly stripped to prevent prayer from feeling like a task list.
    - **Expandable Answered Petitions**: Answered prayer points for that topic are sequestered into an austere collapsed tile (e.g., `Answered (2)`). Tapping it expands the answered prayers with soft strikethrough, allowing spontaneous thanksgiving and praise to God without cluttering active intercession.
 3. **Strictly Passive / Read-Only Prayer Experience**:
    - The prayer screen contains **zero interactive buttons, checkboxes, or edit fields**.
