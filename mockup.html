@@ -321,6 +321,7 @@
       line-height: var(--line-height-body);
       color: var(--text);
       font-weight: 400;
+      white-space: pre-line;
     }
 
     .answered-section {
@@ -355,6 +356,7 @@
       line-height: var(--line-height-body);
       color: var(--text-subtle);
       text-decoration: line-through;
+      white-space: pre-line;
     }
 
     /* Unobtrusive gestural hint at the bottom */
@@ -468,6 +470,7 @@
       font-size: var(--font-body);
       line-height: var(--line-height-body);
       color: var(--text);
+      white-space: pre-line;
     }
 
     /* -------------------------------------------------------------------------
@@ -743,6 +746,39 @@
       </section>
 
       <!-- =====================================================================
+           SCREEN: Edit Saved Petition
+           Click-once from Entity Detail. Title & Body editable. Permanent Delete.
+           ===================================================================== -->
+      <section id="screen-edit-petition" class="screen">
+        <div class="target-context-banner" id="edit-context-banner">Praying for Sarah</div>
+        <div class="form-group">
+          <label class="form-label">Petition Title</label>
+          <input type="text" class="text-input" id="edit-input-title" placeholder="Petition title" style="border: none; padding: 14px 20px; font-weight: 600;">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label">Prayer Details (Bulleted)</label>
+          <textarea class="form-textarea" id="edit-input-body" placeholder="Prayer details..." style="min-height: 200px; padding: 14px 20px;"></textarea>
+        </div>
+        <div class="form-group">
+          <div class="settings-option-tile" id="opt-edit-toggle-answered" style="cursor: pointer;">
+            <span>Answered petition</span>
+            <span class="settings-check" id="check-edit-answered" style="display: none;">✓</span>
+          </div>
+        </div>
+        <button class="btn-submit" id="btn-edit-save">Save changes</button>
+        <button class="btn-secondary" id="btn-edit-delete" style="color: #D32F2F; border-top: 1px solid var(--border);">Delete petition</button>
+        <button class="btn-secondary" id="btn-edit-cancel">Cancel</button>
+
+        <!-- Stark Planar Delete Confirmation Prompt -->
+        <div id="delete-confirm-box" style="display: none; padding: 24px 20px; background: var(--surface-active); border-top: 1px solid var(--border);">
+          <div style="font-size: var(--font-title); font-weight: 600; margin-bottom: 8px; color: var(--text);">Delete this petition?</div>
+          <div style="font-size: var(--font-body); color: var(--text-muted); margin-bottom: 20px; line-height: 1.5;">This will permanently remove the petition from your journal. This cannot be undone.</div>
+          <button class="btn-submit" id="btn-confirm-delete" style="background: #D32F2F; color: #FFFFFF; margin-bottom: 8px;">Confirm permanent delete</button>
+          <button class="btn-secondary" id="btn-cancel-delete" style="width: 100%;">Keep petition</button>
+        </div>
+      </section>
+
+      <!-- =====================================================================
            SCREEN: Log Prayer Points - Step 0 ("Who are you praying for?")
            Mandatory relational subject resolution upfront.
            ===================================================================== -->
@@ -914,24 +950,24 @@
 
         prayers: [
           // Sarah
-          { id: 101, entity_id: 1, title: 'Chemotherapy endurance & peace', body: 'Patience through bodily weakness; presence of Christ in isolation; sustained trust in God\'s sovereign goodness.', status: 'ACTIVE' },
-          { id: 102, entity_id: 1, title: 'Surgical recovery & tissue healing', body: 'Complication-free healing; skill for surgeons; rest without unceasing anxiety.', status: 'ACTIVE' },
-          { id: 103, entity_id: 1, title: 'Clear biopsy margins', body: 'Pathology confirmed clean margins; thanksgiving for answered intercession.', status: 'ANSWERED' },
+          { id: 101, entity_id: 1, title: 'Chemotherapy endurance & peace', body: '• Patience through bodily weakness\n• Presence of Christ in isolation\n• Sustained trust in God\'s sovereign goodness', status: 'ACTIVE' },
+          { id: 102, entity_id: 1, title: 'Surgical recovery & tissue healing', body: '• Complication-free healing\n• Skill for attending surgeons\n• Rest without unceasing anxiety', status: 'ACTIVE' },
+          { id: 103, entity_id: 1, title: 'Clear biopsy margins', body: '• Pathology confirmed clean margins\n• Thanksgiving for answered intercession', status: 'ANSWERED' },
 
           // David
-          { id: 201, entity_id: 2, title: 'Faithfulness under workplace scrutiny', body: 'Integrity when pressured to compromise; bold, gentle witness to colleagues.', status: 'ACTIVE' },
+          { id: 201, entity_id: 2, title: 'Faithfulness under workplace scrutiny', body: '• Integrity when pressured to compromise\n• Bold, gentle witness to colleagues', status: 'ACTIVE' },
 
           // Me
-          { id: 301, entity_id: 3, title: 'Patience with children & gentle speech', body: 'Restraint when fatigued; putting off sinful anger; reflecting Christ\'s gentleness.', status: 'ACTIVE' },
+          { id: 301, entity_id: 3, title: 'Patience with children & gentle speech', body: '• Restraint when fatigued\n• Putting off sinful anger\n• Reflecting Christ\'s gentleness', status: 'ACTIVE' },
 
           // Parish Council
-          { id: 401, entity_id: 4, title: 'Wisdom in pastoral appointments', body: 'Doctrinal discernment; unity across leaders; raising faithful elders.', status: 'ACTIVE' },
+          { id: 401, entity_id: 4, title: 'Wisdom in pastoral appointments', body: '• Doctrinal discernment\n• Unity across leaders\n• Raising faithful elders', status: 'ACTIVE' },
 
           // Youth Ministry Team
-          { id: 501, entity_id: 5, title: 'Discipleship of high schoolers', body: 'Clear teaching of Scripture; protection against secular cynicism; authentic repentance.', status: 'ACTIVE' },
+          { id: 501, entity_id: 5, title: 'Discipleship of high schoolers', body: '• Clear teaching of Scripture\n• Protection against secular cynicism\n• Authentic repentance', status: 'ACTIVE' },
 
           // Persecuted Church
-          { id: 601, entity_id: 6, title: 'Endurance under state surveillance', body: 'Courage for underground pastors; uncompromised gospel preaching; preservation of secret assemblies.', status: 'ACTIVE' },
+          { id: 601, entity_id: 6, title: 'Endurance under state surveillance', body: '• Courage for underground pastors\n• Uncompromised gospel preaching\n• Preservation of secret assemblies', status: 'ACTIVE' },
 
           // Historic Prayers
           { id: 701, entity_id: 7, title: 'The Lord\'s Prayer', body: 'Our Father in heaven, hallowed be your name. Your kingdom come, your will be done, on earth as it is in heaven. Give us this day our daily bread, and forgive us our debts, as we also have forgiven our debtors. And lead us not into temptation, but deliver us from evil. For yours is the kingdom and the power and the glory forever. Amen.', status: 'ACTIVE' },
@@ -945,6 +981,8 @@
         currentPrayerIndex: 0,
         selectedEntityId: null,
         createdEntityRoot: 'PEOPLE',
+        editingPrayerId: null,
+        editingPrayerStatus: 'ACTIVE',
 
         // "Guide Me" Session State
         guideMoreRequested: false
@@ -968,6 +1006,7 @@
         'screen-log-step1': document.getElementById('screen-log-step1'),
         'screen-log-direct': document.getElementById('screen-log-direct'),
         'screen-log-guide': document.getElementById('screen-log-guide'),
+        'screen-edit-petition': document.getElementById('screen-edit-petition'),
         'screen-settings': document.getElementById('screen-settings')
       };
 
@@ -1011,7 +1050,24 @@
           topBarTitle.textContent = entity ? `Praying for ${entity.name}` : 'Direct Entry';
           document.getElementById('direct-target-banner').textContent = `Praying for ${entity ? entity.name : ''}`;
           document.getElementById('btn-direct-save').textContent = entity ? `Save to ${entity.name}` : 'Save prayer point';
-          document.getElementById('direct-input-body').value = '';
+          const directInput = document.getElementById('direct-input-body');
+          directInput.value = '• ';
+          setTimeout(() => {
+            directInput.focus();
+            directInput.selectionStart = directInput.selectionEnd = 2;
+          }, 50);
+        } else if (screenId === 'screen-edit-petition') {
+          topBarTitle.textContent = 'Edit petition';
+          const entity = state.entities.find(e => e.id === state.selectedEntityId);
+          document.getElementById('edit-context-banner').textContent = entity ? `Praying for ${entity.name}` : 'Edit petition';
+          const prayer = state.prayers.find(p => p.id === state.editingPrayerId);
+          if (prayer) {
+            document.getElementById('edit-input-title').value = prayer.title || '';
+            document.getElementById('edit-input-body').value = prayer.body || '';
+            state.editingPrayerStatus = prayer.status || 'ACTIVE';
+            document.getElementById('check-edit-answered').style.display = (prayer.status === 'ANSWERED') ? 'inline' : 'none';
+          }
+          document.getElementById('delete-confirm-box').style.display = 'none';
         } else if (screenId === 'screen-log-guide') {
           const entity = state.entities.find(e => e.id === state.selectedEntityId);
           topBarTitle.textContent = entity ? `Praying for ${entity.name}` : 'Guide Me';
@@ -1059,6 +1115,8 @@
           showScreen('screen-log-step0');
         } else if (state.currentScreen === 'screen-log-direct' || state.currentScreen === 'screen-log-guide') {
           showScreen('screen-log-step1');
+        } else if (state.currentScreen === 'screen-edit-petition') {
+          showScreen('screen-entity-detail');
         } else if (state.currentScreen === 'screen-settings') {
           showScreen('screen-journal');
         } else {
@@ -1257,10 +1315,10 @@
             <div class="detail-petition-body">${escapeHtml(p.body)}</div>
           `;
 
-          // Tap to toggle Answered status
+          // Tap to edit petition (Click once to start editing)
           card.addEventListener('click', () => {
-            p.status = p.status === 'ACTIVE' ? 'ANSWERED' : 'ACTIVE';
-            renderEntityDetail();
+            state.editingPrayerId = p.id;
+            showScreen('screen-edit-petition');
           });
 
           list.appendChild(card);
@@ -1270,6 +1328,46 @@
       // In-Directory Quick Log
       document.getElementById('btn-entity-log-point').addEventListener('click', () => {
         showScreen('screen-log-step1');
+      });
+
+      // Edit Saved Petition Handlers
+      document.getElementById('opt-edit-toggle-answered').addEventListener('click', () => {
+        state.editingPrayerStatus = state.editingPrayerStatus === 'ACTIVE' ? 'ANSWERED' : 'ACTIVE';
+        document.getElementById('check-edit-answered').style.display = (state.editingPrayerStatus === 'ANSWERED') ? 'inline' : 'none';
+      });
+
+      document.getElementById('btn-edit-save').addEventListener('click', () => {
+        const prayer = state.prayers.find(p => p.id === state.editingPrayerId);
+        if (!prayer) return;
+        const newTitle = document.getElementById('edit-input-title').value.trim();
+        const newBody = document.getElementById('edit-input-body').value.trim();
+        if (!newTitle && !newBody) return;
+
+        prayer.title = newTitle || 'Personal petition';
+        prayer.body = newBody;
+        prayer.status = state.editingPrayerStatus;
+
+        showScreen('screen-entity-detail');
+      });
+
+      document.getElementById('btn-edit-cancel').addEventListener('click', () => {
+        showScreen('screen-entity-detail');
+      });
+
+      document.getElementById('btn-edit-delete').addEventListener('click', () => {
+        const confirmBox = document.getElementById('delete-confirm-box');
+        confirmBox.style.display = 'block';
+        confirmBox.scrollIntoView({ behavior: 'smooth' });
+      });
+
+      document.getElementById('btn-cancel-delete').addEventListener('click', () => {
+        document.getElementById('delete-confirm-box').style.display = 'none';
+      });
+
+      document.getElementById('btn-confirm-delete').addEventListener('click', () => {
+        state.prayers = state.prayers.filter(p => p.id !== state.editingPrayerId);
+        state.editingPrayerId = null;
+        showScreen('screen-entity-detail');
       });
 
       // -----------------------------------------------------------------------
@@ -1357,15 +1455,78 @@
       });
 
       function generateLightweightTitle(text) {
-        // Clean leading prayer phrases, strip punctuation, take 2-4 concise words
-        const cleaned = text.replace(/^(please pray that|pray for|praying for|lord please|father please|i pray that|help me to)\s+/i, '')
-                            .replace(/[^\w\s]/g, '')
-                            .trim();
+        // Strip leading bullets/symbols, clean leading prayer phrases, strip punctuation, take 2-4 concise words
+        const stripped = text.replace(/^[•\s\-\*]+/g, '');
+        const cleaned = stripped.replace(/^(please pray that|pray for|praying for|lord please|father please|i pray that|help me to)\s+/i, '')
+                                .replace(/[^\w\s]/g, '')
+                                .trim();
         const words = cleaned.split(/\s+/).filter(Boolean).slice(0, 4);
         if (words.length === 0 || !words[0]) return 'Personal petition';
         const title = words.join(' ');
         return title.charAt(0).toUpperCase() + title.slice(1);
       }
+
+      // Auto Bullet-Point List Engine
+      // Automatically uses bullet lists, with line space (Enter) triggering a new bullet
+      function setupAutoBullets(textarea) {
+        if (!textarea) return;
+
+        textarea.addEventListener('focus', () => {
+          if (textarea.value.trim() === '') {
+            textarea.value = '• ';
+            textarea.selectionStart = textarea.selectionEnd = 2;
+          }
+        });
+
+        textarea.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const val = textarea.value;
+
+            // Find start of current line
+            const lastNewline = val.lastIndexOf('\n', start - 1);
+            const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+            const currentLineBeforeCursor = val.substring(lineStart, start);
+
+            // If the current line is just an empty bullet ("• " or "•"), clear it (allows exiting list / blank line)
+            if (/^•\s*$/.test(currentLineBeforeCursor)) {
+              const nextNewline = val.indexOf('\n', end);
+              const lineEnd = nextNewline === -1 ? val.length : nextNewline;
+              textarea.value = val.substring(0, lineStart) + val.substring(lineEnd);
+              textarea.selectionStart = textarea.selectionEnd = lineStart;
+              return;
+            }
+
+            // Otherwise, insert newline with bullet
+            const bulletInsert = '\n• ';
+            textarea.value = val.substring(0, start) + bulletInsert + val.substring(end);
+            textarea.selectionStart = textarea.selectionEnd = start + bulletInsert.length;
+          } else if (e.key === 'Backspace') {
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const val = textarea.value;
+
+            // If nothing is selected and backspacing right after an empty bullet prefix
+            if (start === end) {
+              const lastNewline = val.lastIndexOf('\n', start - 1);
+              const lineStart = lastNewline === -1 ? 0 : lastNewline + 1;
+              const currentLineBeforeCursor = val.substring(lineStart, start);
+
+              if (currentLineBeforeCursor === '• ') {
+                e.preventDefault();
+                textarea.value = val.substring(0, lineStart) + val.substring(start);
+                textarea.selectionStart = textarea.selectionEnd = lineStart;
+              }
+            }
+          }
+        });
+      }
+
+      // Initialize auto-bullet list engine on Direct Entry and Edit Petition textareas
+      setupAutoBullets(document.getElementById('direct-input-body'));
+      setupAutoBullets(document.getElementById('edit-input-body'));
 
       document.getElementById('btn-direct-cancel').addEventListener('click', () => {
         showScreen('screen-log-step1');

@@ -187,6 +187,11 @@ Once the person or group is established, the user selects their preferred mode:
 
 #### Pathway A: "Direct Entry" (Direct Capture & Auto-Titling)
 - **Elimination of Title Input**: The user shall **never be able to see or add a title** when logging new points. The view presents strictly a single, uncluttered text pad pre-bound to the selected person or group. Users pour out their prayer, burden, or intercession directly without the friction of titling or categorizing upfront.
+- **Auto Bullet-Point Writing Pad**:
+  - The writing pad automatically formats input as a structured bullet-point list.
+  - On initial focus or upon typing the first character, a bullet point prefix (`• `) is automatically initialized.
+  - Pressing **Enter / Return** (line space) automatically triggers a new bullet point on the next line (`\n• `).
+  - Pressing Backspace on an empty bullet cleanses the prefix without breaking editing flow.
 - **Immediate Local Persistence**: Tapping **Save to [Name]** instantly commits the petition body to the local SQLite database.
 - **Post-Committal Auto-Titling via Branched AI Engine**: Following committal, the title (2–6 words) is auto-generated asynchronously in the background using a dedicated lightweight branch of the AI engine.
 - **Theological Validation Not Required**: Because this branch performs solely the simple task of generating a concise title summarizing the user's already-committed text, theological validation is not required.
@@ -221,11 +226,16 @@ Designed for when thoughts regarding the selected person or group are tangled, h
 Tapping **Open Journal** (or swiping left from the home screen) opens the complete management journal:
 1. **Hierarchy Browsing**:
    - Drill into **`People`**, **`Groups`**, or **`General`** to see all associated entities and active prayer points.
-2. **Marking Answered**:
-   - Tapping an active prayer point allows marking it as `Answered`, capturing an optional resolution date and thanksgiving note.
-   - Answered points display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
-3. **Editing & Archiving**:
-   - Update titles, adjust notes, or archive points no longer held in active prayer.
+2. **Editing Saved Petitions (Click-Once Entry & Title Editing)**:
+   - **Click Once to Start Editing**: In the Entity Detail view, clicking or tapping any saved prayer point once immediately transitions into edit mode for that petition.
+   - **Editable Title**: The petition title (initially auto-generated upon creation) is fully exposed and editable. Users can freely modify, refine, or rename the title to reflect evolving pastoral circumstances.
+   - **Editable Body & Auto-Bullets**: The petition body is fully editable, maintaining the auto bullet-point behavior (line space triggers a new bullet).
+   - **Status & Thanksgiving Toggle**: Within the editor, users can mark the petition as `Active` or `Answered` (with an optional thanksgiving note). Answered points in the list display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
+3. **Permanent Deletion (`Delete petition`)**:
+   - Believers can permanently remove petitions that have ended or were logged in error.
+   - Tapping **Delete petition** reveals a stark, planar confirmation prompt (*"Delete this petition? This cannot be undone."*).
+   - Confirming permanently purges the record from local SQLite storage (`DELETE FROM PRAYER_POINT WHERE id = ?`).
+   - Editor controls: **Save changes**, **Cancel**, and **Delete petition**.
 4. **Settings Access**:
    - Theme toggle (*Morning Light* [Default] vs. *Quiet Night*).
    - **Text Scaling**: Dedicated three-tier selector with pronounced, distinct jumps (**Large** *(Default)*, **Regular**, and **Compact**). The **Large** default features prominent, high-presence typography (28px home buttons, 22px card titles, 18px petitions) for effortless, strain-free devotional contemplation. **Regular** offers balanced density (20px buttons, 16px card titles, 13px petitions), and **Compact** provides high-density scannability (15px buttons, 12.5px card titles, 10.5px petitions).

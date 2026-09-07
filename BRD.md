@@ -62,8 +62,9 @@ Many believers struggle with consistency, distraction, and cognitive overload du
      - Tapping *Log prayer points* immediately presents an entity selection screen. Every prayer point must belong to a specific person, group, or general topic.
      - Users select an existing entity (`People`, `Groups`, `General`) from the local SQLite vault, or tap the contiguous **"New Person / Group"** creation tile to immediately establish a new name and root.
      - When logging is triggered from within an existing entity detail screen in the Journal, the target entity is already locked and this initial step is seamlessly satisfied.
-   - **Direct Entry (Elimination of Title Input & Post-Commit Auto-Titling)**:
+   - **Direct Entry (Elimination of Title Input, Auto-Bullets & Post-Commit Auto-Titling)**:
      - The user **shall not be able to see or add a title** when logging new points. The view provides strictly a clean, unadorned text pad pre-bound to the selected person or group.
+     - **Auto Bullet-Point Writing Pad**: The writing pad automatically formats input as a bulleted list, auto-prefixing with a bullet (`• `) and triggering a new bullet on line space (Enter / Return).
      - Tapping **Save to [Name]** immediately commits the petition body to the local SQLite database.
      - Following committal, a concise 2–6 word petition title is auto-generated asynchronously via a dedicated lightweight branch of the AI engine.
      - **Exemption from Theological Validation**: The title-generation branch performs purely a simple summarization task and does not require theological validation.
@@ -81,8 +82,11 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - **Zero Account Friction**: No login, no user registration, and no user-supplied API key required.
    - Orchestrated via a serverless proxy holding the master API key securely server-side with hard spending caps.
 
-6. **Granular Prayer Point Lifecycle**:
-   - Independent states per prayer point: `Active`, `Answered` (with resolution timestamp and testimony note), and `Archived`.
+6. **Granular Prayer Point Lifecycle & Editing Requirements**:
+   - Independent states per prayer point: `Active`, `Answered` (with resolution timestamp and thanksgiving note), and `Archived`.
+   - **Click Once to Edit**: In the Journal directory and entity detail views, clicking or tapping a saved prayer point once immediately opens edit mode.
+   - **Editable Title & Body**: While titles are auto-generated on initial log, users have complete authority to edit and customize the title and body during editing.
+   - **Permanent Deletion**: The system explicitly supports permanent deletion (`DELETE FROM PRAYER_POINT`), completely purging the record from local storage upon user confirmation.
    - Answered prayers are displayed in the directory with a subtle strikethrough.
 
 7. **Language & Dialect Configuration (Default: English Australian/UK; Option: US English)**:

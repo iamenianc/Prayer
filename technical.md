@@ -281,13 +281,32 @@ graph TD
     - If initiated from an entity view in the Journal, the target entity is pre-bound.
     - If initiated from the main menu, an edge-to-edge entity picker allows selecting an existing entity or tapping a contiguous *"New Person / Group"* tile to quickly input a name and select `People` or `Groups`.
   - **Two Discrete Capture Pathways (Post-Entity Selection)**:
-    1. `Direct Entry (Elimination of Title Input & Post-Commit Auto-Titling)`:
+    1. `Direct Entry (Elimination of Title Input, Auto-Bullets & Post-Commit Auto-Titling)`:
        - **Zero Title Field**: The user shall **never see or add a title** when logging new points. The UI renders strictly a single, unadorned text pad pre-bound to the person or group.
+       - **Auto Bullet-Point List Engine**: The text pad automatically formats entries as bulleted lists. Upon focus or initial typing, the text area initializes with a bullet prefix (`• `). On `Enter` (newline/line space), the input controller intercepts the keypress, inserts `\n• `, and advances the cursor position. Pressing Backspace on an empty bullet line clears the bullet prefix.
        - **Immediate Local Commit**: Tapping **Save to [Name]** immediately executes `INSERT INTO PRAYER_POINT (entity_id, body, status, created_at)` into local SQLite. 100% offline-first.
        - **Branched AI Title Generation (Post-Committal)**: After local committal, an asynchronous background task dispatches the petition body to the branched AI title generator (`POST /api/v1/title`). The model generates a concise 2–6 word title and updates the local record (`UPDATE PRAYER_POINT SET title = ? WHERE id = ?`).
        - **Theological Validation Exemption**: This branch performs solely the simple task of generating a concise title from the user's committed text; theological validation is not required.
        - **Offline Fallback**: In offline scenarios, the record uses an initial clean snippet (first 3–5 words) as a temporary label until network connectivity allows the background title generator to populate the permanent title.
     2. `"Guide me"`: Structured articulation pipeline. The app auto-packages the pre-selected entity context (`root` and `group`) into the JSON wire payload (`initial_reflection`, `root`, `group`, `clarifying_question`, `user_response`, `request_more`). Clarifying inquiry is open-ended, concise (6–12 words), with a 2-turn maximum and unconditional question skipping. Candidate review displays strictly 2 points tailored to the entity; category suggestion is omitted (`suggested_root: null`, `suggested_group: null`). One-time option to request 2 more candidate points. Saving commits directly to the selected entity.
+- **Saved Petition Editing & Permanent Deletion Engine**:
+  - **Single-Click Activation**: In the Entity Detail view, tapping any saved petition once immediately opens the petition editor (`openPetitionEditor(petitionId)`).
+  - **Editable Properties**:
+    - `title`: Fully editable text input, allowing believers to customize or refine auto-generated titles.
+    - `body`: Fully editable textarea with the auto bullet-point list engine.
+    - `status`: State toggle between `ACTIVE` and `ANSWERED` (with optional thanksgiving note).
+  - **Persistence Operations**:
+    - *Save Changes*:
+      ```sql
+      UPDATE PRAYER_POINT 
+      SET title = :title, body = :body, status = :status, updated_at = CURRENT_TIMESTAMP 
+      WHERE id = :id;
+      ```
+    - *Permanent Deletion*:
+      ```sql
+      DELETE FROM PRAYER_POINT WHERE id = :id;
+      ```
+      Requires explicit confirmation via a stark, planar confirmation tile (*"Delete this petition? This cannot be undone."*). Hard deletion completely purges the petition record from the SQLite vault.
 - **Surface & Geometry Token Specifications**:
   - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners.
   - `surface_elevation`: Flat tiles (`elevation: 0`, `box-shadow: none`). Zero skeuomorphic depth, gradients, or drop shadows.
