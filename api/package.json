@@ -1,0 +1,23 @@
+{
+  "name": "prayer-ai-agent-api",
+  "version": "1.1.0",
+  "description": "Production Cloudflare Worker proxy and inference API for the Prayer companion app",
+  "main": "worker.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "python test/run_stress_test.py",
+    "test:guide": "powershell -ExecutionPolicy Bypass -File interactive_guide.ps1"
+  },
+  "keywords": [
+    "prayer",
+    "cloudflare-worker",
+    "openrouter",
+    "theology",
+    "inference-proxy"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "private": true
+}

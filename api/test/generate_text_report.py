@@ -1,8 +1,11 @@
 import json
 from collections import Counter
 
-INPUT_FILE = "test/stress_test_responses.json"
-OUTPUT_FILE = "test/AI_GENERATED_TEXT_REPORT.md"
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INPUT_FILE = os.path.join(BASE_DIR, "stress_test_responses.json")
+OUTPUT_FILE = os.path.join(BASE_DIR, "AI_GENERATED_TEXT_REPORT.md")
 
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
     data = json.load(f)

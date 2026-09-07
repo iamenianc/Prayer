@@ -14,8 +14,49 @@ param (
     [string]$Secret = "prayer-app-secret-key-2026",
     [string]$Root = $null,
     [string]$Group = $null,
-    [int]$TimeoutSeconds = 25
+    [int]$TimeoutSeconds = 25,
+    [switch]$TestTitle,
+    [string]$TitleText = $null
 )
+
+function Invoke-TitleRequest ($bodyText, $dialect = "EN_AU_UK") {
+    $tempFile = [System.IO.Path]::GetTempFileName()
+    try {
+        $jsonBody = @{
+            body = $bodyText
+            dialect = $dialect
+        } | ConvertTo-Json -Compress
+        [System.IO.File]::WriteAllText($tempFile, $jsonBody, [System.Text.Encoding]::UTF8)
+
+        $titleEndpoint = "$($Endpoint.TrimEnd('/'))/api/v1/title"
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $response = curl.exe -s --max-time $TimeoutSeconds -X POST $titleEndpoint `
+            -H "Content-Type: application/json" `
+            -H "X-Prayer-Gateway-Secret: $Secret" `
+            --data-binary "@$tempFile"
+        $sw.Stop()
+
+        if ([string]::IsNullOrWhiteSpace($response)) {
+            Write-Host " [!] Error: Empty response from title endpoint." -ForegroundColor Red
+            return $null
+        }
+
+        try {
+            $parsed = $response | ConvertFrom-Json
+            return @{
+                raw_json = $response
+                data = $parsed
+                latency_ms = $sw.ElapsedMilliseconds
+            }
+        } catch {
+            Write-Host " [!] Error: Invalid JSON returned from title endpoint:" -ForegroundColor Red
+            Write-Host "     $response" -ForegroundColor DarkGray
+            return $null
+        }
+    } finally {
+        Remove-Item $tempFile -ErrorAction SilentlyContinue
+    }
+}
 
 function Invoke-ProxyRequest ($payload) {
     $tempFile = [System.IO.Path]::GetTempFileName()
@@ -118,8 +159,21 @@ Write-Host "========================================================" -Foregroun
 Write-Host " PRAYER DISTILLATION ENGINE - INTERACTIVE CLI CLIENT" -ForegroundColor White
 Write-Host " Endpoint: $Endpoint" -ForegroundColor DarkGray
 Write-Host " Type 'exit' or 'quit' at any prompt to exit." -ForegroundColor DarkGray
-Write-Host " Type 'skip' during clarifying questions to bypass." -ForegroundColor DarkGray
 Write-Host "========================================================`n" -ForegroundColor Cyan
+
+if ($TestTitle -or $TitleText) {
+    $text = if ($TitleText) { $TitleText } else { "• Wisdom and patience navigating difficult restructuring at workplace; integrity under pressure." }
+    Write-Host "`nTesting Title Generation Endpoint (/api/v1/title):" -ForegroundColor Yellow
+    Write-Host "Input Text: $text" -ForegroundColor White
+    $res = Invoke-TitleRequest $text
+    if ($res) {
+        Write-Host "`nResult:" -ForegroundColor Green
+        Write-Host "  Title:   $($res.data.title)" -ForegroundColor White
+        Write-Host "  Latency: $($res.latency_ms)ms" -ForegroundColor DarkGray
+        Write-Host "  Raw:     $($res.raw_json)" -ForegroundColor DarkGray
+    }
+    return
+}
 
 while ($true) {
     Write-Host "STEP 1: OPEN HEART" -ForegroundColor Yellow

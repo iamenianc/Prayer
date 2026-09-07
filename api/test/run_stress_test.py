@@ -6,8 +6,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 API_URL = "https://pray-proxy.reflex-game.workers.dev/"
 GATEWAY_SECRET = "prayer-app-secret-key-2026"
-INPUT_FILE = "test/prayer_requests_stress_test.json"
-OUTPUT_FILE = "test/stress_test_responses.json"
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+INPUT_FILE = os.path.join(BASE_DIR, "prayer_requests_stress_test.json")
+OUTPUT_FILE = os.path.join(BASE_DIR, "stress_test_responses.json")
 MAX_WORKERS = 3
 MAX_RETRIES = 3
 

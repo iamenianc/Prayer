@@ -1,7 +1,7 @@
 # Engine Stress-Test Suite & Benchmark Dataset
 
-**Document:** `test/README.md`  
-**Dataset File:** [`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json)  
+**Document:** `api/test/README.md`  
+**Dataset File:** [`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json)  
 **Dataset Size:** Exactly 100 standardized, multi-dimensional test cases  
 **Scope:** Evaluation, stress-testing, and compliance verification of the Prayer Distillation Engine against theological boundaries, taxonomy hierarchies, and linguistic constraints.
 
@@ -11,7 +11,7 @@
 
 This test suite provides a comprehensive benchmark battery designed to stress-test the Prayer Distillation Engine (deployed on Cloudflare Workers at `https://pray-proxy.reflex-game.workers.dev/` backed by OpenRouter inference) across six critical dimensions:
 
-1. **Theological Guardrails & Negative Boundary Invariants**: Verifying that the engine strictly enforces historic Reformed confessional theology (`beliefs.md`), including:
+1. **Theological Guardrails & Negative Boundary Invariants**: Verifying that the engine strictly enforces historic Reformed confessional theology ([`planning/beliefs.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/beliefs.md)), including:
    - *Solus Christus*: Absolute rejection of saint, angel, Marian, or deceased ancestor invocations (Articles XXII).
    - *Sola Gratia*: Elimination of works-righteousness bargaining, merit points, or transactional karma.
    - *Absolute Sovereignty of God*: Refusal of Word-of-Faith "decrees", "positive manifestation", or commanding God.
@@ -28,7 +28,7 @@ This test suite provides a comprehensive benchmark battery designed to stress-te
 
 ## 2. Dataset Schema Reference
 
-Each entry in [`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json) follows this JSON structure:
+Each entry in [`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json) follows this JSON structure:
 
 ```json
 {
@@ -129,7 +129,7 @@ Paste any `input_text` string from the dataset to step through Turn 1, clarifyin
 Run a targeted test for any ID using PowerShell:
 ```powershell
 # Example: Testing St. Jude negative boundary (REQ-032)
-$item = (Get-Content test/prayer_requests_stress_test.json | ConvertFrom-Json) | Where-Object { $_.id -eq "REQ-032" }
+$item = (Get-Content api/test/prayer_requests_stress_test.json | ConvertFrom-Json) | Where-Object { $_.id -eq "REQ-032" }
 $temp = [System.IO.Path]::GetTempFileName()
 @{ user_input = $item.input_text } | ConvertTo-Json -Compress | Set-Content $temp -Encoding UTF8
 $response = curl.exe -s -X POST "https://pray-proxy.reflex-game.workers.dev/" `
@@ -143,18 +143,18 @@ $response | ConvertFrom-Json | ConvertTo-Json -Depth 5
 ### 5.3 Automated Full 100-Request Battery Run
 Execute the complete test suite against the deployed API proxy:
 ```powershell
-python test/run_stress_test.py
+python api/test/run_stress_test.py
 ```
-This script asynchronously processes all 100 requests, tracks HTTP status and latency, and records all live responses directly to [`test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/stress_test_responses.json).
+This script asynchronously processes all 100 requests, tracks HTTP status and latency, and records all live responses directly to [`api/test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/stress_test_responses.json).
 
 ---
 
 ## 6. Benchmark Evaluation Report
 
 The full analysis, evaluation scorecard, and item-by-item results of the live engine responses are documented in:
-- **Comprehensive Evaluation Report**: [`test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/BENCHMARK_RESULTS.md)
-- **AI-Generated Text & Linguistic Quality Report**: [`test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/AI_GENERATED_TEXT_REPORT.md)
-- **Raw Wire Responses Vault**: [`test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/stress_test_responses.json)
+- **Comprehensive Evaluation Report**: [`api/test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/BENCHMARK_RESULTS.md)
+- **AI-Generated Text & Linguistic Quality Report**: [`api/test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/AI_GENERATED_TEXT_REPORT.md)
+- **Raw Wire Responses Vault**: [`api/test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/stress_test_responses.json)
 
 ### Summary Scorecard Highlights
 - **API Availability & Transport**: 100/100 (100.0% HTTP 200 OK).

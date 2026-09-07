@@ -4,7 +4,7 @@
 **Dataset:** [`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json) (100 Test Cases)  
 **Wire Responses Vault:** [`test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/stress_test_responses.json)  
 **Inference Gateway:** Cloudflare Worker Proxy (`https://pray-proxy.reflex-game.workers.dev/`)  
-**Upstream Model:** `~deepseek/deepseek-v4-flash-latest` (Reasoning effort: `low`, max tokens: 1500)  
+**Upstream Model:** `nvidia/nemotron-3.5-lightning` (Reasoning effort: `low`, max tokens: 2500)  
 **Status:** Fully Evaluated (100/100 Completed)  
 
 ---

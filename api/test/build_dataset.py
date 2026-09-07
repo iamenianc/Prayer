@@ -1328,7 +1328,7 @@ def analyze_dataset(items):
     print(f"  Avg Words: {sum(word_counts) / len(word_counts):.1f}")
 
 def main():
-    target_path = os.path.abspath("c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json")
+    target_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "prayer_requests_stress_test.json")
     analyze_dataset(TEST_CASES)
 
     with open(target_path, "w", encoding="utf-8") as f:

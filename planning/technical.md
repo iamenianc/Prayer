@@ -1,6 +1,6 @@
 # Technical Decisions & Architecture Reference
 
-**Document:** `technical.md`  
+**Document:** `planning/technical.md`  
 **Status:** Approved Decisions & Open Questions Log  
 **Application Title (Unofficial):** *Pray Without Ceasing* (1 Thessalonians 5:17)  
 **Last Updated:** 2026-09-07  
@@ -175,14 +175,19 @@ graph TD
 
 #### 1.3.5 Deployed Cloudflare Worker Configuration Reference
 - **Active Edge Endpoint**: `https://pray-proxy.reflex-game.workers.dev/`
-- **Worker Script Source**: Tracked directly in repository at [`worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/worker.js).
-- **Interactive CLI Testing Client**: Tracked at [`interactive_guide.ps1`](file:///c:/Users/ianch/sourcecode/repos/Prayer/interactive_guide.ps1) for terminal-based multi-turn distillation testing.
+- **Supported Endpoints**:
+  - `POST /api/v1/guide` (and `POST /`): Multi-turn theological distillation engine.
+  - `POST /api/v1/title`: Lightweight post-commit auto-titling branch (exempt from theological validation).
+  - `GET /health` (and `GET /`): Edge proxy health check and route discovery.
+  - `OPTIONS`: Universal CORS preflight.
+- **Worker Script Source**: Tracked directly in repository at [`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js).
+- **Interactive CLI Testing Client**: Tracked at [`api/interactive_guide.ps1`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/interactive_guide.ps1) for terminal-based multi-turn distillation and title testing.
 - **Gateway Authentication Header**: `X-Prayer-Gateway-Secret: prayer-app-secret-key-2026`
 - **Active Upstream Model**: `nvidia/nemotron-3.5-lightning`
 - **Reasoning Architecture**: High-efficiency, fast inference model; configured with `temperature: 0.2`, `max_tokens: 2500`, `response_format: { type: "json_object" }`, and `reasoning: { effort: "low" }`. Delivers ultra-responsive generation and reliable JSON structuring.
 - **Upstream Data Retention Policy**: Hard-coded `provider: { data_collection: "deny" }` to guarantee OpenRouter routes exclusively through upstream providers that do not log, retain, or train on prayer requests.
 - **Error Reflection Sanitization**: Upstream and internal error handlers suppress raw upstream error text (`errText` / `err.message`) to prevent accidental reflection of prayer text in HTTP error payloads.
-- **Worker Observability**: Explicitly disabled (`observability: { enabled: false }` in `wrangler.jsonc` or `[observability] enabled = false` in `wrangler.toml`) to uphold the zero-telemetry and privacy mandate by preventing request payload log retention at the edge.
+- **Worker Observability**: Explicitly disabled (`observability: { enabled: false }` in `api/wrangler.jsonc`) to uphold the zero-telemetry and privacy mandate by preventing request payload log retention at the edge.
 - **Live Verification Status**:
   - Worker deployment: **ONLINE** (edge latency ~300ms).
   - Gateway Authorization: **VERIFIED ACTIVE** (unauthorized calls return HTTP 401).
@@ -227,15 +232,15 @@ graph TD
 
 - **Finer Modular Prompt Architecture & Cloudflare 5.1 kB Text Binding Limit**:
   - Cloudflare Workers enforce a strict **5 KiB (5,120 bytes)** ceiling per environment variable text binding.
-  - To eliminate truncation risks while maximizing architectural clarity and maintainability, the system prompt is decomposed into **6 fine modules with meaningful semantic names**, assembled sequentially to leverage LLM **Primacy Attention Mechanics** (positioning operational inquiry rules ahead of doctrinal content), located under [`prompts/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts):
-    1. **`PROMPT_PERSONA`** ([`prompts/PROMPT_PERSONA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts/PROMPT_PERSONA.txt) — ~0.5 kB): Core non-therapeutic identity, neutral tone, zero pleasantries, sole role to enquire and articulate, and the First Principle ("Enquire first. If a clear actionable point is not obvious, ask a question—never guess, speculate, or invent unstated circumstances").
-    2. **`PROMPT_INQUIRY_FLOW`** ([`prompts/PROMPT_INQUIRY_FLOW.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts/PROMPT_INQUIRY_FLOW.txt) — ~2.0 kB): Turn-taking control logic, mandatory inquiry when actionable points are not obvious, plain English emotion vs entity phrasing models, Turn 2 hard turn ceiling, unconditional skip bypass, burden triage for multiple competing crises, and one-time request handling for 2 additional suggestions.
-    3. **`PROMPT_THEOLOGY`** ([`prompts/PROMPT_THEOLOGY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts/PROMPT_THEOLOGY.txt) — ~1.3 kB): Christian, Protestant, Reformed & Calvinist identity, directing all petitions exclusively to God, in the name of Jesus Christ (rejecting saints/angels/ancestors), alignment with classical Reformed confessional principles, framing petitions as humble biblical requests submitted to God's sovereign will (rejecting prosperity decrees, word-faith formulas, transactional bargaining, or manifesting), Heidelberg Catechism Q&A 1 comfort grounding, unbeliever petitions focused on repentance and faith in Christ, and strict prohibition against writing scripted prayers or addressing God directly.
-    4. **`PROMPT_TAXONOMY_PRIVACY`** ([`prompts/PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts/PROMPT_TAXONOMY_PRIVACY.txt) — ~1.9 kB): Single root/group invariant, on-device entity masking, personal petitions under People even within workplace contexts, and ontological definitions for `PEOPLE`, `GROUPS`, and `GENERAL`.
-    5. **`PROMPT_CARD_STYLE`** ([`prompts/PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts/PROMPT_CARD_STYLE.txt) — ~1.9 kB): Strictly and exactly 2 candidate points per generation, strict length ceilings (Title: strictly 2–6 words, targeting 2–4; Description: hard limit of maximum 20–25 words in concise telegraphic shorthand), preferred 2-to-3 clause semicolon pattern for mobile readability, no redundant prefixes ("Pray for", "Ask God to"), strict prohibition against assuming unstated medical burdens, strict exclusion of `w/` or `/w` abbreviations, and diverse telegraphic shorthand examples (work trial, gospel witness, physical recovery).
-    6. **`PROMPT_OUTPUT_SCHEMA`** ([`prompts/PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/prompts/PROMPT_OUTPUT_SCHEMA.txt) — ~0.8 kB): UK/Australian vs US English dialect handling and conditional JSON output schema for inquiry vs candidate point generation.
-  - The worker proxy dynamically assembles these modules in sequence at runtime, falling back to monolithic bindings if configured.
-  - Full assembled reference is preserved in [`system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/system_prompt.txt).
+  - To eliminate truncation risks while maximizing architectural clarity and maintainability, the system prompt is decomposed into **6 fine modules with meaningful semantic names**, assembled sequentially to leverage LLM **Primacy Attention Mechanics** (positioning operational inquiry rules ahead of doctrinal content), located under [`api/prompts/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts):
+    1. **`PROMPT_PERSONA`** ([`api/prompts/PROMPT_PERSONA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_PERSONA.txt) — ~0.5 kB): Core non-therapeutic identity, neutral tone, zero pleasantries, sole role to enquire and articulate, and the First Principle ("Enquire first. If a clear actionable point is not obvious, ask a question—never guess, speculate, or invent unstated circumstances").
+    2. **`PROMPT_INQUIRY_FLOW`** ([`api/prompts/PROMPT_INQUIRY_FLOW.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_INQUIRY_FLOW.txt) — ~2.0 kB): Turn-taking control logic, mandatory inquiry when actionable points are not obvious, plain English emotion vs entity phrasing models, Turn 2 hard turn ceiling, unconditional skip bypass, burden triage for multiple competing crises, and one-time request handling for 2 additional suggestions.
+    3. **`PROMPT_THEOLOGY`** ([`api/prompts/PROMPT_THEOLOGY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_THEOLOGY.txt) — ~1.3 kB): Christian, Protestant, Reformed & Calvinist identity, directing all petitions exclusively to God, in the name of Jesus Christ (rejecting saints/angels/ancestors), alignment with classical Reformed confessional principles, framing petitions as humble biblical requests submitted to God's sovereign will (rejecting prosperity decrees, word-faith formulas, transactional bargaining, or manifesting), Heidelberg Catechism Q&A 1 comfort grounding, unbeliever petitions focused on repentance and faith in Christ, and strict prohibition against writing scripted prayers or addressing God directly.
+    4. **`PROMPT_TAXONOMY_PRIVACY`** ([`api/prompts/PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt) — ~1.9 kB): Single root/group invariant, on-device entity masking, personal petitions under People even within workplace contexts, and ontological definitions for `PEOPLE`, `GROUPS`, and `GENERAL`.
+    5. **`PROMPT_CARD_STYLE`** ([`api/prompts/PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt) — ~1.9 kB): Strictly and exactly 2 candidate points per generation, strict length ceilings (Title: strictly 2–6 words, targeting 2–4; Description: hard limit of maximum 20–25 words in concise telegraphic shorthand), preferred 2-to-3 clause semicolon pattern for mobile readability, no redundant prefixes ("Pray for", "Ask God to"), strict prohibition against assuming unstated medical burdens, strict exclusion of `w/` or `/w` abbreviations, and diverse telegraphic shorthand examples (work trial, gospel witness, physical recovery).
+    6. **`PROMPT_OUTPUT_SCHEMA`** ([`api/prompts/PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_OUTPUT_SCHEMA.txt) — ~0.8 kB): UK/Australian vs US English dialect handling and conditional JSON output schema for inquiry vs candidate point generation.
+  - The worker proxy dynamically assembles these modules in sequence at runtime, falling back to monolithic bindings or built-in compiled defaults if configured.
+  - Full assembled reference is preserved in [`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt).
 
 ---
 
@@ -358,13 +363,13 @@ To guarantee fluid, native smartphone responsiveness without relying on heavy th
 
 ### 1.7 Engine Stress-Testing & Theological Benchmark Suite
 
-To ensure continuous compliance with theological guardrails, root categorization rules, and mobile card brevity constraints, the repository maintains a 100-request benchmark suite located under [`test/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test):
-- **Primary Dataset**: [`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json) containing exactly 100 diverse, multi-perspective prayer requests.
-- **Documentation & Execution**: [`test/README.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/README.md) cataloging evaluation criteria, schema structure, single-item runner, and full battery execution via [`test/run_stress_test.py`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/run_stress_test.py).
-- **Live Response Vault**: [`test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/stress_test_responses.json) storing complete wire response payloads, timing, and analytical metrics across all 100 test items.
+To ensure continuous compliance with theological guardrails, root categorization rules, and mobile card brevity constraints, the repository maintains a 100-request benchmark suite located under [`api/test/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test):
+- **Primary Dataset**: [`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json) containing exactly 100 diverse, multi-perspective prayer requests.
+- **Documentation & Execution**: [`api/test/README.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/README.md) cataloging evaluation criteria, schema structure, single-item runner, and full battery execution via [`api/test/run_stress_test.py`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/run_stress_test.py).
+- **Live Response Vault**: [`api/test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/stress_test_responses.json) storing complete wire response payloads, timing, and analytical metrics across all 100 test items.
 - **Evaluation & Benchmark Reports**:
-  - [`test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/BENCHMARK_RESULTS.md): Comprehensive 100-item system-level evaluation scorecard and full catalog.
-  - [`test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/AI_GENERATED_TEXT_REPORT.md): Dedicated qualitative and linguistic quality report focusing on AI-generated text, telegraphic syntax, theological reframing, and clarifying question analysis.
+  - [`api/test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/BENCHMARK_RESULTS.md): Comprehensive 100-item system-level evaluation scorecard and full catalog.
+  - [`api/test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/AI_GENERATED_TEXT_REPORT.md): Dedicated qualitative and linguistic quality report focusing on AI-generated text, telegraphic syntax, theological reframing, and clarifying question analysis.
   - *Transport & Availability*: 100/100 (100.0%) HTTP 200 OK.
   - *JSON Schema Integrity*: 100/100 (100.0%) valid JSON matching distillation output schema.
   - *Cardinality Invariant*: 100.0% compliance (strictly 0 or 2 candidates per turn; zero cases of 1 or 3).
