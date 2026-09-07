@@ -743,20 +743,20 @@
       </section>
 
       <!-- =====================================================================
-           SCREEN: Log Prayer Points - Step 0 (Select or Create Entity)
-           Mandatory target entity resolution upfront.
+           SCREEN: Log Prayer Points - Step 0 ("Who are you praying for?")
+           Mandatory relational subject resolution upfront.
            ===================================================================== -->
       <section id="screen-log-step0" class="screen">
         <div class="create-entity-box">
-          <input type="text" class="text-input" id="new-entity-name" placeholder="Name (e.g. David, Small Group)">
+          <input type="text" class="text-input" id="new-entity-name" placeholder="Name (e.g., David, Youth Ministry)">
           <div class="radio-row">
             <button class="radio-btn selected" id="radio-root-people">People</button>
             <button class="radio-btn" id="radio-root-groups">Groups</button>
           </div>
-          <button class="btn-submit" id="btn-create-entity">Create & Continue</button>
+          <button class="btn-submit" id="btn-create-entity">Add & continue</button>
         </div>
 
-        <div class="section-header">Or Select Existing</div>
+        <div class="section-header">From your journal</div>
         <div id="log-picker-list">
           <!-- Existing entities rendered here -->
         </div>
@@ -767,66 +767,66 @@
            Direct Entry vs. Guide Me
            ===================================================================== -->
       <section id="screen-log-step1" class="screen">
-        <div class="target-context-banner" id="log-target-banner">Target: Sarah</div>
+        <div class="target-context-banner" id="log-target-banner">Praying for Sarah</div>
         <button class="home-slab" id="btn-pathway-direct" style="border-bottom: 1px solid var(--border);">Direct Entry</button>
         <button class="home-slab" id="btn-pathway-guide">Guide Me</button>
       </section>
 
       <!-- =====================================================================
            SCREEN: Direct Entry
-           Clean text pad pre-bound to target entity.
+           Clean text pad pre-bound to the person or group.
            ===================================================================== -->
       <section id="screen-log-direct" class="screen">
-        <div class="target-context-banner" id="direct-target-banner">Target: Sarah</div>
+        <div class="target-context-banner" id="direct-target-banner">Praying for Sarah</div>
         <div class="form-group">
-          <label class="form-label">Petition Title (2–6 words)</label>
+          <label class="form-label">Petition (2–6 words)</label>
           <input type="text" class="text-input" id="direct-input-title" placeholder="e.g. Sustained endurance in trial" style="border: none; padding: 12px 20px;">
         </div>
         <div class="form-group" style="flex: 1;">
-          <label class="form-label">Details / Scriptural Burden</label>
+          <label class="form-label">Prayer details</label>
           <textarea class="form-textarea" id="direct-input-body" placeholder="Record the specific burden or request..."></textarea>
         </div>
-        <button class="btn-submit" id="btn-direct-save">Save Prayer Point</button>
+        <button class="btn-submit" id="btn-direct-save">Save to Sarah</button>
         <button class="btn-secondary" id="btn-direct-cancel">Cancel</button>
       </section>
 
       <!-- =====================================================================
            SCREEN: Guide Me (AI Distillation Workflow)
-           Step 1: Open Heart -> Step 2: Neutral Distillation -> Step 3: Candidate Review
+           Step 1: Open Heart -> Step 2: Clarifying Question -> Step 3: Review Petitions
            ===================================================================== -->
       <section id="screen-log-guide" class="screen">
-        <div class="target-context-banner" id="guide-target-banner">Target: Sarah</div>
+        <div class="target-context-banner" id="guide-target-banner">Praying for Sarah</div>
 
         <!-- Sub-step 1: Open Heart -->
         <div id="guide-substep-1" style="display: flex; flex-direction: column; flex: 1;">
           <div class="form-group" style="flex: 1;">
-            <label class="form-label" id="guide-heart-label">Who or what is on your heart?</label>
-            <textarea class="form-textarea" id="guide-raw-input" placeholder="Express your thoughts or concerns freely..."></textarea>
+            <label class="form-label" id="guide-heart-label">What is on your heart?</label>
+            <textarea class="form-textarea" id="guide-raw-input" placeholder="Share what is on your heart..."></textarea>
           </div>
           <button class="btn-submit" id="btn-guide-continue">Continue</button>
           <button class="btn-secondary" id="btn-guide-cancel-1">Cancel</button>
         </div>
 
-        <!-- Sub-step 2: Neutral Distillation Inquiry (1 question, max 2 turns) -->
+        <!-- Sub-step 2: Clarifying Question (1 question, max 2 turns) -->
         <div id="guide-substep-2" style="display: none; flex-direction: column; flex: 1;">
           <div class="form-group" style="flex: 1; padding: 20px;">
-            <div style="font-size: var(--font-meta); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Clarifying Inquiry</div>
+            <div style="font-size: var(--font-meta); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">Clarifying question</div>
             <div id="guide-question-text" style="font-size: var(--font-title); font-weight: 500; line-height: 1.4; margin-bottom: 24px; color: var(--text);">
               What specific burden or trial is weighing on you most heavily right now?
             </div>
             <input type="text" class="text-input" id="guide-clarification-input" placeholder="Type your response...">
           </div>
-          <button class="btn-submit" id="btn-guide-answer">Submit Response</button>
-          <button class="btn-secondary" id="btn-guide-skip-q">Skip to Suggestions</button>
+          <button class="btn-submit" id="btn-guide-answer">Continue</button>
+          <button class="btn-secondary" id="btn-guide-skip-q">Skip to petitions</button>
         </div>
 
-        <!-- Sub-step 3: Candidate Points Review (strictly 2 candidate points) -->
+        <!-- Sub-step 3: Petitions Review (strictly 2 candidate points) -->
         <div id="guide-substep-3" style="display: none; flex-direction: column; flex: 1;">
-          <div class="section-header">Candidate Petitions (Review & Commit)</div>
+          <div class="section-header" id="guide-candidates-header">Review petitions</div>
           <div id="guide-candidates-container">
             <!-- 2 candidate cards rendered here -->
           </div>
-          <button class="btn-submit" id="btn-guide-save-candidates">Save to Entity Vault</button>
+          <button class="btn-submit" id="btn-guide-save-candidates">Save to Sarah</button>
           <button class="btn-secondary" id="btn-guide-request-more">Suggest 2 More</button>
           <button class="btn-secondary" id="btn-guide-cancel-3">Cancel</button>
         </div>
@@ -834,10 +834,10 @@
 
       <!-- =====================================================================
            SCREEN: App Settings
-           Theme, Text Scaling, Dialect, Historic Prayer Blending
+           Theme, Text Size, Language, Historic Prayers
            ===================================================================== -->
       <section id="screen-settings" class="screen">
-        <div class="section-header">Theme Mode</div>
+        <div class="section-header">Theme</div>
         <div class="settings-group">
           <div class="settings-option-tile" id="opt-theme-light">
             <span>Morning Light (Default)</span>
@@ -849,7 +849,7 @@
           </div>
         </div>
 
-        <div class="section-header">Text Scaling</div>
+        <div class="section-header">Text Size</div>
         <div class="settings-group">
           <div class="settings-option-tile" id="opt-scale-large">
             <span>Large (Default)</span>
@@ -865,7 +865,7 @@
           </div>
         </div>
 
-        <div class="section-header">Language & Dialect</div>
+        <div class="section-header">Language</div>
         <div class="settings-group">
           <div class="settings-option-tile" id="opt-lang-uk">
             <span>English (Australian / UK) (Default)</span>
@@ -877,7 +877,7 @@
           </div>
         </div>
 
-        <div class="section-header">Historic Reformed Prayers</div>
+        <div class="section-header">Historic Prayers</div>
         <div class="settings-group">
           <div class="settings-option-tile" id="opt-historic-dedicated">
             <span>Dedicated in General (Default)</span>
@@ -1004,24 +1004,26 @@
           topBarTitle.textContent = entity ? entity.name : 'Journal';
           renderEntityDetail();
         } else if (screenId === 'screen-log-step0') {
-          topBarTitle.textContent = 'Log prayer points';
+          topBarTitle.textContent = 'Who are you praying for?';
           renderLogStep0();
         } else if (screenId === 'screen-log-step1') {
           const entity = state.entities.find(e => e.id === state.selectedEntityId);
-          topBarTitle.textContent = entity ? entity.name : 'Log prayer points';
-          document.getElementById('log-target-banner').textContent = `Target: ${entity ? entity.name : ''}`;
+          topBarTitle.textContent = entity ? `Praying for ${entity.name}` : 'Log prayer points';
+          document.getElementById('log-target-banner').textContent = `Praying for ${entity ? entity.name : ''}`;
         } else if (screenId === 'screen-log-direct') {
           const entity = state.entities.find(e => e.id === state.selectedEntityId);
-          topBarTitle.textContent = 'Direct Entry';
-          document.getElementById('direct-target-banner').textContent = `Target: ${entity ? entity.name : ''}`;
+          topBarTitle.textContent = entity ? `Praying for ${entity.name}` : 'Direct Entry';
+          document.getElementById('direct-target-banner').textContent = `Praying for ${entity ? entity.name : ''}`;
+          document.getElementById('btn-direct-save').textContent = entity ? `Save to ${entity.name}` : 'Save prayer point';
           document.getElementById('direct-input-title').value = '';
           document.getElementById('direct-input-body').value = '';
         } else if (screenId === 'screen-log-guide') {
           const entity = state.entities.find(e => e.id === state.selectedEntityId);
-          topBarTitle.textContent = 'Guide Me';
-          document.getElementById('guide-target-banner').textContent = `Target: ${entity ? entity.name : ''}`;
-          document.getElementById('guide-heart-label').textContent = `Who or what is on your heart regarding ${entity ? entity.name : ''}?`;
+          topBarTitle.textContent = entity ? `Praying for ${entity.name}` : 'Guide Me';
+          document.getElementById('guide-target-banner').textContent = `Praying for ${entity ? entity.name : ''}`;
+          document.getElementById('guide-heart-label').textContent = `What is on your heart for ${entity ? entity.name : ''}?`;
           document.getElementById('guide-raw-input').value = '';
+          document.getElementById('btn-guide-save-candidates').textContent = entity ? `Save to ${entity.name}` : 'Save petitions';
           state.guideMoreRequested = false;
           showGuideSubstep(1);
         } else if (screenId === 'screen-settings') {
@@ -1393,7 +1395,14 @@
 
       function renderCandidateReview(isAlternate = false) {
         const entity = state.entities.find(e => e.id === state.selectedEntityId);
-        const entityName = entity ? entity.name : 'Target';
+        const entityName = entity ? entity.name : '';
+        if (entityName) {
+          document.getElementById('guide-candidates-header').textContent = `Petitions for ${entityName}`;
+          document.getElementById('btn-guide-save-candidates').textContent = `Save to ${entityName}`;
+        } else {
+          document.getElementById('guide-candidates-header').textContent = 'Review petitions';
+          document.getElementById('btn-guide-save-candidates').textContent = 'Save petitions';
+        }
         const container = document.getElementById('guide-candidates-container');
         container.innerHTML = '';
 

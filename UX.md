@@ -46,6 +46,32 @@ Users can toggle between two high-contrast modes depending on environment and pr
 - **No Decorative Icons**: Pure typographic hierarchy and delicate hairline rules.
 - **Subdued Answered State**: In the Journal, when a prayer is answered, the text softens with a subtle strikethrough, visually signaling gratitude and completion while preserving the historical record.
 
+### 2.4 Lexicon & Devotional Terminology Standard (Translating Functional Concepts to Sacred Language)
+
+The application maintains an intentional, uncompromising distinction between **underlying functional/database concepts** (used by developers and data schemas) and **devotional app language** (experienced by the believer). Raw engineering jargon, military or marketing terms (such as *"target"*), database primitives (*"entity"*, *"record"*, *"row"*), and bureaucratic ticketing nomenclature (*"item"*, *"status"*, *"resolution"*) are strictly translated into reverent, personal, and liturgically grounded terminology:
+
+| Functional / Database Concept | Meaningful App Language | Theological & Liturgical Rationale |
+| :--- | :--- | :--- |
+| **Target / Target Entity (`entity_id`)** | **`Praying for [Name]`** (in prayer & logging) / **`Person or group`** | Human beings, congregations, and ministries are sacred souls and fellowships held before the Throne of Grace, never clinical "targets" or abstract "entities". |
+| **Entity Selection / Step 0 Prompt** | **`Who are you praying for?`** | Replaces clinical selection procedures with a pastoral, relational inquiry. |
+| **Create Entity Action** | **`Add a person or group`** $\rightarrow$ **`Add & continue`** | Replaces database object instantiation with natural relational entry. |
+| **Picker Source Section** | **`From your journal`** (never *"Or Select Existing"*) | Acknowledges the user's ongoing relational journal rather than a generic database table. |
+| **Prayer Point / Record / Row / Item** | **`Petition`** or **`Prayer`** (or unadorned substantive title) | Petitions before God are solemn intercessory burdens, never items on a checklist or tickets in a queue. |
+| **Ordinal Numbers (`Point 1`, `Point 2`)** | **Strictly Prohibited** (Pure title & description) | Every petition is a distinct, earnest plea; numbering reduces sacred intercession to administrative accounting. |
+| **Capture Modes / Pathway Choice** | **`Direct Entry`** vs. **`Guide Me`** | Clean, honest choice between immediate manual recording and assisted articulation. |
+| **AI Raw Reflection / User Input** | **`What is on your heart?`** | Welcomes honest personal reflection rather than demanding form data. |
+| **Clarifying Inquiry / Distillation Turn** | **`Clarifying question`** $\rightarrow$ Action: **`Continue`** | Softens AI pipeline jargon into a gentle, focused conversational touchpoint. |
+| **Skip Question Action** | **`Skip to petitions`** (never *"Skip Question Binary"*) | Directly conveys destination without clinical process terminology. |
+| **Candidate Points / Review & Commit** | **`Review petitions`** / **`Petitions for [Name]`** | Focuses on the prayer content rather than AI generation status. |
+| **Commit to Database Action** | **`Save to [Name]`** / **`Save petitions`** (never *"Save to Entity Vault"*) | Affirms the relational destination in the user's journal rather than disk persistence. |
+| **Secondary AI Generation** | **`Suggest 2 more`** (strictly one-time action) | Restrained, functional action without gamified generation prompts. |
+| **Active Prayer State** | Clean, unadorned typography | Default posture of ongoing, watchful intercession. |
+| **Answered Prayer State** | **`Answered`** (with soft strikethrough in Journal) | Cultivates thanksgiving (*eucharistia*) and praise for God's faithfulness; not a "closed ticket". |
+| **Answer / Resolution Note** | **`Thanksgiving note`** (or note of God's faithfulness) | Honors the theological reality that answered prayer produces gratitude to God alone. |
+| **Devotional Queue / Balancing Metrics** | **`Start praying`** (queue metrics are 100% silent) | Anti-neglect balancing is a quiet pastoral servant; metrics are never exposed to the user. |
+| **Journal Vault Directory** | **`Journal`** (`People`, `Groups`, `General`) | Personal spiritual vault; avoids database administration vocabulary. |
+| **Settings Panel** | **`Settings`** (`Appearance`, `Text Size`, `Language`, `Historic Prayers`) | Dignified, quiet preferences; avoids developer terminology like "Config" or "Tiers". |
+
 ---
 
 ## 3. Screen Structure & Navigation Framework
@@ -53,15 +79,15 @@ Users can toggle between two high-contrast modes depending on environment and pr
 ```mermaid
 graph TD
     Launch([App Launch]) --> Home["Blank Home Screen<br/>(1. Start praying | 2. Open Journal | 3. Log prayer points)"]
-    Home -->|"Tap 'Start praying'"| PraySession["Full-Screen Prayer Mode<br/>(No Buttons, No Tiles, 'Praying for [Entity]')"]
-    Home -->|"Tap 'Log prayer points'"| LogStep0["Log Step 0: Target Entity Selection<br/>(Pick or Create Person/Group)"]
-    LogStep0 -->|"Select/Create Target"| LogStep1["Log Step 1: Capture Petitions<br/>('Direct Entry' or 'Guide Me')"]
-    Home -->|"Tap 'Open Journal' / Swipe Left"| Journal["Journal Vault Directory<br/>(People | Groups | General)"]
+    Home -->|"Tap 'Start praying'"| PraySession["Full-Screen Prayer Mode<br/>(No Buttons, No Tiles, 'Praying for [Name]')"]
+    Home -->|"Tap 'Log prayer points'"| LogStep0["Who are you praying for?<br/>(Add or Choose Person/Group)"]
+    LogStep0 -->|"Selected Focus"| LogStep1["Praying for [Name]<br/>('Direct Entry' or 'Guide Me')"]
+    Home -->|"Tap 'Open Journal' / Swipe Left"| Journal["Journal Directory<br/>(People | Groups | General)"]
     
     Journal --> PeopleRoot["People Root<br/>(Personal & Distinct Relational Sphere)"]
     Journal --> GroupsRoot["Groups Root<br/>(Church, Teams, Communities)"]
     Journal --> GeneralRoot["General Root<br/>(World, Global, Historic Prayers)"]
-    Journal --> Settings["App Settings<br/>(Theme, Language, Blending, Backup)"]
+    Journal --> Settings["App Settings<br/>(Appearance, Text Size, Language, Historic Prayers)"]
 ```
 
 ### 3.1 The Blank Entry Screen
@@ -123,36 +149,36 @@ graph LR
 
 ### 4.2 Journey 2: "Log Prayer Points" (Capture & Articulation)
 
-Tapping **Log prayer points** from the home screen initiates a structured, entity-first workflow. Because every prayer point in the application belongs to a relational entity (`INDIVIDUAL_ENTITY` under `People`, `Groups`, or `General`), **the initial step strictly requires selecting an existing person/group or creating a new one** before capturing petitions:
+Tapping **Log prayer points** from the home screen initiates a structured, person- and group-first workflow. Because every petition in the application belongs to a specific person, group, or general concern (`INDIVIDUAL_ENTITY` under `People`, `Groups`, or `General`), **the initial step strictly asks who is on the user's heart before capturing petitions**:
 
 ```mermaid
 graph TD
-    TapLog["Tap 'Log prayer points'"] --> Step0["Initial Step: Select or Create Target<br/>(Person, Group, or General Concern)"]
+    TapLog["Tap 'Log prayer points'"] --> Step0["Initial Step: Who are you praying for?<br/>(Add or Choose Person/Group)"]
     
-    Step0 -->|"Pick Existing Entity"| EntitySelected["Target Context Locked<br/>(e.g., Sarah / Parish Council)"]
-    Step0 -->|"Create New Entity"| CreateNew["Quick Create Entity Tile<br/>(Name + Root Selection)"]
-    CreateNew --> EntitySelected
+    Step0 -->|"Choose from Journal"| FocusSelected["Praying for [Name]<br/>(e.g., Sarah / Parish Council)"]
+    Step0 -->|"Add Person / Group"| CreateNew["Add Person / Group Tile<br/>(Name + People or Groups)"]
+    CreateNew --> FocusSelected
     
-    EntitySelected --> PickPath{"Select Capture Mode"}
+    FocusSelected --> PickPath{"Choose Pathway"}
     
     PickPath -->|"Direct Entry"| DirectPad["Empty Text Pad<br/>(Immediate petition entry)"]
-    DirectPad --> CommitDirect["Save Directly to Entity Vault"]
+    DirectPad --> CommitDirect["Save to [Name]"]
     
-    PickPath -->|"'Guide me'"| Step1["Step 1: Open Heart<br/>'Who or what is on your heart?'"]
-    Step1 --> Step2["Step 2: Neutral Distillation<br/>(1 open-ended question at a time; max 2 turns)"]
+    PickPath -->|"'Guide me'"| Step1["Step 1: Open Heart<br/>'What is on your heart?'"]
+    Step1 --> Step2["Step 2: Clarifying Question<br/>(1 open-ended question; max 2 turns)"]
     Step2 -->|"Answer (up to 2 turns)"| Step2
-    Step2 -->|"Skip any question / Finished"| Step3["Step 3: Review Candidate Points<br/>(2 concise candidate points tailored to target)"]
-    Step3 -->|"Save"| CommitGuided["Committed to Target Entity Vault"]
+    Step2 -->|"Skip to petitions / Finished"| Step3["Step 3: Review Petitions<br/>(2 concise petitions tailored to [Name])"]
+    Step3 -->|"Save to [Name]"| CommitGuided["Saved to [Name] in Journal"]
 ```
 
-#### Step 0: Mandatory Initial Step — Select or Create Person / Group
-Before drafting points, the user defines the destination topic:
-1. **Quick-Picker List**: An edge-to-edge list of recent and frequent entities grouped by root (`People`, `Groups`, `General`). Tapping an existing entity immediately binds the target context and advances to capture mode.
-2. **"New Person / Group" Creation Tile**: A contiguous hairline button at the top of the list allowing immediate creation:
+#### Step 0: Mandatory Initial Step — "Who are you praying for?"
+Before drafting petitions, the user specifies the person or group:
+1. **"From your journal" Quick-Picker**: An edge-to-edge list of recent people and groups grouped by `People`, `Groups`, and `General`. Tapping any name immediately binds the context (*Praying for [Name]*) and advances to capture mode.
+2. **"Add a person or group" Tile**: A contiguous hairline creation area at the top of the list allowing immediate entry:
    - Enter name (e.g., *"David"*, *"Youth Ministry"*).
-   - Select root category (`People` or `Groups`).
-   - Instantly creates the entity in the local SQLite database and proceeds into logging.
-3. **Contextual In-Directory Entry**: When logging is initiated from within an existing entity detail view in the Journal, Step 0 is seamlessly pre-satisfied; the target person or group is already locked.
+   - Select sphere (`People` or `Groups`).
+   - Tapping **Add & continue** creates the person/group locally and proceeds immediately into logging.
+3. **Contextual In-Directory Entry**: When logging is initiated from within an existing person or group view in the Journal, Step 0 is seamlessly pre-satisfied; the context (*Praying for [Name]*) is already established.
 
 ---
 
@@ -172,18 +198,18 @@ Designed for when thoughts regarding the selected person or group are tangled, h
   - The client masks personal entity names prior to sending. The suggestion engine analyzes the raw entry and asks clarifying questions **one at a time**.
   - **Tone & Style**: Strictly neutral, concise, and objective. **Not a therapy bot**—zero artificial empathy, zero psychological framing, and zero conversational filler.
   - **Open-Ended Inquiries & Actionable Clarity**: Questions expect the user to provide the substance. It must not use leading questions or assume intent unless the user explicitly asks for suggestions. If a clear actionable point is not obvious from the user's reflection, the system must never jump to speculative prayer cards; it promptly poses strictly one concise question (6–12 words) in natural, plain English without bureaucratic templates. It distinguishes between internal emotional states (asking plainly what is causing the feeling, e.g., *"What is making you feel anxious right now?"*) and external entities/topics (asking plainly what is happening, e.g., *"What is going on with your boss that you'd like to pray about?"*). When multiple competing crises are presented simultaneously, the engine performs concise burden triage (*"Which of these is weighing on you most heavily right now?"*).
-  - **Skip Question Binary**: While a clarifying inquiry is default-mandatory, the engine evaluates a `skip_question` binary flag, advancing directly to Step 3 suggestions only when initial input is already exceptionally comprehensive and unambiguous.
-  - **Unconditional Question Skipping**: The user can skip any question the app asks at any point. Skipping immediately guarantees that no more questions will be asked during that session; the flow bypasses all remaining inquiry and transitions directly to Step 3 (Review & Action).
-  - **Bounded Interaction**: Hard ceiling of **maximum 2 question turns**. A prominent **"Skip" / "Skip to Suggestions"** action is always provided on every question.
-- **Step 3 (Review & Action — Flat Tessellated Candidate Tiles)**:
-  - Presents strictly and exactly **2 concise candidate prayer points** (never 1, never 3), rendered as flat, geometric rectangular tiles with sharp 90-degree right angles, zero curved edges, and zero drop shadows.
+  - **Skip Question Binary**: While a clarifying inquiry is default-mandatory, the engine evaluates a `skip_question` binary flag, advancing directly to Step 3 petitions only when initial input is already exceptionally comprehensive and unambiguous.
+  - **Unconditional Question Skipping**: The user can skip any question the app asks at any point. Skipping immediately guarantees that no more questions will be asked during that session; the flow bypasses all remaining inquiry and transitions directly to Step 3 (Review & Commit).
+  - **Bounded Interaction**: Hard ceiling of **maximum 2 question turns**. A prominent **"Skip to petitions"** (or **"Skip"**) action is always provided on every question.
+- **Step 3 (Review & Action — Flat Tessellated Petitions)**:
+  - Presents strictly and exactly **2 concise candidate petitions** (never 1, never 3), rendered as flat, geometric rectangular tiles with sharp 90-degree right angles, zero curved edges, and zero drop shadows.
   - Grounded strictly in facts provided by the user; the assistant never presumes or fabricates illnesses, cancer, or medical crises.
   - **Contextual Pre-specification Bypass**: When `root` (and optional `group`) was already prespecified upon entry, category suggestions are omitted entirely ("suggestion isn't needed"). The cards directly reflect the pre-selected context without asking the user to confirm or re-categorize. When entry was uncontextualized, suggested root categories (`People`, `Groups`, `General`) are presented.
-  - Entity name suggestions are strictly not required and omitted for privacy; target entity assignment is performed locally on-device.
+  - Entity name suggestions are strictly not required and omitted for privacy; assignment to the person or group is performed locally on-device.
   - **Objective Petitions, Never Scripted Prayers**: Candidate cards show discrete, telegraphic petitions and burdens—never pre-written prayers addressing God directly (no "Father God...", "Lord...", or second-person prayer prose). The user does the praying; the cards organize the petitions.
   - **Telegraphic Card Aesthetics & Strict Brevity**: Phrased in compact shorthand (using symbols like `&`, `→`, `↑`, standard abbreviations like `govt`, and omitting filler articles/auxiliary verbs; the abbreviation `w/` or `/w` is strictly excluded in favor of "with" or omission) to maximize glanceability and minimize screen clutter on mobile cards. Strictly constrained to **2–6 word titles** (targeting 2–4 words, hard ceiling of 6 words) and a hard ceiling of **maximum 20–25 words per description** (never lengthy multi-sentence paragraphs). Employs a preferred **2-to-3 clause semicolon pattern** (Clause 1: immediate need/action; Clause 2: heart posture/spiritual fruit; Clause 3: submission to God's sovereign will/peace) to enhance visual hierarchy and scannability on mobile screens.
   - **Resilience Across Wordiness & Emotional Load**: The distillation experience is stress-tested against a 100-case benchmark dataset ([`test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/prayer_requests_stress_test.json)) ensuring that whether the user enters a 5-word cryptic fragment or a 250-word emotional ramble, the candidate cards consistently honor the 2–6 word title and $\le$ 25-word telegraphic description standard, with verified live responses documented in [`test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/BENCHMARK_RESULTS.md) and textual quality evaluated in [`test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/test/AI_GENERATED_TEXT_REPORT.md).
-  - User controls are strictly limited to focused actions: **Save**, **"Suggest 2 more"** (strictly one-time action per session; disabled or hidden once invoked to prevent decision paralysis), **Back**, and **Cancel**.
+  - User controls are strictly limited to focused actions: **Save to [Name]**, **"Suggest 2 more"** (strictly one-time action per session; disabled or hidden once invoked to prevent decision paralysis), **Back**, and **Cancel**.
 - **Graceful Quota & Offline Fallback**: If network connectivity is unavailable or the daily operational quota is exhausted, the UI quietly presents: *"The assistant is currently unavailable. You can record your prayer points directly."* Users are seamlessly transitioned to direct manual recording without disruption.
 
 ---
@@ -194,7 +220,7 @@ Tapping **Open Journal** (or swiping left from the home screen) opens the comple
 1. **Hierarchy Browsing**:
    - Drill into **`People`**, **`Groups`**, or **`General`** to see all associated entities and active prayer points.
 2. **Marking Answered**:
-   - Tapping an active prayer point allows marking it as `Answered`, capturing an optional resolution date and testimony note.
+   - Tapping an active prayer point allows marking it as `Answered`, capturing an optional resolution date and thanksgiving note.
    - Answered points display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
 3. **Editing & Archiving**:
    - Update titles, adjust notes, or archive points no longer held in active prayer.

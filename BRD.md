@@ -91,6 +91,12 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - The active interface is strictly free from settings, display switches, or configuration controls.
    - All user preferences (Quiet Night vs. Morning Light, dialect selection, and historic prayer blending) are sequestered in a dedicated Settings panel reached exclusively via intentional navigation from the Journal.
 
+9. **Lexicon & Devotional Terminology Standard**:
+   - The application strictly translates raw functional, database, and engineering language into reverent, personal, and liturgically grounded app vocabulary.
+   - Clinical or marketing terms such as *"Target"* or *"Target Entity"* are strictly prohibited from user-facing presentations, replaced universally by **`Praying for [Name]`**, **`Who are you praying for?`**, and **`Person or group`**.
+   - Arbitrary sequential numbering (*Point 1*, *Point 2*, *Item 1*) is strictly forbidden; petitions are presented purely by substantive title and body.
+   - Administrative and database operations are framed relationally: saving to disk is presented as **`Save to [Name]`**, AI inquiry is framed as a gentle **`Clarifying question`** with **`Continue`** and **`Skip to petitions`**, and answered prayers are framed around **`Thanksgiving notes`** for God's sovereign faithfulness.
+
 ### 2.3 Post-MVP / Future Milestones
 - Native iOS client release.
 - Encrypted local file export and restore (`.prayerbackup`).

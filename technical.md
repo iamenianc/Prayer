@@ -293,6 +293,14 @@ graph TD
 - **Sequestered Settings Architecture (`APP_CONFIG`)**:
   - Zero settings, display switches, or configuration toggles are permitted on the home screen or active prayer interface.
   - All configurable parameters (`locale_dialect`, `theme_mode`, `text_scale`, `blend_historic_prayers`) are isolated inside a dedicated Settings panel reached exclusively via deliberate navigation from the Journal.
+- **Data Model to Devotional UI Terminology Mapping Standard**:
+  Frontend components, view models, and string bundles must strictly map relational schema entities to approved devotional language:
+  - `INDIVIDUAL_ENTITY` / `entity_id`: Rendered in UI headers as **`Praying for {entity.name}`**, in selection prompts as **`Who are you praying for?`**, and in listings as clean names alone. Strictly never rendered as *"Target"* or *"Entity"*.
+  - `PRAYER_POINT`: Rendered as unnumbered petitions with substantive `title` and `description`. Strictly never prefixed with *"Point 1"*, *"Item 1"*, or primary keys.
+  - Database Commits (`INSERT INTO PRAYER_POINT`): Rendered on action buttons as **`Save to {entity.name}`** or **`Save prayer point`** (never *"Save to Entity Vault"*).
+  - Clarification Actions: Clarifying prompt action is **`Continue`**; bypass action is **`Skip to petitions`**.
+  - `STATUS = 'ANSWERED'`: Rendered as **`Answered`** with soft strikethrough; optional notes are stored and labeled as **`Thanksgiving note`**.
+  - `APP_CONFIG` parameters: Rendered respectively as **`Theme`**, **`Text Size`**, **`Language`**, and **`Historic Prayers`**.
 
 ---
 
