@@ -248,7 +248,7 @@ graph TD
 - **Passive Prayer Engine ("Start Praying")**:
   - Direct queue instantiation with zero pre-filters.
   - **Topic-Centric Contemplation Architecture**: Replaces mechanical card batches with holistic, entity-based Topics. Each screen in *Start praying* corresponds to an `INDIVIDUAL_ENTITY` (Topic). When a Topic is displayed, **all of its unanswered (active) prayer points** are retrieved from SQLite and rendered together contiguously on screen as an edge-to-edge stack.
-  - **Stripped Administrative Metadata**: Prayer cards and list items render strictly `title` and `description`. Administrative counters (e.g. `Point N of M`), status tokens (`Active`), and ticket-like labels are completely excluded from presentation to maintain solemn contemplation.
+  - **Design Principle: Strict Prohibition of Ordinal / Index Labels**: UI components, templates, and view models are strictly prohibited from generating, coding, or interpolating sequential counter labels (e.g., `Point 1`, `Point 2`, `Point ${idx + 1}`, `Point N of M`, `Item 1`). While database records retain internal primary keys (`id`) for relational integrity, all presentation layers must strictly suppress ordinal numbering. Petitions are rendered solely as unnumbered, sacred petitions featuring their substantive `title` and `description`.
   - **Balanced Queue Curation & Anti-Neglect Algorithm**:
     - To ensure balanced intercession across all relational spheres, SQLite query ordering balances topics dynamically:
       ```sql
