@@ -587,7 +587,7 @@
             },
             {
               id: "guide_strictly_2_candidates",
-              desc: "Candidate review produces strictly and exactly 2 prayer cards with semicolon clauses",
+              desc: "Candidate review produces strictly and exactly 2 prayer cards within brevity ceilings",
               fn: (doc, app) => {
                 const cards = doc.querySelectorAll('#guide-candidates-container .candidate-card');
                 if (cards.length !== 2) throw new Error(`Expected strictly 2 candidates, got ${cards.length}`);
@@ -598,8 +598,12 @@
                   if (wordCount < 2 || wordCount > 6) {
                     throw new Error(`Candidate ${idx+1} title word count out of range (2-6): "${title}" (${wordCount} words)`);
                   }
-                  if (!body.includes(';')) {
-                    throw new Error(`Candidate ${idx+1} does not use preferred 2-3 clause semicolon pattern: "${body}"`);
+                  const bodyWordCount = body.split(/\s+/).length;
+                  if (bodyWordCount > 25) {
+                    throw new Error(`Candidate ${idx+1} description exceeds 25-word telegraphic ceiling: "${body}" (${bodyWordCount} words)`);
+                  }
+                  if (body.startsWith('Pray')) {
+                    throw new Error(`Candidate ${idx+1} uses a redundant prefix: "${body}"`);
                   }
                 });
               }

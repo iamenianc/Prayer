@@ -100,7 +100,7 @@ The application maintains an intentional, uncompromising distinction between **u
 | **Answered Prayer State** | **`Answered`** (with soft strikethrough in Journal) | Cultivates thanksgiving (*eucharistia*) and praise for God's faithfulness; not a "closed ticket". |
 | **Answer / Resolution Note** | **`Thanksgiving note`** (or note of God's faithfulness) | Honors the theological reality that answered prayer produces gratitude to God alone. |
 | **Devotional Queue / Balancing Metrics** | **`Start praying`** (queue metrics are 100% silent) | Anti-neglect balancing is a quiet pastoral servant; metrics are never exposed to the user. |
-| **Journal Vault Directory** | **`Journal`** (`People`, `Groups`, `General`) | Personal spiritual vault; avoids database administration vocabulary. |
+| **Journal Vault Directory** | **`Journal`** (`People`, `Groups`, `General`, `Mission Partners`) | Personal spiritual vault; avoids database administration vocabulary. |
 | **Settings Panel** | **`Settings`** (`Appearance`, `Text Size`, `Language`, `Historic Prayers`) | Dignified, quiet preferences; avoids developer terminology like "Config" or "Tiers". |
 
 ---
@@ -113,11 +113,12 @@ graph TD
     Home -->|"Tap 'Start praying'"| PraySession["Full-Screen Prayer Mode<br/>(No Buttons, No Tiles, 'Praying for [Name]')"]
     Home -->|"Tap 'Add prayer points'"| AddStep0["Who are you praying for?<br/>(Add or Choose Person/Group)"]
     AddStep0 -->|"Selected Focus"| AddStep1["Praying for [Name]<br/>(Lined Notepad & 'Prayer Assistant')"]
-    Home -->|"Tap 'Open Journal' / Swipe Left"| Journal["Journal Directory<br/>(People | Groups | General)"]
+    Home -->|"Tap 'Open Journal' / Swipe Left"| Journal["Journal Directory<br/>(People | Groups | General | Mission Partners)"]
     
     Journal --> PeopleRoot["People Root<br/>(Personal & Distinct Relational Sphere)"]
     Journal --> GroupsRoot["Groups Root<br/>(Church, Teams, Communities)"]
     Journal --> GeneralRoot["General Root<br/>(World, Global, Historic Prayers)"]
+    Journal --> MissionRoot["Mission Partners Root<br/>(Supported Missionaries & Agencies)"]
     Journal --> Settings["App Settings<br/>(Appearance, Text Size, Language, Historic Prayers)"]
 ```
 
@@ -130,10 +131,11 @@ Upon launch, the user meets an uncluttered, contiguous canvas featuring strictly
 The home screen features strictly zero hero headers, wordmarks, app logos, or arbitrary header titles. The three action slabs divide the screen vertically and contiguously edge-to-edge.
 
 ### 3.2 The Journal (Open Journal / Swipe Left)
-Tapping **Open Journal** (or swiping left from the blank home screen) glides into the structured Journal and management vault, rooted in three foundational domains:
+Tapping **Open Journal** (or swiping left from the blank home screen) glides into the structured Journal and management vault, rooted in four foundational domains:
 1. **`People`**: Exclusively and strictly specific, distinct individual relationships (e.g., spouse, children, parents, a single named friend/neighbor, and personal prayer points under *Me*—including personal health, job trials, or spiritual sanctification situated within a workplace or hospital).
 2. **`Groups`**: Collectives, communities, and shared peer/work environments (e.g., work colleagues, office team, church congregation, small group, committee, ministry).
 3. **`General`**: Broad topics, global concerns, personal spiritual disciplines, and the preloaded collection of historic Reformed prayers.
+4. **`Mission Partners`**: Supported missionary families, mission agencies, missionaries, and ministry partners (e.g., a missionary family on the field, a Bible translation agency, a church planting ministry).
 
 ---
 
@@ -180,14 +182,14 @@ graph LR
 
 ### 4.2 Journey 2: "Add Prayer Points" (Capture & Articulation)
 
-Tapping **Add prayer points** from the home screen initiates a structured, person- and group-first workflow. Because every prayer point in the application belongs to a specific person, group, or general concern (`INDIVIDUAL_ENTITY` under `People`, `Groups`, or `General`), **the initial step strictly asks who is on the user's heart before capturing prayer points**:
+Tapping **Add prayer points** from the home screen initiates a structured, person- and group-first workflow. Because every prayer point in the application belongs to a specific person, group, general concern, or mission partner (`INDIVIDUAL_ENTITY` under `People`, `Groups`, `General`, or `Mission Partners`), **the initial step strictly asks who is on the user's heart before capturing prayer points**:
 
 ```mermaid
 graph TD
     TapAdd["Tap 'Add prayer points'"] --> Step0["Initial Step: Who are you praying for?<br/>(Add or Choose Person/Group)"]
     
     Step0 -->|"Choose from Journal"| FocusSelected["Praying for [Name]<br/>(e.g., Sarah / Parish Council)"]
-    Step0 -->|"Add Person / Group"| CreateNew["Add Person / Group Tile<br/>(Name + People or Groups)"]
+    Step0 -->|"Add Person / Group"| CreateNew["Add Person / Group Tile<br/>(Name + People, Groups, General, or Mission Partners)"]
     CreateNew --> FocusSelected
     
     FocusSelected --> LinedNotepad["Integrated Lined Notepad Canvas<br/>(Ruled notepad lines, auto-bullets, Save)"]
@@ -202,10 +204,10 @@ graph TD
 
 #### Step 0: Mandatory Initial Step — "Who are you praying for?"
 Before drafting prayer points, the user specifies the person or group:
-1. **"From your journal" Quick-Picker**: An edge-to-edge list of recent people and groups grouped by `People`, `Groups`, and `General`. Tapping any name immediately binds the context (*Praying for [Name]*) and advances to capture mode.
-2. **"Add a person or group" Tile**: A contiguous hairline creation area at the top of the list allowing immediate entry:
-   - Enter name (e.g., *"David"*, *"Youth Ministry"*).
-   - Select sphere (`People` or `Groups`).
+1. **"From your journal" Quick-Picker**: An edge-to-edge list of recent people and groups grouped by `People`, `Groups`, `General`, and `Mission Partners`. Tapping any name immediately binds the context (*Praying for [Name]*) and advances to capture mode.
+2. **"Add a person, group, general topic, or mission partner" Tile**: A contiguous hairline creation area at the top of the list allowing immediate entry:
+   - Enter name (e.g., *"David"*, *"Youth Ministry"*, *"Wycliffe Bible Translators"*).
+   - Select sphere (`People`, `Groups`, `General`, or `Mission Partners`).
    - Tapping **Add & continue** creates the person/group locally and proceeds immediately into adding prayer points.
 
 ---
@@ -240,12 +242,12 @@ Designed for when thoughts regarding the selected person or group are tangled, h
 - **Step 3 (Review & Action — Flat Tessellated Prayer Points)**:
   - Presents strictly and exactly **2 concise candidate prayer points** (never 1, never 3), rendered as flat, geometric rectangular tiles with sharp 90-degree right angles, zero curved edges, and zero drop shadows.
   - Grounded strictly in facts provided by the user; the assistant never presumes or fabricates illnesses, cancer, or medical crises.
-  - **Contextual Pre-specification Bypass**: When `root` (and optional `group`) was already prespecified upon entry, category suggestions are omitted entirely ("suggestion isn't needed"). The cards directly reflect the pre-selected context without asking the user to confirm or re-categorize. When entry was uncontextualized, suggested root categories (`People`, `Groups`, `General`) are presented.
+  - **Contextual Pre-specification Bypass**: When `root` (and optional `group`) was already prespecified upon entry, category suggestions are omitted entirely ("suggestion isn't needed"). The cards directly reflect the pre-selected context without asking the user to confirm or re-categorize. When entry was uncontextualized, suggested root categories (`People`, `Groups`, `General`, `Mission Partners`) are presented.
   - Entity name suggestions are strictly not required and omitted for privacy; assignment to the person or group is performed locally on-device.
   - **Objective Prayer Points, Never Scripted Prayers**: Candidate cards show discrete, telegraphic prayer points and burdens—never pre-written prayers addressing God directly (no "Father God...", "Lord...", or second-person prayer prose). The user does the praying; the cards organize the prayer points.
-  - **Telegraphic Card Aesthetics & Strict Brevity**: Phrased in compact shorthand (using symbols like `&`, `→`, `↑`, standard abbreviations like `govt`, and omitting filler articles/auxiliary verbs; the abbreviation `w/` or `/w` is strictly excluded in favor of "with" or omission) to maximize glanceability and minimize screen clutter on mobile cards. Strictly constrained to **2–6 word titles** (targeting 2–4 words, hard ceiling of 6 words) and a hard ceiling of **maximum 20–25 words per description** (never lengthy multi-sentence paragraphs). Employs a preferred **2-to-3 clause semicolon pattern** (Clause 1: immediate need/action; Clause 2: heart posture/spiritual fruit; Clause 3: submission to God's sovereign will/peace) to enhance visual hierarchy and scannability on mobile screens.
+  - **Telegraphic Card Aesthetics & Strict Brevity**: Phrased in compact shorthand (using symbols like `&`, `→`, `↑`, standard abbreviations like `govt`, and omitting filler articles/auxiliary verbs; the abbreviation `w/` or `/w` is strictly excluded in favor of "with" or omission) to maximize glanceability and minimize screen clutter on mobile cards. Strictly constrained to **2–6 word titles** (targeting 2–4 words, hard ceiling of 6 words) and a hard ceiling of **maximum 20–25 words per description** (never lengthy multi-sentence paragraphs). Employs a high-level description structure direction: cards stay telegraphic and scannable, but are explicitly not confined to a fixed clause template or ordering — clause count and punctuation (semicolons, em-dashes, commas) vary naturally to express each burden distinctively rather than reading as clones of one formula.
   - **Resilience Across Wordiness & Emotional Load**: The distillation experience is stress-tested against a 100-case benchmark dataset ([`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json)) ensuring that whether the user enters a 5-word cryptic fragment or a 250-word emotional ramble, the candidate cards consistently honor the 2–6 word title and $\le$ 25-word telegraphic description standard, with verified live responses documented in [`api/test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/BENCHMARK_RESULTS.md) and textual quality evaluated in [`api/test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/AI_GENERATED_TEXT_REPORT.md).
-  - **Two-Tier Model Experience**: To ensure prayer points feel personal, thoughtful, and spiritually grounded rather than mechanical or formulaic, the backend employs a Two-Tier pipeline: Tier 1 (`temperature: 1.0`, `top_p: 0.95`, `max_tokens: 9000`) generates natural, thoughtful, sober drafts without clinical triage tags or cheesy/overly poetic melodrama, while Tier 2 (`temperature: 0.1`, `max_tokens: 9000`) compresses and verifies the text into the crisp 2-to-3 clause semicolon pattern with 2–6 word titles, guaranteeing both heartfelt resonance and scannable mobile brevity.
+  - **Two-Tier Model Experience**: To ensure prayer points feel personal, thoughtful, and spiritually grounded rather than mechanical or formulaic, the backend employs a Two-Tier pipeline: Tier 1 (`temperature: 1.0`, `top_p: 0.95`, `max_tokens: 9000`) generates natural, thoughtful, sober drafts without clinical triage tags or cheesy/overly poetic melodrama, while Tier 2 (`temperature: 0.1`, `max_tokens: 9000`) compresses and verifies the text into telegraphic, scannable descriptions (no rigid clause template, natural variation per burden) with 2–6 word titles, guaranteeing both heartfelt resonance and scannable mobile brevity.
   - **Graceful Quota & Offline Fallback**: If network connectivity is unavailable or the daily operational quota is exhausted, the UI quietly presents: *"The assistant is currently unavailable. You can record your prayer points directly."* Users are seamlessly transitioned to direct manual recording without disruption.
 
 ---
@@ -254,7 +256,7 @@ Designed for when thoughts regarding the selected person or group are tangled, h
 
 Tapping **Open Journal** (or swiping left from the home screen) opens the complete management journal:
 1. **Hierarchy Browsing**:
-   - Drill into **`People`**, **`Groups`**, or **`General`** to see all associated entities and active prayer points.
+   - Drill into **`People`**, **`Groups`**, **`General`**, or **`Mission Partners`** to see all associated entities and active prayer points.
 2. **Editing Saved Prayer Points (Click-Once Entry & Title Editing)**:
    - **Click Once to Start Editing**: In the Entity Detail view, clicking or tapping any saved prayer point once immediately transitions into edit mode for that prayer point.
    - **Editable Title**: The prayer point title (initially auto-generated upon creation) is fully exposed and editable. Users can freely modify, refine, or rename the title to reflect evolving pastoral circumstances.

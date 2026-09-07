@@ -98,7 +98,7 @@ class DevotionalFlowsTest {
     }
 
     @Test
-    fun `test candidate points cardinality and semicolon clause structure`() {
+    fun `test candidate points cardinality and telegraphic brevity`() {
         val candidates = listOf(
             CandidatePrayerPoint(
                 title = "Surgery Recovery",
@@ -106,7 +106,7 @@ class DevotionalFlowsTest {
             ),
             CandidatePrayerPoint(
                 title = "Sovereign Peace",
-                description = "Quiet heart amidst physical discomfort; trust in Father's preservation; spiritual comfort"
+                description = "Quiet heart amidst physical discomfort, trust in Father's preservation"
             )
         )
 
@@ -116,12 +116,6 @@ class DevotionalFlowsTest {
         candidates.forEach { card ->
             val titleWords = card.title.split("\\s+".toRegex()).size
             assertTrue("Title should be 2 to 6 words: $titleWords ('${card.title}')", titleWords in 2..6)
-
-            val clauses = card.description.split(";").map { it.trim() }
-            assertTrue(
-                "Description should follow 2-to-3 clause semicolon pattern: actual ${clauses.size} in '${card.description}'",
-                clauses.size in 2..3
-            )
 
             val descWords = card.description.split("\\s+".toRegex()).size
             assertTrue("Description must be telegraphic <= 25 words: $descWords", descWords <= 25)

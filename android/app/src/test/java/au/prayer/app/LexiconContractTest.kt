@@ -36,7 +36,7 @@ class LexiconContractTest {
         "Praying for",
         "Who are you praying for?",
         "From your journal",
-        "Add a person or group",
+        "Add a person, group, general topic, or mission partner",
         "Direct Entry",
         "Prayer Assistant",
         "What is on your heart?",

@@ -86,14 +86,14 @@ erDiagram
     APP_CONFIG ||--|| CLIENT_ENVIRONMENT : "configures"
 
     ROOT_CATEGORY {
-        string code PK "PEOPLE | GROUPS | GENERAL"
-        string displayTitle "People | Groups | General"
-        int sortOrder "1 | 2 | 3"
+        string code PK "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS"
+        string displayTitle "People | Groups | General | Mission Partners"
+        int sortOrder "1 | 2 | 3 | 4"
     }
 
     INDIVIDUAL_ENTITY {
         string id PK "UUID"
-        string rootCode FK "PEOPLE | GROUPS | GENERAL"
+        string rootCode FK "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS"
         string displayName "Individual name or collective title"
         string contextDescription "Relational / vocational background"
         boolean isPreloadedHistoric "Flag for preloaded collects/creeds"
@@ -106,7 +106,7 @@ erDiagram
         string id PK "UUID"
         string entityId FK "References INDIVIDUAL_ENTITY.id"
         string title "Concise 2-6 word telegraphic summary"
-        string description "Telegraphic body (2-3 clause semicolon pattern)"
+        string description "Telegraphic, scannable body (no rigid clause template)"
         string status "ACTIVE | ANSWERED | ARCHIVED | HISTORIC"
         int interactedCount "Times reviewed in prayer mode"
         int64 createdAt "Epoch ms of entry"
@@ -254,15 +254,15 @@ The system prompt is organized under [`api/prompts/`](file:///c:/Users/ianch/sou
 - **[`PROMPT_PERSONA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_PERSONA.txt)**: Concise distillation engine; zero therapeutic filler, zero artificial empathy.
 - **[`PROMPT_INQUIRY_FLOW.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_INQUIRY_FLOW.txt)**: Enquire first policy; turn limits (max 2 turns); 6–12 word plain English questions; burden triage; unconditional skipping.
 - **[`PROMPT_THEOLOGY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_THEOLOGY.txt)**: Reformed confessional guardrails; Solus Christus; Heidelberg Q1 comfort; prayer for unbelievers focused on repentance/faith; strict prohibition against composing actual prayers.
-- **[`PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt)**: Three root mapping rules (`PEOPLE`, `GROUPS`, `GENERAL`); personal prayer points under `PEOPLE` (*Me*); single-root invariant; on-device entity privacy masking.
-- **[`PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt)**: Strictly 2 candidate points; title hard limit: strictly 2 to 6 words; description ceiling: 20–25 words; 2-to-3 clause semicolon structure (`Clause 1; Clause 2; Clause 3`); no redundant prefixes.
+- **[`PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt)**: Four root mapping rules (`PEOPLE`, `GROUPS`, `GENERAL`, `MISSION_PARTNERS`); personal prayer points under `PEOPLE` (*Me*); single-root invariant; on-device entity privacy masking.
+- **[`PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt)**: Strictly 2 candidate points; title hard limit: strictly 2 to 6 words; description ceiling: 20–25 words; high-level telegraphic scannable structure direction (explicitly no rigid clause template); no redundant prefixes.
 - **[`PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_OUTPUT_SCHEMA.txt)**: Strict JSON output schema with conditional branching for questions vs. prayer cards.
 
 ### 4.2 API Testing & Benchmark Suite (`api/test/`)
 - **`prayer_requests_stress_test.json`**: 100 diverse, realistic prayer burdens spanning all three roots, emotional states, pastoral trials, theological traps (e.g. prosperity decrees, praying to Mary), and privacy boundaries.
 - **`run_stress_test.py`**: Automated stress runner querying the live proxy or local endpoint and persisting raw model completions to `stress_test_responses.json`.
 - **`BENCHMARK_RESULTS.md`**: Systematic quantitative analysis measuring compliance across root mapping, question generation, card counts, title word counts, description length ceilings, and theological boundaries.
-- **`AI_GENERATED_TEXT_REPORT.md`**: Qualitative linguistic analysis assessing telegraphic brevity, semicolon clause syntax, vocabulary tone, and absence of conversational filler.
+- **`AI_GENERATED_TEXT_REPORT.md`**: Qualitative linguistic analysis assessing telegraphic brevity, clause and punctuation variety, vocabulary tone, and absence of conversational filler.
 - **`interactive_guide.ps1`**: Interactive PowerShell terminal client simulating the multi-turn mobile companion flow.
 
 ---
@@ -464,7 +464,7 @@ sequenceDiagram
     LLM-->>Worker: JSON {"skip_question": true, "candidate_prayer_points": [Point1, Point2]}
     Worker-->>API: 200 OK GuideResponse
     API-->>Log: GuideResponse
-    Log-->>Believer: Displays strictly 2 candidate cards (2-6 word titles, semicolon syntax)
+    Log-->>Believer: Displays strictly 2 candidate cards (2-6 word titles, telegraphic scannable phrasing)
     
     Believer->>Log: Taps "Save to [Name]" on selected card
     Log->>Main: Commits prayer point directly to database

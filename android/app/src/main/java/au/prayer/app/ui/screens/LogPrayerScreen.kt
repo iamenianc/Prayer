@@ -296,7 +296,7 @@ fun LogPrayerScreen(
                                 ) {
                                     Column(modifier = Modifier.padding(PrayerSpacing.large)) {
                                         Text(
-                                            text = "Add a person or group",
+                                            text = "Add a person, group, general topic, or mission partner",
                                             style = typography.prayerPointTitle,
                                             color = colors.textPrimary,
                                             modifier = Modifier.padding(bottom = PrayerSpacing.small)
@@ -372,6 +372,56 @@ fun LogPrayerScreen(
                                                 border = BorderStroke(if (isGroups) 1.5.dp else 0.5.dp, colors.border)
                                             ) {
                                                 Text("Groups", style = typography.button)
+                                            }
+
+                                            val isGeneral = newEntityRoot == RootCode.GENERAL
+                                            val generalBg by animateColorAsState(
+                                                targetValue = if (isGeneral) colors.textPrimary else colors.surface,
+                                                label = "GeneralBg"
+                                            )
+                                            val generalText by animateColorAsState(
+                                                targetValue = if (isGeneral) colors.background else colors.textPrimary,
+                                                label = "GeneralText"
+                                            )
+
+                                            Button(
+                                                onClick = { newEntityRoot = RootCode.GENERAL },
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(PrayerSpacing.minTouchTarget),
+                                                shape = FlatSquareShape,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = generalBg,
+                                                    contentColor = generalText
+                                                ),
+                                                border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
+                                            ) {
+                                                Text("General", style = typography.button)
+                                            }
+
+                                            val isMissionPartners = newEntityRoot == RootCode.MISSION_PARTNERS
+                                            val missionPartnersBg by animateColorAsState(
+                                                targetValue = if (isMissionPartners) colors.textPrimary else colors.surface,
+                                                label = "MissionPartnersBg"
+                                            )
+                                            val missionPartnersText by animateColorAsState(
+                                                targetValue = if (isMissionPartners) colors.background else colors.textPrimary,
+                                                label = "MissionPartnersText"
+                                            )
+
+                                            Button(
+                                                onClick = { newEntityRoot = RootCode.MISSION_PARTNERS },
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .height(PrayerSpacing.minTouchTarget),
+                                                shape = FlatSquareShape,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = missionPartnersBg,
+                                                    contentColor = missionPartnersText
+                                                ),
+                                                border = BorderStroke(if (isMissionPartners) 1.5.dp else 0.5.dp, colors.border)
+                                            ) {
+                                                Text("Mission Partners", style = typography.button)
                                             }
                                         }
 
@@ -1125,7 +1175,7 @@ fun LogPrayerScreen(
             onDismissRequest = { entityToEdit = null },
             title = {
                 Text(
-                    text = "Edit person or group",
+                    text = "Edit person, group, topic, or mission partner",
                     style = typography.prayerPointTitle,
                     color = colors.textPrimary
                 )
@@ -1203,6 +1253,56 @@ fun LogPrayerScreen(
                         ) {
                             Text("Groups", style = typography.button)
                         }
+
+                        val isGeneralEdit = editEntityRoot == RootCode.GENERAL
+                        val generalEditBg by animateColorAsState(
+                            targetValue = if (isGeneralEdit) colors.textPrimary else colors.surface,
+                            label = "EditLogGeneralBg"
+                        )
+                        val generalEditText by animateColorAsState(
+                            targetValue = if (isGeneralEdit) colors.background else colors.textPrimary,
+                            label = "EditLogGeneralText"
+                        )
+
+                        Button(
+                            onClick = { editEntityRoot = RootCode.GENERAL },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = generalEditBg,
+                                contentColor = generalEditText
+                            ),
+                            border = BorderStroke(if (isGeneralEdit) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("General", style = typography.button)
+                        }
+
+                        val isMissionEdit = editEntityRoot == RootCode.MISSION_PARTNERS
+                        val missionEditBg by animateColorAsState(
+                            targetValue = if (isMissionEdit) colors.textPrimary else colors.surface,
+                            label = "EditLogMissionBg"
+                        )
+                        val missionEditText by animateColorAsState(
+                            targetValue = if (isMissionEdit) colors.background else colors.textPrimary,
+                            label = "EditLogMissionText"
+                        )
+
+                        Button(
+                            onClick = { editEntityRoot = RootCode.MISSION_PARTNERS },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = missionEditBg,
+                                contentColor = missionEditText
+                            ),
+                            border = BorderStroke(if (isMissionEdit) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("Mission Partners", style = typography.button)
+                        }
                     }
                 }
             },
@@ -1260,7 +1360,7 @@ fun LogPrayerScreen(
             },
             text = {
                 Text(
-                    text = "Delete this person or group and all associated prayer points? This cannot be undone.",
+                    text = "Delete this person, group, general topic, or mission partner and all associated prayer points? This cannot be undone.",
                     style = typography.caption,
                     color = colors.textSubtle
                 )

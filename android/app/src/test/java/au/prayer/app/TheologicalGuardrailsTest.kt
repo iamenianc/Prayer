@@ -125,10 +125,6 @@ class TheologicalGuardrailsTest {
             // Description ceiling: strictly <= 25 words
             val descWords = card.description.split("\\s+".toRegex()).filter { it.isNotBlank() }
             assertTrue("Description must be <= 25 words: actual ${descWords.size} ('${card.description}')", descWords.size <= 25)
-
-            // Preferred 2-to-3 clause semicolon pattern
-            val clauses = card.description.split(";").map { it.trim() }
-            assertTrue("Description must have 2 to 3 clauses: actual ${clauses.size} in '${card.description}'", clauses.size in 2..3)
         }
     }
 

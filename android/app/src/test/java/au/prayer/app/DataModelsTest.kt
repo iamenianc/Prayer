@@ -109,7 +109,7 @@ class DataModelsTest {
     @Test
     fun `test RootCode enum values and sort order`() {
         val roots = RootCode.values()
-        assertEquals(3, roots.size)
+        assertEquals(4, roots.size)
 
         assertEquals(RootCode.PEOPLE, roots[0])
         assertEquals("People", RootCode.PEOPLE.displayTitle)
@@ -122,6 +122,10 @@ class DataModelsTest {
         assertEquals(RootCode.GENERAL, roots[2])
         assertEquals("General", RootCode.GENERAL.displayTitle)
         assertEquals(3, RootCode.GENERAL.sortOrder)
+
+        assertEquals(RootCode.MISSION_PARTNERS, roots[3])
+        assertEquals("Mission Partners", RootCode.MISSION_PARTNERS.displayTitle)
+        assertEquals(4, RootCode.MISSION_PARTNERS.sortOrder)
     }
 
     @Test

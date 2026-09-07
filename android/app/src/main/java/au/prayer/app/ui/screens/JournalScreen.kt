@@ -274,6 +274,30 @@ fun JournalScreen(
                                     Text("General", style = typography.homeAction, color = colors.textPrimary)
                                 }
                             }
+
+                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+
+                            // Mission Partners Slab
+                            Surface(
+                                onClick = {
+                                    selectedRoot = RootCode.MISSION_PARTNERS
+                                    journalBackStack.push(JournalView.ENTITY_LIST)
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                shape = FlatSquareShape,
+                                color = colors.surface,
+                                contentColor = colors.textPrimary,
+                                tonalElevation = 0.dp
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("Mission Partners", style = typography.homeAction, color = colors.textPrimary)
+                                }
+                            }
                         }
                     }
 
@@ -890,7 +914,7 @@ fun JournalScreen(
             onDismissRequest = { entityToEdit = null },
             title = {
                 Text(
-                    text = "Edit person or group",
+                    text = "Edit person, group, topic, or mission partner",
                     style = typography.prayerPointTitle,
                     color = colors.textPrimary
                 )
@@ -968,6 +992,56 @@ fun JournalScreen(
                         ) {
                             Text("Groups", style = typography.button)
                         }
+
+                        val isGeneral = editEntityRoot == RootCode.GENERAL
+                        val generalBg by animateColorAsState(
+                            targetValue = if (isGeneral) colors.textPrimary else colors.surface,
+                            label = "EditGeneralBg"
+                        )
+                        val generalText by animateColorAsState(
+                            targetValue = if (isGeneral) colors.background else colors.textPrimary,
+                            label = "EditGeneralText"
+                        )
+
+                        Button(
+                            onClick = { editEntityRoot = RootCode.GENERAL },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = generalBg,
+                                contentColor = generalText
+                            ),
+                            border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("General", style = typography.button)
+                        }
+
+                        val isMission = editEntityRoot == RootCode.MISSION_PARTNERS
+                        val missionBg by animateColorAsState(
+                            targetValue = if (isMission) colors.textPrimary else colors.surface,
+                            label = "EditMissionBg"
+                        )
+                        val missionText by animateColorAsState(
+                            targetValue = if (isMission) colors.background else colors.textPrimary,
+                            label = "EditMissionText"
+                        )
+
+                        Button(
+                            onClick = { editEntityRoot = RootCode.MISSION_PARTNERS },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = missionBg,
+                                contentColor = missionText
+                            ),
+                            border = BorderStroke(if (isMission) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("Mission Partners", style = typography.button)
+                        }
                     }
                 }
             },
@@ -1025,7 +1099,7 @@ fun JournalScreen(
             },
             text = {
                 Text(
-                    text = "Delete this person or group and all associated prayer points? This cannot be undone.",
+                    text = "Delete this person, group, general topic, or mission partner and all associated prayer points? This cannot be undone.",
                     style = typography.caption,
                     color = colors.textSubtle
                 )

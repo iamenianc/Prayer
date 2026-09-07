@@ -15,10 +15,11 @@
 The following architectural decisions have been explicitly agreed upon and form the foundational technical boundaries for the system.
 
 ### 1.1 Data Hierarchy & Ontological Model
-- **Ontological Architecture**: Three foundational roots:
+- **Ontological Model**: Four foundational roots:
   - **`People` (Root 1)**: Exclusively and strictly specific, distinct individual human relationships (e.g., spouse, parent, child, a single named friend/neighbor, and personal prayer points under *Me*—including personal trials, health, or sanctification occurring within a workplace or hospital).
   - **`Groups` (Root 2)**: Collectives, communities, and shared peer/work environments (e.g., work colleagues, office team, church congregation, small group, committee, ministry).
   - **`General` (Root 3)**: Broad topics, global prayer points, societal needs, and preloaded historic Reformed prayers.
+  - **`Mission Partners` (Root 4)**: Supported missionary families, mission agencies, missionaries, and ministry partners (e.g., a missionary family on the field, a Bible translation agency, a church planting ministry).
 - **Entity Model**:
 ```mermaid
 erDiagram
@@ -27,7 +28,7 @@ erDiagram
     PRAYER_POINT ||--o{ JOURNAL_UPDATE : "chronicles"
 
     ROOT_CATEGORY {
-        string code PK "PEOPLE | GROUPS | GENERAL"
+        string code PK "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS"
         string display_title
         int sort_order
     }
@@ -104,7 +105,7 @@ Because **both adding pathways** leverage AI assistance—`Add a prayer point` u
 | Feature / Flow | Network Requirement | Plaintext Exposure Boundary |
 | :--- | :--- | :--- |
 | **"Start praying"** (Passive contemplation queue) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; decrypted only in device RAM from SQLCipher vault. |
-| **Journal Management** (Browsing, editing, answered tracking across People, Groups, General) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
+| **Journal Management** (Browsing, editing, answered tracking across People, Groups, General, Mission Partners) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
 | **"Add a prayer point"** (AI Intelligent Filing) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
 | **"Prayer Assistant"** (AI Distillation & Articulation) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
 | **Post-Commit Auto-Titling** (Branched AI Title Generator) | **Online (Async background)** | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. Theological validation exempt. |
@@ -156,7 +157,7 @@ graph TD
      ```json
      {
        "initial_reflection": "string (required, max 1,500 chars)",
-       "root": "PEOPLE | GROUPS | GENERAL | null (optional)",
+       "root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS | null (optional)",
        "group": "string | null (optional, max 100 chars)",
        "clarifying_question": "string | null (optional, max 500 chars)",
        "user_response": "string | null (optional, max 1,000 chars)",
@@ -194,7 +195,7 @@ graph TD
        - *Assistant Endpoint (`/api/v1/assistant`)*: `max_tokens: 9000`. Ingests the user reflection and Tier 1 draft, strictly enforcing:
          - **Prohibition of Direct Prayers**: Strips all second-person prayer language and direct address to God (*"Father..."*, *"Lord Jesus..."*), ensuring output is strictly an objective prayer point.
          - **Mobile Brevity Ceilings**: Titles strictly 2–6 words (targeting 2–4); descriptions hard-capped at $\le$ 20–25 words in telegraphic shorthand.
-         - **2-to-3 Clause Semicolon Pattern**: Enforces strictly 2 to 3 compact clauses separated by semicolons (Clause 1: immediate need; Clause 2: heart posture/spiritual fruit; Clause 3: submission to God's sovereign will/peace).
+         - **Telegraphic Description Structure (High-Level, No Rigid Template)**: Descriptions stay scannable and telegraphic, but are NOT forced into any fixed clause template. Clause count, punctuation (semicolons, em-dashes, commas), and the ordering of need/attitude/submission vary naturally to fit each burden; the two cards in a response must differ in structure and vocabulary.
          - **Taxonomy Invariants**: Strictly 2 candidate cards; `suggested_root: null` and `suggested_group: null` when root is pre-specified.
          - **Confessional Guardrails**: Reformed theology, Solus Christus, and Heidelberg Catechism Q&A 1 comfort grounding.
          - **Output Format**: Strictly valid JSON matching the wire schema.
@@ -227,7 +228,7 @@ graph TD
     ```json
     {
       "initial_reflection": "string",
-      "root": "PEOPLE | GROUPS | GENERAL | null",
+      "root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS | null",
       "group": "string | null",
       "clarifying_question": "string | null",
       "user_response": "string | null",
@@ -251,8 +252,8 @@ graph TD
     1. **`PROMPT_PERSONA`** ([`api/prompts/PROMPT_PERSONA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_PERSONA.txt) — ~0.5 kB): Core non-therapeutic identity, neutral tone, zero pleasantries, sole role to enquire and articulate, and the First Principle ("Enquire first. If a clear actionable point is not obvious, ask a question—never guess, speculate, or invent unstated circumstances").
     2. **`PROMPT_INQUIRY_FLOW`** ([`api/prompts/PROMPT_INQUIRY_FLOW.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_INQUIRY_FLOW.txt) — ~2.0 kB): Turn-taking control logic, mandatory inquiry when actionable points are not obvious, plain English emotion vs entity phrasing models, Turn 2 hard turn ceiling, unconditional skip bypass, burden triage for multiple competing crises, and one-time request handling for 2 additional suggestions.
     3. **`PROMPT_THEOLOGY`** ([`api/prompts/PROMPT_THEOLOGY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_THEOLOGY.txt) — ~1.3 kB): Christian, Protestant, Reformed & Calvinist identity, directing all prayer points exclusively to God, in the name of Jesus Christ (rejecting saints/angels/ancestors), alignment with classical Reformed confessional principles, framing prayer points as humble biblical requests submitted to God's sovereign will (rejecting prosperity decrees, word-faith formulas, transactional bargaining, or manifesting), Heidelberg Catechism Q&A 1 comfort grounding, unbeliever prayer points focused on repentance and faith in Christ, and strict prohibition against writing scripted prayers or addressing God directly.
-    4. **`PROMPT_TAXONOMY_PRIVACY`** ([`api/prompts/PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt) — ~1.9 kB): Single root/group invariant, on-device entity masking, personal prayer points under People even within workplace contexts, and ontological definitions for `PEOPLE`, `GROUPS`, and `GENERAL`.
-    5. **`PROMPT_CARD_STYLE`** ([`api/prompts/PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt) — ~1.9 kB): Strictly and exactly 2 candidate points per generation, strict length ceilings (Title: strictly 2–6 words, targeting 2–4; Description: hard limit of maximum 20–25 words in concise telegraphic shorthand), preferred 2-to-3 clause semicolon pattern for mobile readability, no redundant prefixes ("Pray for", "Ask God to"), strict prohibition against assuming unstated medical burdens, strict exclusion of `w/` or `/w` abbreviations, and diverse telegraphic shorthand examples (work trial, gospel witness, physical recovery).
+    4. **`PROMPT_TAXONOMY_PRIVACY`** ([`api/prompts/PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt) — ~1.9 kB): Single root/group invariant, on-device entity masking, personal prayer points under People even within workplace contexts, and ontological definitions for `PEOPLE`, `GROUPS`, `GENERAL`, and `MISSION_PARTNERS`.
+    5. **`PROMPT_CARD_STYLE`** ([`api/prompts/PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt) — ~1.9 kB): Strictly and exactly 2 candidate points per generation, strict length ceilings (Title: strictly 2–6 words, targeting 2–4; Description: hard limit of maximum 20–25 words in concise telegraphic shorthand), high-level telegraphic scannable structure guidance (explicitly no rigid clause template), no redundant prefixes ("Pray for", "Ask God to"), strict prohibition against assuming unstated medical burdens, strict exclusion of `w/` or `/w` abbreviations, and diverse telegraphic shorthand examples (work trial, gospel witness, physical recovery).
     6. **`PROMPT_OUTPUT_SCHEMA`** ([`api/prompts/PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_OUTPUT_SCHEMA.txt) — ~0.8 kB): UK/Australian vs US English dialect handling and conditional JSON output schema for inquiry vs candidate point generation.
   - The worker proxy dynamically assembles these modules in sequence at runtime, falling back to monolithic bindings or built-in compiled defaults if configured.
   - Full assembled reference is preserved in [`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt).
@@ -266,7 +267,7 @@ graph TD
     1. `Start praying`
     2. `Open Journal`
     3. `Add prayer points`
-  - Strictly zero hero headers, application title banners, wordmarks, or tutorial/explanatory labels. The three slabs occupy the viewport edge-to-edge. Swiping left also triggers the Journal (`People`, `Groups`, `General`).
+  - Strictly zero hero headers, application title banners, wordmarks, or tutorial/explanatory labels. The three slabs occupy the viewport edge-to-edge. Swiping left also triggers the Journal (`People`, `Groups`, `General`, `Mission Partners`).
 - **Passive Prayer Engine ("Start Praying" / Full-Screen Prayer Mode)**:
   - **Full-Screen Buttonless Architecture**: When in Prayer mode (`screen-pray`), the top navigation bar and bottom action dock are completely hidden (`display: none`). The interface features strictly zero buttons, zero card tiles, and zero grid borders.
   - **Typographic Presentation**: The screen renders exclusively a clean, solemn heading (`Praying for {entity.name}`), followed directly by the prayer points (`prayer-point-title` and `prayer-point-body`) with generous typographic breathing room on the edge-to-edge canvas.
@@ -476,7 +477,7 @@ To ensure that specifications from `beliefs.md`, `BRD.md`, `technical.md`, and `
 1. **Full-Specification Interactive Prototype ([`planning/prototype.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/prototype.html))**:
    - **Local Schema & Relational Integrity**: In-memory and `localStorage`-backed persistence mirroring the `ROOT_CATEGORY`, `INDIVIDUAL_ENTITY`, `PRAYER_POINT`, and `APP_CONFIG` SQLCipher tables.
    - **TouchGestureController**: Full mobile swipe engine enforcing horizontal discrimination ratio ($|\Delta X| \ge 1.5 \times |\Delta Y|$), distance thresholds ($\ge 40\text{px}$ / $\ge 60\text{px}$), and swipe-down exit.
-   - **Entity-First Adding Pathways**: Title-free Direct Entry with auto bullet-point list engine and asynchronous post-commit auto-titling to `/api/v1/title`; Prayer Assistant distillation with on-device entity masking, plain English clarifying inquiry, unconditional skip to candidate points, and strictly 2 candidate cards with 2-to-3 clause semicolon structure.
+   - **Entity-First Adding Pathways**: Title-free Direct Entry with auto bullet-point list engine and asynchronous post-commit auto-titling to `/api/v1/title`; Prayer Assistant distillation with on-device entity masking, plain English clarifying inquiry, unconditional skip to candidate points, and strictly 2 candidate cards with high-level telegraphic scannable structure.
    - **Passive Sanctuary Mode**: Full-screen buttonless immersion with pure typographic layout, expandable answered section, and anti-neglect queue balancing.
 2. **In-Browser Automated Spec & Layout Validator ([`planning/test_runner.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/test_runner.html))**:
    - Zero-dependency, browser-executable test suite running 100+ assertions across geometry, contrast, typography scaling, anti-neglect ordering, gestural navigation, and negative lexicon compliance.
@@ -500,12 +501,12 @@ To ensure that specifications from `beliefs.md`, `BRD.md`, `technical.md`, and `
 
 The native Android client maintains a comprehensive JUnit 4 test battery located under [`android/app/src/test/java/au/prayer/app/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/test/java/au/prayer/app), enforcing liturgical, architectural, cryptographic, and theological invariants across the JVM codebase:
 - **`AntiNeglectQueueTest.kt`** (8 tests): Validates the anti-neglect queue comparator contract mirroring SQL (`last_interacted_at IS NOT NULL ASC, last_interacted_at ASC, interacted_count ASC`), never-interacted priority, tie-breaking, preloaded historic Reformed prayer seeds (all 4 collects + Lord's Prayer + Creed), silent interaction counters, and historic queue blending.
-- **`DevotionalFlowsTest.kt`** (9 tests): Validates Step 0 entity taxonomy spheres (`PEOPLE`, `GROUPS`, `GENERAL`), offline fallback title generation edge cases (empty strings, whitespace, single words, 2–4 words verbatim, 5+ word truncation, bullet stripping), auto-bullet list indentation and empty bullet deletion, candidate prayer points schema ($\le 25$ words telegraphic shorthand, 2-to-3 clause semicolon structure, zero `w/` or `/w`), entity renaming and category sphere transitions (`PEOPLE` $\leftrightarrow$ `GROUPS`), and prayer point editing/reactivation/quick-toggle lifecycles.
+- **`DevotionalFlowsTest.kt`** (9 tests): Validates Step 0 entity taxonomy spheres (`PEOPLE`, `GROUPS`, `GENERAL`), offline fallback title generation edge cases (empty strings, whitespace, single words, 2–4 words verbatim, 5+ word truncation, bullet stripping), auto-bullet list indentation and empty bullet deletion, candidate prayer points schema ($\le 25$ words telegraphic shorthand, scannable phrasing without a rigid clause template, zero `w/` or `/w`), entity renaming and category sphere transitions (`PEOPLE` $\leftrightarrow$ `GROUPS`), and prayer point editing/reactivation/quick-toggle lifecycles.
 - **`GestureEngineTest.kt`** (13 tests): Validates horizontal swipe left/right topic progression, upper-screen zone boundary discrimination for swipe-down exit ($Y_{start} \le 150\text{px}$), rejection of mid-screen vertical swipes to preserve scrolling, mathematical 1.5 horizontal-to-vertical discrimination boundary, list card swipe actions (right to toggle answered, left to reveal delete), sub-threshold rejection, universal edge-swipe back navigation ($X_{start} \le 25\text{px}, \Delta X \ge 50\text{px}$), and long-press touch evaluation (duration $\ge 400\text{ms}$ with displacement $\le 20\text{px}$).
 - **`LayoutGeometryTest.kt`** (8 tests): Validates universal 0dp geometry (`FlatSquareShape`), Morning Light and Quiet Night high-contrast color tokens, three-tier typography scale tokens (`LARGE > REGULAR > COMPACT`), line-height breathing room proportions, formal 8dp grid spacing tokens (`PrayerSpacing`: 4dp, 8dp, 16dp, 24dp, 32dp, 48dp, 56dp, 72dp), Material 3 Shape & ColorScheme bindings, text staying strictly within bounds without horizontal clipping across all mobile viewports (360dp, 390dp, 412dp, 428dp) and accessibility zoom levels (1.0x to 2.0x), multi-clause description soft-wrapping (2 to 15 bounded lines), and Lined Notepad ruled line-height spacing (`fontSize * 1.9f`) preventing glyph collision or slicing.
 - **`LexiconContractTest.kt`** (5 tests): Enforces strict negative lexicon verification on `strings.xml` preventing clinical/engineering terms (`target`, `entity`, `ticket`, `commit to`, `sqlite`, `database`, `pipeline`) and deprecated terms (`petition`, `petitions`, `guide me`, `log prayer`), regex pattern scanning prohibiting ordinal numbering (`Point 1`, `Item 1`, `1 of 5`), approved liturgical terminology presence, and `LocaleDialect` dialect standards (`EN_AU_UK` and `EN_US`).
 - **`PrayerApiClientTest.kt`** (6 tests): Validates wire format serialization for `GuideRequest` (`initial_reflection`, `root`, `group`, `clarifying_question`, `user_response`, `request_more`), deserialization of `GuideResponse` and candidate prayer points, graceful handling of unknown JSON keys, `TitleRequest` / `TitleResponse` roundtrip serialization, and offline fallback title generator truncation rules.
-- **`TheologicalGuardrailsTest.kt`** (7 tests): Enforces confessional Reformed boundaries: prohibition of direct scripted prayers or second-person invocations addressed to God in AI outputs, exclusion of saint/angel/ancestor intercession (*Solus Christus*), rejection of Word-Faith decrees and prosperity rhetoric, candidate card brevity ceilings (2–6 words title, $\le 25$ words telegraphic description, 2-to-3 clause semicolon pattern), exclusion of `w/` or `/w`, prohibition against inventing unstated medical crises (cancer, ICU), and Heidelberg Catechism Q1 comfort grounding.
+- **`TheologicalGuardrailsTest.kt`** (7 tests): Enforces confessional Reformed boundaries: prohibition of direct scripted prayers or second-person invocations addressed to God in AI outputs, exclusion of saint/angel/ancestor intercession (*Solus Christus*), rejection of Word-Faith decrees and prosperity rhetoric, candidate card brevity ceilings (2–6 words title, $\le 25$ words telegraphic description, scannable phrasing without a rigid clause template), exclusion of `w/` or `/w`, prohibition against inventing unstated medical crises (cancer, ICU), and Heidelberg Catechism Q1 comfort grounding.
 - **`DataModelsTest.kt`** (7 tests): Validates domain model defaults and copy immutability across `IndividualEntity`, `PrayerPoint`, `TopicWithPoints`, `AppConfig`, `RootCode`, `PrayerStatus`, `LocaleDialect`, `ThemeMode`, and `TextScale`.
 - **`LifoBackStackTest.kt`** (6 tests): Validates reactive LIFO back stack push, pop, popToRoot, replace, canPop boundary conditions, multi-tier navigation sub-stack state preservation, and zero-depth protections.
 - **Execution & Invariant**: Executed via `.\gradlew.bat test` inside `android/`. **69/69 tests passing (100.0%)** across 9 test suites in debug and release unit test configurations.
@@ -527,7 +528,7 @@ The following areas remain intentionally open for future architectural refinemen
 - **Status**: Approved
 - **Active Model**: `nvidia/nemotron-3.5-lightning` orchestrated via a Two-Tier LLM pipeline in `api/worker.js`:
   - **Tier 1 (Creative & Thoughtful Drafter)**: `temperature: 1.0`, `top_p: 0.95`, `max_tokens: 9000`, `reasoning: { enabled: false }`. Solicits natural, sober, non-robotic generation with varied vocabulary for questions, candidate points, and titles without cheesy or overly poetic melodrama.
-  - **Tier 2 (Verification & Compliance Harness)**: `temperature: 0.1`, `max_tokens: 9000`, `reasoning: { enabled: false }`. Strictly enforces Reformed confessional boundaries, mobile brevity ceilings (2–6 words for titles, $\le$ 20–25 words for descriptions, 2-to-3 clause semicolon pattern), single root invariants, and valid JSON wire format.
+  - **Tier 2 (Verification & Compliance Harness)**: `temperature: 0.1`, `max_tokens: 9000`, `reasoning: { enabled: false }`. Strictly enforces Reformed confessional boundaries, mobile brevity ceilings (2–6 words for titles, $\le$ 20–25 words for descriptions, telegraphic scannable structure), single root invariants, and valid JSON wire format.
   - Disabling internal reasoning eliminates ~3,900 tokens of unconstrained CoT overhead while `max_tokens: 9000` provides zero truncation constraints. Net generation latency is ~1.2–1.6s.
 
 ### 2.3 Offline Encrypted Backup Mechanics

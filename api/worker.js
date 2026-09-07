@@ -54,7 +54,7 @@ Output draft JSON:
     {
       "title": "string",
       "description": "string",
-      "suggested_root": "PEOPLE | GROUPS | GENERAL | null",
+      "suggested_root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS | null",
       "suggested_group": "string or null"
     }
   ]
@@ -71,18 +71,17 @@ MANDATORY COMPLIANCE DIRECTIVES:
 2. STRICT MOBILE BREVITY CEILINGS:
    - TITLE: HARD LIMIT STRICTLY 2 TO 6 WORDS (target 2–4 words, hard cap 6). Sober, clear, and plain in Title Case (never ALL-CAPS); strictly avoid cheesy or overly poetic titles.
    - DESCRIPTION: HARD LIMIT MAXIMUM 20–25 WORDS. Write in concise, telegraphic shorthand.
-3. PREFERRED STRUCTURE (2-TO-3 CLAUSE SEMICOLON PATTERN):
-   - Every description MUST consist of strictly 2 to 3 compact clauses separated by semicolons (;).
-   - Clause 1: immediate physical or circumstantial need/action;
-   - Clause 2: heart posture or spiritual fruit;
-   - Clause 3: submission to God's sovereign will/peace.
+3. DESCRIPTION STRUCTURE (HIGH-LEVEL, EMBRACE VARIETY):
+   - Keep descriptions telegraphic and scannable; join compact clauses or phrases with whatever punctuation fits the burden (semicolons, em-dashes, commas).
+   - Do NOT force a fixed 2-to-3 clause template or a prescribed ordering of need/attitude/submission. Let each description grow naturally from the specific burden.
+   - The two cards in a response MUST differ in structure and vocabulary.
 4. LEXICAL DIVERSITY ACROSS CARDS:
    - When generating 2 cards, use distinct vocabulary across both cards. Do NOT repeat the exact same phrase or clause across both cards in the same response.
 5. TAXONOMY & CARD INVARIANTS:
    - When generating cards (skip_question: true), clarifying_question MUST be null and output STRICTLY AND EXACTLY 2 candidate cards.
    - When asking a clarifying question (skip_question: false), candidate_prayer_points MUST be empty ([]).
-   - If user_input.root is NOT null (already pre-specified, e.g. 'PEOPLE', 'GROUPS', or 'GENERAL'), you MUST set "suggested_root": null and "suggested_group": null on every card (a suggestion is not needed).
-   - If user_input.root IS null, you MUST classify every generated card with a NON-NULL suggested_root drawn strictly from 'PEOPLE', 'GROUPS', or 'GENERAL'. NEVER output null for suggested_root in this case. 'PEOPLE' requires a single distinct individual; 'GROUPS' for a collective/community/setting; 'GENERAL' for broad societal, national, or abstract matters. The three suggested_root values across the response MUST be identical (one single root for the whole response).
+   - If user_input.root is NOT null (already pre-specified, e.g. 'PEOPLE', 'GROUPS', 'GENERAL', or 'MISSION_PARTNERS'), you MUST set "suggested_root": null and "suggested_group": null on every card (a suggestion is not needed).
+   - If user_input.root IS null, you MUST classify every generated card with a NON-NULL suggested_root drawn strictly from 'PEOPLE', 'GROUPS', 'GENERAL', or 'MISSION_PARTNERS'. NEVER output null for suggested_root in this case. 'PEOPLE' requires a single distinct individual; 'GROUPS' for a collective/community/setting; 'GENERAL' for broad societal, national, or abstract matters; 'MISSION_PARTNERS' for supported missionary families, mission agencies, or ministry partners. The four suggested_root values across the response MUST be identical (one single root for the whole response).
    - Entity names are masked locally for privacy; do not invent or suggest entity names.
 6. CRITICAL INQUIRY PRESERVATION:
    - If tier1_draft.skip_question is false (Tier 1 posed a clarifying question), you MUST NOT generate candidate prayer points under any circumstances. Output skip_question: false, preserve that clarifying_question (refine wording only for brevity if needed), and candidate_prayer_points: []. NEVER convert a clarifying question into prayer cards.
@@ -101,9 +100,9 @@ MANDATORY COMPLIANCE DIRECTIVES:
   "clarifying_question": "string or null",
   "candidate_prayer_points": [
     {
-      "title": "string",
-      "description": "string",
-      "suggested_root": "PEOPLE | GROUPS | GENERAL | null (set a real root from PEOPLE/GROUPS/GENERAL when user_input.root is null)",
+      "title": "string (2-6 words, Title Case)",
+      "description": "string (telegraphic, <= 20-25 words; scannable but NOT a rigid clause template — vary structure naturally per burden, join compact clauses/phrases with semicolons, em-dashes, or commas as fits)",
+      "suggested_root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS | null (set a real root from PEOPLE/GROUPS/GENERAL/MISSION_PARTNERS when user_input.root is null)",
       "suggested_group": "string or null"
     }
   ]
@@ -396,7 +395,7 @@ async function handleDistillationGuide(request, env) {
       });
     }
 
-    const validRoots = ["PEOPLE", "GROUPS", "GENERAL"];
+    const validRoots = ["PEOPLE", "GROUPS", "GENERAL", "MISSION_PARTNERS"];
     const root = (body.root && validRoots.includes(String(body.root).toUpperCase()))
       ? String(body.root).toUpperCase()
       : null;
