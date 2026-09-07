@@ -62,9 +62,12 @@ Many believers struggle with consistency, distraction, and cognitive overload du
      - Tapping *Log prayer points* immediately presents an entity selection screen. Every prayer point must belong to a specific person, group, or general topic.
      - Users select an existing entity (`People`, `Groups`, `General`) from the local SQLite vault, or tap the contiguous **"New Person / Group"** creation tile to immediately establish a new name and root.
      - When logging is triggered from within an existing entity detail screen in the Journal, the target entity is already locked and this initial step is seamlessly satisfied.
-   - **Direct Entry**:
-     - Immediate empty text pad pre-bound to the selected person or group.
-     - The user enters their petition and taps **Save**, instantly persisting the prayer point to the local SQLite database. 100% offline with zero network latency.
+   - **Direct Entry (Elimination of Title Input & Post-Commit Auto-Titling)**:
+     - The user **shall not be able to see or add a title** when logging new points. The view provides strictly a clean, unadorned text pad pre-bound to the selected person or group.
+     - Tapping **Save to [Name]** immediately commits the petition body to the local SQLite database.
+     - Following committal, a concise 2–6 word petition title is auto-generated asynchronously via a dedicated lightweight branch of the AI engine.
+     - **Exemption from Theological Validation**: The title-generation branch performs purely a simple summarization task and does not require theological validation.
+     - **Offline Graceful Fallback**: In offline scenarios, the petition is safely saved locally using an initial truncated text snippet until background connectivity generates the permanent title.
    - **"Guide me" (Assisted Articulation & Distillation)**: An objective, structured tool to help users articulate tangled or heavy thoughts for the selected person or group:
      - **App Auto-Conversion to JSON Payload**: The client formats session state into a structured JSON payload (`initial_reflection`, pre-specified `root` and `group`, `clarifying_question`, `user_response`, `request_more`).
      - **Step 1 (Open Heart)**: Prompt (*"Who or what is on your heart?"*) with open text canvas, explicitly focused on the pre-selected person or group.

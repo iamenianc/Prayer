@@ -185,10 +185,12 @@ Before drafting petitions, the user specifies the person or group:
 #### Step 1: Choosing Pathway (Direct vs. "Guide Me")
 Once the person or group is established, the user selects their preferred mode:
 
-#### Pathway A: "Direct Entry" (Direct Capture)
-- Opens immediately to an empty text pad pre-bound to the selected person or group.
-- The user writes their petition directly.
-- Tapping **Save** immediately commits the new prayer point into the local SQLite vault under that entity. Zero network transit or AI inference is required.
+#### Pathway A: "Direct Entry" (Direct Capture & Auto-Titling)
+- **Elimination of Title Input**: The user shall **never be able to see or add a title** when logging new points. The view presents strictly a single, uncluttered text pad pre-bound to the selected person or group. Users pour out their prayer, burden, or intercession directly without the friction of titling or categorizing upfront.
+- **Immediate Local Persistence**: Tapping **Save to [Name]** instantly commits the petition body to the local SQLite database.
+- **Post-Committal Auto-Titling via Branched AI Engine**: Following committal, the title (2–6 words) is auto-generated asynchronously in the background using a dedicated lightweight branch of the AI engine.
+- **Theological Validation Not Required**: Because this branch performs solely the simple task of generating a concise title summarizing the user's already-committed text, theological validation is not required.
+- **Offline Resilience**: If offline upon save, the petition is safely stored with an initial clean snippet (first 3–5 words) until network connectivity allows the background title generator to populate the permanent title.
 
 #### Pathway B: "Guide Me" (Objective AI-Assisted Articulation)
 Designed for when thoughts regarding the selected person or group are tangled, heavy, or difficult to articulate:

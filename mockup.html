@@ -775,16 +775,12 @@
       <!-- =====================================================================
            SCREEN: Direct Entry
            Clean text pad pre-bound to the person or group.
+           Zero title field: title is auto-generated after committal.
            ===================================================================== -->
       <section id="screen-log-direct" class="screen">
         <div class="target-context-banner" id="direct-target-banner">Praying for Sarah</div>
-        <div class="form-group">
-          <label class="form-label">Petition (2–6 words)</label>
-          <input type="text" class="text-input" id="direct-input-title" placeholder="e.g. Sustained endurance in trial" style="border: none; padding: 12px 20px;">
-        </div>
         <div class="form-group" style="flex: 1;">
-          <label class="form-label">Prayer details</label>
-          <textarea class="form-textarea" id="direct-input-body" placeholder="Record the specific burden or request..."></textarea>
+          <textarea class="form-textarea" id="direct-input-body" placeholder="Share what is on your heart to pray for..." style="min-height: 240px; padding: 20px;"></textarea>
         </div>
         <button class="btn-submit" id="btn-direct-save">Save to Sarah</button>
         <button class="btn-secondary" id="btn-direct-cancel">Cancel</button>
@@ -1015,7 +1011,6 @@
           topBarTitle.textContent = entity ? `Praying for ${entity.name}` : 'Direct Entry';
           document.getElementById('direct-target-banner').textContent = `Praying for ${entity ? entity.name : ''}`;
           document.getElementById('btn-direct-save').textContent = entity ? `Save to ${entity.name}` : 'Save prayer point';
-          document.getElementById('direct-input-title').value = '';
           document.getElementById('direct-input-body').value = '';
         } else if (screenId === 'screen-log-guide') {
           const entity = state.entities.find(e => e.id === state.selectedEntityId);
@@ -1342,22 +1337,35 @@
         showScreen('screen-log-guide');
       });
 
-      // Pathway A: Direct Entry
+      // Pathway A: Direct Entry (Zero Title Field - Auto-Generated After Committal)
       document.getElementById('btn-direct-save').addEventListener('click', () => {
-        const title = document.getElementById('direct-input-title').value.trim();
         const body = document.getElementById('direct-input-body').value.trim();
-        if (!title) return;
+        if (!body) return;
+
+        // Auto-generate title post-committal (simulating lightweight AI title generation branch)
+        const autoTitle = generateLightweightTitle(body);
 
         state.prayers.unshift({
           id: Date.now(),
           entity_id: state.selectedEntityId,
-          title: title,
-          body: body || title,
+          title: autoTitle,
+          body: body,
           status: 'ACTIVE'
         });
 
         showScreen('screen-entity-detail');
       });
+
+      function generateLightweightTitle(text) {
+        // Clean leading prayer phrases, strip punctuation, take 2-4 concise words
+        const cleaned = text.replace(/^(please pray that|pray for|praying for|lord please|father please|i pray that|help me to)\s+/i, '')
+                            .replace(/[^\w\s]/g, '')
+                            .trim();
+        const words = cleaned.split(/\s+/).filter(Boolean).slice(0, 4);
+        if (words.length === 0 || !words[0]) return 'Personal petition';
+        const title = words.join(' ');
+        return title.charAt(0).toUpperCase() + title.slice(1);
+      }
 
       document.getElementById('btn-direct-cancel').addEventListener('click', () => {
         showScreen('screen-log-step1');

@@ -107,6 +107,7 @@ Because **both logging pathways** leverage AI assistance—`Record a prayer poin
 | **Journal Management** (Browsing, editing, answered tracking across People, Groups, General) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
 | **"Record a prayer point"** (AI Intelligent Filing) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
 | **"Guide me"** (AI Distillation & Articulation) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
+| **Post-Commit Auto-Titling** (Branched AI Title Generator) | **Online (Async background)** | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. Theological validation exempt. |
 | **Offline Logging Fallback** (Manual folder/entity picker) | **100% Offline** (Zero network calls) | Activated when offline or manually selected; never leaves the device. |
 
 #### 1.3.3 Two-Tier Zero-Leakage Architecture
@@ -280,7 +281,12 @@ graph TD
     - If initiated from an entity view in the Journal, the target entity is pre-bound.
     - If initiated from the main menu, an edge-to-edge entity picker allows selecting an existing entity or tapping a contiguous *"New Person / Group"* tile to quickly input a name and select `People` or `Groups`.
   - **Two Discrete Capture Pathways (Post-Entity Selection)**:
-    1. `Direct Entry`: Pre-bound empty text pad for direct manual entry. Tapping *Save* executes `INSERT INTO PRAYER_POINT` locally. 100% offline; zero network calls.
+    1. `Direct Entry (Elimination of Title Input & Post-Commit Auto-Titling)`:
+       - **Zero Title Field**: The user shall **never see or add a title** when logging new points. The UI renders strictly a single, unadorned text pad pre-bound to the person or group.
+       - **Immediate Local Commit**: Tapping **Save to [Name]** immediately executes `INSERT INTO PRAYER_POINT (entity_id, body, status, created_at)` into local SQLite. 100% offline-first.
+       - **Branched AI Title Generation (Post-Committal)**: After local committal, an asynchronous background task dispatches the petition body to the branched AI title generator (`POST /api/v1/title`). The model generates a concise 2–6 word title and updates the local record (`UPDATE PRAYER_POINT SET title = ? WHERE id = ?`).
+       - **Theological Validation Exemption**: This branch performs solely the simple task of generating a concise title from the user's committed text; theological validation is not required.
+       - **Offline Fallback**: In offline scenarios, the record uses an initial clean snippet (first 3–5 words) as a temporary label until network connectivity allows the background title generator to populate the permanent title.
     2. `"Guide me"`: Structured articulation pipeline. The app auto-packages the pre-selected entity context (`root` and `group`) into the JSON wire payload (`initial_reflection`, `root`, `group`, `clarifying_question`, `user_response`, `request_more`). Clarifying inquiry is open-ended, concise (6–12 words), with a 2-turn maximum and unconditional question skipping. Candidate review displays strictly 2 points tailored to the entity; category suggestion is omitted (`suggested_root: null`, `suggested_group: null`). One-time option to request 2 more candidate points. Saving commits directly to the selected entity.
 - **Surface & Geometry Token Specifications**:
   - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners.
