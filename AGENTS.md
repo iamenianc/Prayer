@@ -11,7 +11,7 @@ This repository maintains three distinct domains:
 
 2. **AI Agent API Production Code (`api/`)**:
    - The serverless proxy and inference engine supporting the companion app is **active production code**.
-   - Located under [`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api): Cloudflare Worker proxy (`worker.js`), deployment configuration (`wrangler.jsonc`), package manifests, modular prompts (`prompts/`), compiled system prompt (`system_prompt.txt`), interactive CLI testing tools (`interactive_guide.ps1`), and the 100-request benchmark suite (`test/`).
+   - Located under [`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api): Cloudflare Worker proxy (`worker.js`), deployment configuration (`wrangler.jsonc`), package manifests, authoritative compiled system prompt (`system_prompt.txt`), interactive CLI testing tools (`interactive_guide.ps1`), and the 100-request benchmark suite (`test/`).
    - The agent **is permitted and expected** to maintain, update, test, benchmark, and deploy the API production codebase.
 
 3. **Native Android Production Codebase (`android/`)**:
@@ -122,28 +122,86 @@ Prayer/
 │   ├── technical.md                   # Technical decisions & architecture reference
 │   ├── UX.md                          # UX & product design specification
 │   ├── codebase_knowledge_graph.md    # Architecture map & cross-layer knowledge graph
-│   ├── prototype.html                 # Reference prototype (decommissioned)
 │   ├── test_runner.html               # In-browser spec & layout contract validator
 │   └── tests/                         # Automated Playwright layout & gesture test suite
+│       ├── anti_neglect_queue.spec.js # Anti-neglect priority queue tests
+│       ├── devotional_flows.spec.js   # End-to-end devotional workflow tests
+│       ├── gesture_engine.spec.js     # Touch & swipe gesture interaction tests
+│       ├── layout_geometry.spec.js    # 0dp planar geometry & seam tests
+│       ├── lexicon_contract.spec.js   # Reverent devotional lexicon contract tests
+│       ├── package.json               # Test runner dependencies & scripts
+│       ├── playwright.config.js       # Playwright browser runner configuration
+│       ├── test_helpers.js            # Shared DOM & assertion test utilities
+│       └── test_runner.spec.js        # Root harness verification test
 ├── api/                               # Production AI Agent API codebase
 │   ├── worker.js                      # Cloudflare Worker serverless proxy (multi-route)
 │   ├── wrangler.jsonc                 # Cloudflare Worker deployment configuration
 │   ├── package.json                   # Worker dependencies & scripts (test, dev, deploy)
 │   ├── system_prompt.txt              # Authoritative compiled system prompt
-│   ├── prompts/                       # Modular system prompt components
-│   │   ├── PROMPT_PERSONA.txt
-│   │   ├── PROMPT_INQUIRY_FLOW.txt
-│   │   ├── PROMPT_THEOLOGY.txt
-│   │   ├── PROMPT_TAXONOMY_PRIVACY.txt
-│   │   ├── PROMPT_CARD_STYLE.txt
-│   │   └── PROMPT_OUTPUT_SCHEMA.txt
 │   ├── interactive_guide.ps1          # Interactive CLI test client for the API
 │   └── test/                          # 100-case stress-test suite & benchmark reports
+│       ├── prayer_requests_stress_test.json # 100 benchmark test scenarios
+│       ├── stress_test_responses.json       # Recorded model responses
+│       ├── run_stress_test.py               # Stress test execution runner
+│       ├── build_dataset.py                 # Dataset generator & validator
+│       ├── generate_report.py               # HTML benchmark report generator
+│       ├── generate_text_report.py          # Markdown summary report generator
+│       ├── BENCHMARK_RESULTS.md             # Detailed benchmark evaluation report
+│       ├── AI_GENERATED_TEXT_REPORT.md      # Textual analysis report
+│       └── README.md                        # Benchmark documentation
 └── android/                           # Production Native Android Client (Kotlin + Jetpack Compose)
     ├── app/                           # Android application module
-    │   ├── src/main/java/au/prayer/app/ # Application source code
-    │   └── src/test/java/au/prayer/app/ # Replicated test suites
+    │   ├── build.gradle.kts           # Application build script & dependencies
+    │   ├── proguard-rules.pro         # ProGuard / R8 code shrinking rules
+    │   └── src/
+    │       ├── main/
+    │       │   ├── AndroidManifest.xml # Android application manifest
+    │       │   ├── java/au/prayer/app/ # Application Kotlin source code
+    │       │   │   ├── MainActivity.kt # Root activity & LIFO back stack manager
+    │       │   │   ├── data/
+    │       │   │   │   ├── local/      # SQLite / SQLCipher database & repository
+    │       │   │   │   │   ├── PrayerDatabaseHelper.kt
+    │       │   │   │   │   └── PrayerRepository.kt
+    │       │   │   │   └── models/     # Domain models & seed content
+    │       │   │   │       ├── Models.kt
+    │       │   │   │       └── PreloadedContent.kt
+    │       │   │   ├── network/        # API bridge
+    │       │   │   │   └── PrayerApiClient.kt
+    │       │   │   └── ui/             # Jetpack Compose UI
+    │       │   │       ├── components/ # Custom components (LinedNotepad)
+    │       │   │       │   └── LinedNotepad.kt
+    │       │   │       ├── gestures/   # Gesture detection engine
+    │       │   │       │   └── TouchGestureModifier.kt
+    │       │   │       ├── navigation/ # LIFO stack state manager
+    │       │   │       │   └── LifoBackStack.kt
+    │       │   │       ├── screens/    # Screens (Home, Sanctuary, Log, Journal)
+    │       │   │       │   ├── HomeScreen.kt
+    │       │   │       │   ├── JournalScreen.kt
+    │       │   │       │   ├── LogPrayerScreen.kt
+    │       │   │       │   └── SanctuaryPrayerScreen.kt
+    │       │   │       └── theme/      # Planar 0dp theme, spacing & typography
+    │       │   │           ├── Spacing.kt
+    │       │   │           ├── Theme.kt
+    │       │   │           └── Typography.kt
+    │       │   └── res/                # App drawables, mipmaps, strings, colors
+    │       └── test/java/au/prayer/app/ # Replicated JVM unit test suite (65 tests)
+    │           ├── AntiNeglectQueueTest.kt
+    │           ├── DataModelsTest.kt
+    │           ├── DevotionalFlowsTest.kt
+    │           ├── GestureEngineTest.kt
+    │           ├── LayoutGeometryTest.kt
+    │           ├── LexiconContractTest.kt
+    │           ├── LifoBackStackTest.kt
+    │           ├── PrayerApiClientTest.kt
+    │           └── TheologicalGuardrailsTest.kt
     ├── gradle/                        # Version catalogs and Gradle wrapper
+    │   ├── libs.versions.toml         # Version catalog
+    │   └── wrapper/
+    │       ├── gradle-wrapper.jar
+    │       └── gradle-wrapper.properties
     ├── build.gradle.kts               # Root build configuration
+    ├── gradle.properties              # JVM & Gradle build properties
+    ├── gradlew                        # Gradle wrapper script (Unix)
+    ├── gradlew.bat                    # Gradle wrapper batch file (Windows)
     └── settings.gradle.kts            # Project settings
 ```

@@ -3,7 +3,7 @@
 **Document:** `planning/technical.md`  
 **Status:** Approved Decisions & Open Questions Log  
 **Application Title (Unofficial):** *Pray Without Ceasing* (1 Thessalonians 5:17)  
-**Last Updated:** 2026-09-07  
+**Last Updated:** 2026-09-10  
 **Platform Scope:** Mobile Only (Android initial; engineered for iOS portability)  
 **Security Posture:** 100% Offline-First Local Persistence; Hardware-Secured Encrypted Vault  
 **Cloud Infrastructure:** Zero-Cost Cloudflare Worker Serverless Proxy (Zero User Login / Zero API Key Required)  
@@ -100,16 +100,16 @@ erDiagram
 - **Architectural Imperative**: The OpenRouter API key must **never touch the mobile codebase, git repository, build environment, or client binaries**. Zero instances of the master key shall exist on client devices.
 
 #### 1.3.2 Data Exposure & Plaintext Pipeline Boundaries
-Because **both adding pathways** leverage AI assistance—`Add a prayer point` uses AI for intelligent database filing, and `"Prayer Assistant"` uses AI for articulation and distillation—the architectural boundary between offline vaulting and external network transit is strictly defined:
+Because writing on the lined notepad is 100% offline-first while ambient suggestions and auto-titling leverage cloud inference, the architectural boundary between offline vaulting and external network transit is strictly defined:
 
 | Feature / Flow | Network Requirement | Plaintext Exposure Boundary |
 | :--- | :--- | :--- |
 | **"Start praying"** (Passive contemplation queue) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; decrypted only in device RAM from SQLCipher vault. |
 | **Journal Management** (Browsing, editing, answered tracking across People, Groups, General, Mission Partners) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
-| **"Add a prayer point"** (AI Intelligent Filing) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
-| **"Prayer Assistant"** (AI Distillation & Articulation) | **Online** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. |
+| **"Add prayer points"** (Direct Lined Notepad writing & saving) | **100% Offline** (Zero network calls) | Committed immediately to device RAM and encrypted local SQLite. |
+| **Ambient Suggestion Pane** (Background prayer point suggestions based on target context) | **Online (Background async)** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. All user recorded data on target is passed in one go; zero chat, zero questioning. |
 | **Post-Commit Auto-Titling** (Branched AI Title Generator) | **Online (Async background)** | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. Theological validation exempt. |
-| **Offline Adding Fallback** (Manual folder/entity picker) | **100% Offline** (Zero network calls) | Activated when offline or manually selected; never leaves the device. |
+| **Offline Fallback** (Local manual entry & snippet titling) | **100% Offline** (Zero network calls) | When offline, notepad saves locally, suggestion pane collapses gracefully, and auto-titling falls back to initial text snippet. |
 
 #### 1.3.3 Two-Tier Zero-Leakage Architecture
 The system isolates the API key behind an impenetrable serverless edge barrier, separating credential storage from client interaction:
@@ -131,12 +131,12 @@ graph TD
         OpenRouter["OpenRouter Gateway<br/>(Prepaid Hard Cap: $5.00)"]
     end
 
-    MobileClient -->|"1. POST /api/v1/guide<br/>(Sanitized input + Device UUID + App Key)"| Worker
+    MobileClient -->|"1. POST /api/v1/suggest<br/>(Batch Target Context + Device UUID + App Key)"| Worker
     Worker -->|"2. Read Secret at Runtime"| Vault
     Worker -->|"3. Enforce 20 req/day per UUID"| RateLimiter
     Worker -->|"4. Prepend Fixed System Prompt"| PromptStorage
     Worker -->|"5. POST /chat/completions<br/>Authorization: Bearer [KEY]"| OpenRouter
-    OpenRouter -->|"6. Structured Distillation JSON"| Worker
+    OpenRouter -->|"6. Structured Suggestion Array JSON"| Worker
     Worker -->|"7. Clean Result (No Keys / No Raw Headers)"| MobileClient
 ```
 
@@ -152,22 +152,34 @@ graph TD
    - The mobile application repository contains **zero** OpenRouter SDK dependencies, credentials, or URLs.
    - All `.env*` and local configuration files are enforced in `.gitignore`.
 3. **Gateway Cloaking & Proxy Abuse Defense**:
-   Even if an attacker sniffs network traffic from their own phone to identify the proxy URL (`https://prayer-proxy.workers.dev/api/v1/guide`), they cannot abuse the underlying OpenRouter API key because of four proxy-level guardrails:
+   Even if an attacker sniffs network traffic from their own phone to identify the proxy URL (`https://prayer-proxy.workers.dev/api/v1/suggest`), they cannot abuse the underlying OpenRouter API key because of four proxy-level guardrails:
    - **Forced Schema & Server-Side Prompt**: The proxy accepts strictly:
      ```json
      {
-       "initial_reflection": "string (required, max 1,500 chars)",
-       "root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS | null (optional)",
+       "target_name": "string (optional, masked, max 100 chars)",
+       "root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS (required)",
        "group": "string | null (optional, max 100 chars)",
-       "clarifying_question": "string | null (optional, max 500 chars)",
-       "user_response": "string | null (optional, max 1,000 chars)",
-       "request_more": false
+       "context_description": "string | null (optional, max 500 chars)",
+       "recorded_points": [
+         {
+           "title": "string (required, max 100 chars)",
+           "body": "string (required, max 1,000 chars)",
+           "status": "ACTIVE | ANSWERED (required)"
+         }
+       ],
+       "journal_updates": [
+         {
+           "text": "string (required, max 1,000 chars)"
+         }
+       ],
+       "current_draft": "string | null (optional, max 1,500 chars)",
+       "locale_dialect": "EN_AU_UK | EN_US (optional, default EN_AU_UK)"
      }
      ```
-     The mobile application automatically packages its local devotional state into this structured JSON payload. The proxy sanitizes the payload, strips caller-supplied system prompts, enforces its fixed theological distillation system prompt, and forwards the stringified JSON payload as the model's user message. An attacker **cannot** use your proxy to write code, solve homework, or run arbitrary LLM queries.
+     The mobile application automatically packages all user recorded data on the target into this structured JSON payload in one go (not line by line). The proxy sanitizes the payload, strips caller-supplied system prompts, enforces its fixed ambient suggestion prompt (which strictly prohibits asking questions, chatting, or fabricating unstated details when existing data is limited), and forwards the stringified JSON payload as the model's user message. An attacker **cannot** use your proxy to write code, solve homework, or run arbitrary LLM queries.
    - **App-Level Pre-Shared Gateway Key (`X-Prayer-Gateway-Secret`)**: The proxy rejects any request lacking a high-entropy secret header configured at compile-time (`401 Unauthorized`), blocking casual scrapers and search bots.
    - **Multi-Tier Rate Limiting**:
-     - **Per-Device Quota**: Maximum 20 distillation sessions per 24 hours per anonymous installation UUID.
+     - **Per-Device Quota**: Maximum 20 suggestion sessions per 24 hours per anonymous installation UUID.
      - **Per-IP Rate Limit**: Maximum 30 requests per hour per IP.
      - **Global Daily Circuit Breaker**: Hard cap of 1,000 total requests/day across all 100 users combined.
 4. **Hard-Capped Financial Blast Radius (\$5.00/Month)**:
@@ -177,28 +189,28 @@ graph TD
 #### 1.3.5 Deployed Cloudflare Worker Configuration Reference
 - **Active Edge Endpoint**: `https://pray-proxy.reflex-game.workers.dev/`
 - **Supported Endpoints**:
-  - `POST /api/v1/guide` (and `POST /`): Multi-turn theological distillation engine.
+  - `POST /api/v1/suggest` (and `POST /api/v1/guide` compatibility): Ambient background suggestion generator (batch target context, 1–6 words per line, zero chat, zero questioning).
   - `POST /api/v1/title`: Lightweight post-commit auto-titling branch (exempt from theological validation).
   - `GET /health` (and `GET /`): Edge proxy health check and route discovery.
   - `OPTIONS`: Universal CORS preflight.
 - **Worker Script Source**: Tracked directly in repository at [`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js).
-- **Interactive CLI Testing Client**: Tracked at [`api/interactive_guide.ps1`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/interactive_guide.ps1) for terminal-based multi-turn distillation and title testing.
+- **Interactive CLI Testing Client**: Tracked at [`api/interactive_guide.ps1`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/interactive_guide.ps1) for terminal-based suggestion and title testing.
 - **Gateway Authentication Header**: `X-Prayer-Gateway-Secret: prayer-app-secret-key-2026`
 - **Active Upstream Model**: `nvidia/nemotron-3.5-lightning`
 - **Reasoning Architecture & Two-Tier Pipeline**:
   - *Hidden Reasoning Disabled*: Configured with `reasoning: { enabled: false }` across all calls. Disabling internal unconstrained reasoning overhead eliminates ~3,900 tokens of hidden thinking bloat in Nemotron, reducing output tokens to ~140–250 tokens total and cutting edge-to-edge latency from 10+ seconds to ~1.2–1.6s.
-  - *Two-Tier Pipeline Architecture (`api/worker.js`)*: Solves the tension between thoughtful, non-robotic pastoral text and strict, unyielding system prompt compliance:
-    1. **Tier 1 — Creative & Thoughtful Drafter (`temperature: 1.0`, `top_p: 0.95`)**:
-       - *Assistant Endpoint (`/api/v1/assistant`)*: `max_tokens: 9000`. Generates natural, dignified, sober, non-robotic drafts with varied vocabulary for clarifying questions (Turn 1 vague inputs) or candidate prayer points. Explicitly avoids both sterile triage labels and overly poetic, cheesy, or melodramatic greeting-card prose.
+  - *Two-Tier Pipeline Architecture (`api/worker.js`)*: Solves the tension between thoughtful, natural phrasing and strict, unyielding system prompt compliance:
+    1. **Tier 1 — Creative & Thoughtful Drafter (`temperature: 0.7`, `top_p: 0.95`)**:
+       - *Suggestion Endpoint (`/api/v1/suggest`)*: `max_tokens: 9000`. Generates natural, dignified, sober drafts of suggested prayer points based strictly on existing recorded content for the target. AI will not ask questions and will not chat.
        - *Title Endpoint (`/api/v1/title`)*: `max_tokens: 9000`. Brainstorms 2–3 plain, dignified title ideas in Title Case (2–4 words), rejecting both sterile clinical codes and cheesy clichés.
     2. **Tier 2 — Verification & Compliance Harness (Low Temperature: `0.1`)**:
-       - *Assistant Endpoint (`/api/v1/assistant`)*: `max_tokens: 9000`. Ingests the user reflection and Tier 1 draft, strictly enforcing:
-         - **Prohibition of Direct Prayers**: Strips all second-person prayer language and direct address to God (*"Father..."*, *"Lord Jesus..."*), ensuring output is strictly an objective prayer point.
-         - **Mobile Brevity Ceilings**: Titles strictly 2–6 words (targeting 2–4); descriptions hard-capped at $\le$ 20–25 words in telegraphic shorthand.
-         - **Telegraphic Description Structure (High-Level, No Rigid Template)**: Descriptions stay scannable and telegraphic, but are NOT forced into any fixed clause template. Clause count, punctuation (semicolons, em-dashes, commas), and the ordering of need/attitude/submission vary naturally to fit each burden; the two cards in a response must differ in structure and vocabulary.
-         - **Taxonomy Invariants**: Strictly 2 candidate cards; `suggested_root: null` and `suggested_group: null` when root is pre-specified.
+       - *Suggestion Endpoint (`/api/v1/suggest`)*: `max_tokens: 9000`. Ingests the batch target data and Tier 1 draft, strictly enforcing:
+         - **Prohibition of Questions & Chat**: Zero clarifying questions, zero conversational filler, zero chat.
+         - **Prohibition of Direct Prayers**: Strips all second-person prayer language and direct address to God (*"Father..."*, *"Lord Jesus..."*), ensuring output is strictly objective prayer points.
+         - **Line Brevity Ceilings**: Each line strictly between **1 and 6 words long**.
+         - **Strict Non-Fabrication Invariant**: Shall never make up content if existing data is limited. Bounded strictly by recorded facts.
          - **Confessional Guardrails**: Reformed theology, Solus Christus, and Heidelberg Catechism Q&A 1 comfort grounding.
-         - **Output Format**: Strictly valid JSON matching the wire schema.
+         - **Output Format**: Strictly valid JSON matching wire schema `{"suggestions": ["line 1", "line 2", ...]}`.
        - *Title Endpoint (`/api/v1/title`)*: `max_tokens: 9000`. Selects or refines the single best title under strict word ceilings (2–6 words), prefix stripping ("Pray for", etc.), and configured dialect (`EN_AU_UK` vs `EN_US`).
   - *Data Retention Policy*: Hard-coded `provider: { data_collection: "deny" }` guarantees OpenRouter routes exclusively through upstream providers that do not log, retain, or train on prayer requests.
 - **Error Reflection Sanitization**: Upstream and internal error handlers suppress raw upstream error text (`errText` / `err.message`) to prevent accidental reflection of prayer text in HTTP error payloads.
@@ -207,7 +219,7 @@ graph TD
   - Worker deployment: **ONLINE** (edge latency ~300ms).
   - Gateway Authorization: **VERIFIED ACTIVE** (unauthorized calls return HTTP 401).
   - OpenRouter Secret Vaulting: **VERIFIED ACTIVE** (master API key securely injected by Cloudflare).
-  - End-to-End Inference: **VERIFIED OPERATIONAL** (successfully parses unstructured input into strictly formatted theological prayer distillation JSON).
+  - End-to-End Inference: **VERIFIED OPERATIONAL** (successfully parses batch target context into strictly formatted theological prayer suggestions JSON).
 
 #### 1.3.6 Inference Cache Isolation & Zero Cross-Request Contamination
 - **Prompt Caching Mechanics (KV Cache Reuse)**: Modern LLM providers (e.g., DeepSeek, Anthropic, Google) employ prompt caching by caching Key-Value (KV) tensors of exact token prefixes starting from token index 0. In this architecture:
@@ -219,43 +231,50 @@ graph TD
 
 ---
 
-### 1.4 Prayer Assistant System Prompt & Interaction Guardrails
+### 1.4 Ambient Suggestion Engine System Prompt & Interaction Guardrails
 
-- **Strict Persona & Tone Specification**:
-  - **Not a Therapy Bot**: The model must never mimic a human counselor, pastor, or friend. Zero artificial empathy, zero emotional coddling, and zero conversational filler.
-  - **Objective Prayer Points, Never Scripted Prayers**: The engine must never compose actual prayers or address God directly (e.g., never output "Father God...", "Dear Lord...", "Lord Jesus...", "Thy will be done", or second-person invocations to God). Believers pray themselves; the engine strictly summarizes the burden or thanksgiving into an objective prayer point.
-  - **Structured JSON Prompt Contract & App Auto-Conversion**: The mobile app automatically structures its session state and user input into a standardized JSON payload transmitted over the wire:
+- **Strict Persona & Non-Conversational Tone**:
+  - **No Chat & No Questions**: The AI assistant will **not** ask questions and will **not** be able to chat to. Conversational turn-taking, artificial empathy, pseudo-psychological validation, and chat dialogues are strictly forbidden.
+  - **Objective Prayer Points, Never Scripted Prayers**: The engine must never compose actual prayers or address God directly (e.g., never output "Father God...", "Dear Lord...", "Lord Jesus...", "Thy will be done", or second-person invocations to God). Believers pray themselves; the engine strictly summarizes recorded burdens into concise suggested prayer points.
+  - **Batch Target Context Ingestion**: All user recorded data on the target (existing active prayer points, answered points, notes, and context) is passed to the AI **in one go, not line by line**.
+  - **Structured JSON Wire Schema**:
     ```json
     {
-      "initial_reflection": "string",
-      "root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS | null",
+      "target_name": "string (optional, masked)",
+      "root": "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS",
       "group": "string | null",
-      "clarifying_question": "string | null",
-      "user_response": "string | null",
-      "request_more": false
+      "context_description": "string | null",
+      "recorded_points": [
+        { "title": "string", "body": "string", "status": "ACTIVE | ANSWERED" }
+      ],
+      "journal_updates": [
+        { "text": "string" }
+      ],
+      "current_draft": "string | null",
+      "locale_dialect": "EN_AU_UK | EN_US"
     }
     ```
-    This JSON string forms the model's user message. The model parses the JSON payload directly, eliminating ad-hoc multiline text delimiters.
-  - **Pre-Specified Root & Group Bypass**: When `root` (and optionally `group`) is prespecified by the user (e.g., when adding is triggered from within an existing person or group view), the engine does **not** infer or suggest categories ("a suggestion is not needed"). It sets `suggested_root: null` and `suggested_group: null` on output cards and shapes prayer points strictly to the prespecified context. When `root` is `null`, category inference operates normally.
-  - **Strictly 2 Suggestions Invariant & One-Time Expansion**: The candidate generation step must always produce strictly and exactly 2 candidate prayer points per turn—never 1, and never 3. The client permits a strictly one-time request for 2 additional suggestions (`request_more: true`, hard ceiling of 4 lifetime suggestions per session).
-  - **Open-Ended Inquiries & Actionable Clarity**: Clarifying questions must be strictly open-ended, prompting the user to supply their own data and intent, rather than proposing leading options or guessing theological outcomes. If a clear actionable point is not obvious from the user's reflection, the engine **must never generate candidate prayer points**; it must set `skip_question: false` and formulate strictly ONE concise question (6–12 words) in plain, natural English (`candidate_prayer_points: []`), avoiding bureaucratic templates. It distinguishes between internal emotional states (asking plainly what is causing the feeling, e.g., *"What is making you feel anxious right now?"*) and external entities/topics (asking plainly what is happening, e.g., *"What is going on with your boss that you'd like to pray about?"*), or performing concise burden triage (*"Which of these is weighing on you most heavily right now?"*).
-  - **Deterministic Vague-Input Inquiry Gate (`api/worker.js`)**: Because Turn 1 inquiry is default-mandatory and must not depend on model whim, the worker enforces a deterministic gate for fresh Turn 1 requests (`user_response` absent and `request_more` false). Reflections of $\le$ 3 words (single topics, emotions, or bare names) always trigger the dedicated single-call clarifying-inquiry path (`PROMPT_INQUIRY` / built-in default, `temperature 1.0`); reflections of 4–8 words with no temporal/situational detail markers also trigger it. Detailed reflections follow the normal two-tier distillation. The inquiry response is schema-validated, with a natural-language fallback question if the model output is malformed. Tier 2 is additionally bound by *Critical Inquiry Preservation*: a Tier 1 clarifying question must never be converted into candidate cards.
-  - **Prohibition Against Presuming Unstated Burdens**: Prayer points must strictly ground in user-supplied facts. The engine must never invent or assume medical illnesses, hospitalizations, cancer, or crises unless explicitly stated by the user.
-  - **One Question at a Time**: The engine is constrained to ask exactly one question per turn, capped at a maximum of 2 question turns before producing candidate points.
-  - **Unconditional Question Skipping**: The user can skip any question asked by the app at any point. Skipping guarantees that no more questions will be asked during that session; the engine immediately proceeds to candidate prayer point generation (`skip_question: true`, `clarifying_question: null`). The app sets `user_response: "skip"` in the JSON payload.
-  - **Entity Privacy & Masking Mandate**: Entity names are masked on-device prior to transmission. Consequently, entity name suggestions from the AI are strictly not required and omitted from the inference schema. Target entity binding is handled entirely locally on-device.
+  - **Ambient Output Format & Brevity Ceilings**:
+    - Generates a JSON array of suggested lines: `{"suggestions": ["line 1", "line 2", ...]}`.
+    - Each line is strictly between **1 and 6 words long**.
+    - Displayed in a small bottom pane showing **1 to 5 lines at a time** in a scrollable list.
+  - **Strict Anti-Fabrication Invariant (Grounding)**:
+    - The lines produced by the AI shall **never make up content if existing data is limited**.
+    - If user recorded data is sparse or minimal, the model is strictly constrained to the provided facts and must never extrapolate unstated medical crises, hospitalizations, emotional traumas, or speculative burdens.
+  - **Scroll-Triggered Refresh**:
+    - Scrolling within the suggestion list triggers a background API call to refresh or retrieve additional suggested points.
+  - **Entity Privacy & Masking Mandate**: Entity names are masked on-device prior to transmission. Target entity binding is handled entirely locally on-device.
   - **Dialect & Orthography Fidelity**: Engine defaults to English (Australian / UK) orthography and phrasing (e.g., *saviour*, *honour*, *neighbour*). When US English is configured on the client, user context communicates this preference to ensure matching US orthography.
 
-- **Finer Modular Prompt Architecture & Cloudflare 5.1 kB Text Binding Limit**:
+- **Modular Prompt Architecture & Cloudflare 5.1 kB Text Binding Limit**:
   - Cloudflare Workers enforce a strict **5 KiB (5,120 bytes)** ceiling per environment variable text binding.
-  - To eliminate truncation risks while maximizing architectural clarity and maintainability, the system prompt is decomposed into **6 fine modules with meaningful semantic names**, assembled sequentially to leverage LLM **Primacy Attention Mechanics** (positioning operational inquiry rules ahead of doctrinal content), located under [`api/prompts/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts):
-    1. **`PROMPT_PERSONA`** ([`api/prompts/PROMPT_PERSONA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_PERSONA.txt) — ~0.5 kB): Core non-therapeutic identity, neutral tone, zero pleasantries, sole role to enquire and articulate, and the First Principle ("Enquire first. If a clear actionable point is not obvious, ask a question—never guess, speculate, or invent unstated circumstances").
-    2. **`PROMPT_INQUIRY_FLOW`** ([`api/prompts/PROMPT_INQUIRY_FLOW.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_INQUIRY_FLOW.txt) — ~2.0 kB): Turn-taking control logic, mandatory inquiry when actionable points are not obvious, plain English emotion vs entity phrasing models, Turn 2 hard turn ceiling, unconditional skip bypass, burden triage for multiple competing crises, and one-time request handling for 2 additional suggestions.
-    3. **`PROMPT_THEOLOGY`** ([`api/prompts/PROMPT_THEOLOGY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_THEOLOGY.txt) — ~1.3 kB): Christian, Protestant, Reformed & Calvinist identity, directing all prayer points exclusively to God, in the name of Jesus Christ (rejecting saints/angels/ancestors), alignment with classical Reformed confessional principles, framing prayer points as humble biblical requests submitted to God's sovereign will (rejecting prosperity decrees, word-faith formulas, transactional bargaining, or manifesting), Heidelberg Catechism Q&A 1 comfort grounding, unbeliever prayer points focused on repentance and faith in Christ, and strict prohibition against writing scripted prayers or addressing God directly.
-    4. **`PROMPT_TAXONOMY_PRIVACY`** ([`api/prompts/PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt) — ~1.9 kB): Single root/group invariant, on-device entity masking, personal prayer points under People even within workplace contexts, and ontological definitions for `PEOPLE`, `GROUPS`, `GENERAL`, and `MISSION_PARTNERS`.
-    5. **`PROMPT_CARD_STYLE`** ([`api/prompts/PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt) — ~1.9 kB): Strictly and exactly 2 candidate points per generation, strict length ceilings (Title: strictly 2–6 words, targeting 2–4; Description: hard limit of maximum 20–25 words in concise telegraphic shorthand), high-level telegraphic scannable structure guidance (explicitly no rigid clause template), no redundant prefixes ("Pray for", "Ask God to"), strict prohibition against assuming unstated medical burdens, strict exclusion of `w/` or `/w` abbreviations, and diverse telegraphic shorthand examples (work trial, gospel witness, physical recovery).
-    6. **`PROMPT_OUTPUT_SCHEMA`** ([`api/prompts/PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_OUTPUT_SCHEMA.txt) — ~0.8 kB): UK/Australian vs US English dialect handling and conditional JSON output schema for inquiry vs candidate point generation.
-  - The worker proxy dynamically assembles these modules in sequence at runtime, falling back to monolithic bindings or built-in compiled defaults if configured.
+  - The system prompt is decomposed into fine modules assembled sequentially under [`api/prompts/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts):
+    1. **`PROMPT_PERSONA`** ([`api/prompts/PROMPT_PERSONA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_PERSONA.txt) — ~0.5 kB): Ambient suggestion identity, zero chat, zero questioning, non-therapeutic, objective point formulation.
+    2. **`PROMPT_SUGGESTION_FLOW`** ([`api/prompts/PROMPT_SUGGESTION_FLOW.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_SUGGESTION_FLOW.txt) — ~2.0 kB): Batch target context processing, 1–6 words per line, 1–5 lines visible, scroll refresh mechanics, and strict prohibition against making up content if data is limited.
+    3. **`PROMPT_THEOLOGY`** ([`api/prompts/PROMPT_THEOLOGY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_THEOLOGY.txt) — ~1.3 kB): Christian, Protestant, Reformed & Calvinist identity, directing all prayer points exclusively to God in the name of Jesus Christ (rejecting saints/angels/ancestors), alignment with classical Reformed confessional principles, framing prayer points as humble biblical requests submitted to God's sovereign will (rejecting prosperity decrees, word-faith formulas, transactional bargaining, or manifesting), Heidelberg Catechism Q&A 1 comfort grounding, and strict prohibition against writing scripted prayers or addressing God directly.
+    4. **`PROMPT_TAXONOMY_PRIVACY`** ([`api/prompts/PROMPT_TAXONOMY_PRIVACY.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_TAXONOMY_PRIVACY.txt) — ~1.9 kB): Four roots (`PEOPLE`, `GROUPS`, `GENERAL`, `MISSION_PARTNERS`), on-device entity masking, personal prayer points under People even within workplace contexts.
+    5. **`PROMPT_CARD_STYLE`** ([`api/prompts/PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt) — ~1.9 kB): Strict length ceiling of 1 to 6 words per suggested line, stripping redundant prefixes ("Pray for", "Ask God to"), punchy core nouns and verbs.
+    6. **`PROMPT_OUTPUT_SCHEMA`** ([`api/prompts/PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_OUTPUT_SCHEMA.txt) — ~0.8 kB): UK/Australian vs US English dialect handling and JSON output schema `{"suggestions": ["string"]}`.
   - Full assembled reference is preserved in [`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt).
 
 ---
@@ -304,13 +323,21 @@ graph TD
     1. `Integrated Lined Notepad (Direct Entry Replacement, Auto-Bullets & Post-Commit Auto-Titling)`:
        - **Zero Title Field & Direct Access**: The intermediary "Direct Entry" button is completely removed. Upon entity selection, the UI renders strictly an integrated lined notepad pre-bound to the person or group.
        - **Authentic Notepad Ruled Lines & Mathematical Line-Locking**: Text sits strictly *inside* the ruled lines without baseline drift or glyph slicing across all font scales and display densities. Enforced via `TextLayoutResult` integration (`onTextLayout`), extracting exact pixel line boundaries (`layout.getLineTop(0)` and `layout.getLineBottom(i)`), zero font padding (`includeFontPadding = false`), centered line-height styling, dynamically computed line height (`(fontSize * 1.9f).sp`), full-height viewport rules (`BoxWithConstraints`), hairline stroke (`0.75dp`), and unified single-canvas scrolling (`drawBehind` and `BasicTextField` sharing the same `Modifier.verticalScroll` Box).
-       - **Expanded Vertical Canvas & Pushed-Down Secondary Action**: The notepad takes up the vast majority of the vertical viewport (`Modifier.weight(1f)`), pushing the secondary **"Prayer Assistant"** button down to an accessible action slab (72dp) at the bottom.
+       - **Expanded Vertical Canvas & Bottom Ambient Pane**: The notepad takes up the primary vertical viewport (`Modifier.weight(1f)`), seamlessly integrating with the collapsible ambient suggestion pane anchored at the bottom of the screen.
        - **Auto Bullet-Point List Engine**: The text pad automatically formats entries as bulleted lists. Initializing with a bullet prefix (`• `), `Enter` (newline) inserts `\n• ` and advances the cursor. Backspacing over an empty bullet clears the bullet cleanly.
        - **Immediate Local Commit**: Tapping **Save to [Name]** (or the header Save action) immediately executes `INSERT INTO PRAYER_POINT (entity_id, body, status, created_at)` into local SQLite. 100% offline-first.
        - **Branched AI Title Generation (Post-Committal)**: After local committal, an asynchronous background task dispatches the prayer point body to the branched AI title generator (`POST /api/v1/title`). The model generates a concise 2–6 word title and updates the local record (`UPDATE PRAYER_POINT SET title = ? WHERE id = ?`).
        - **Theological Validation Exemption**: This branch performs solely the simple task of generating a concise title from the user's committed text; theological validation is not required.
        - **Offline Fallback**: In offline scenarios, the record uses an initial clean snippet (first 3–5 words) as a temporary label until network connectivity allows the background title generator to populate the permanent title.
-    2. `"Prayer Assistant"`: Pushed to the bottom of the screen as a structured articulation pipeline. The app auto-packages the pre-selected entity context (`root` and `group`) into the JSON wire payload (`initial_reflection`, `root`, `group`, `clarifying_question`, `user_response`, `request_more`). Clarifying inquiry is open-ended, concise (6–12 words), with a 2-turn maximum and unconditional question skipping. Candidate review displays strictly 2 points tailored to the entity; category suggestion is omitted (`suggested_root: null`, `suggested_group: null`). One-time option to request 2 more candidate points. Saving commits directly to the selected entity.
+    2. `Ambient Suggestion Pane (Bottom Collapsible Pane, Batch Context & Scroll-Refresh)`:
+       - **Bottom Collapsible Pane**: Anchored at the bottom of the viewport as a small, non-intrusive pane that can be **tapped to hide or show** at any time.
+       - **Non-Conversational Operation**: The AI assistant will **not** ask questions and will **not** be able to chat to. It works silently in the background based strictly on existing content.
+       - **Batch Target Context**: Transmits all user recorded data on the target entity (all active and answered points, journal notes, context description, and current draft) in one go (not line by line) to `POST /api/v1/suggest`.
+       - **Scrollable Suggestions**: Shows **1 to 5 lines at a time** in a smooth scrollable list.
+       - **Line Brevity**: Each suggested line is strictly between **1 and 6 words long**.
+       - **Strict Non-Fabrication**: The lines produced by the AI shall **never make up content if existing data is limited**. The model is constrained to facts already present in the recorded data.
+       - **Scroll-Triggered Refresh**: Scrolling within the suggestion list detects list displacement and automatically dispatches a background refresh call to fetch fresh or additional suggested lines.
+       - **Single-Tap Adoption**: Tapping any suggested line immediately appends or inserts it as a bulleted prayer point into the active lined notepad draft.
 - **Saved Prayer Point Editing & Permanent Deletion Engine**:
   - **Single-Click Activation**: In the Entity Detail view, tapping any saved prayer point once immediately opens the prayer point editor.
   - **Editable Properties**:
@@ -477,7 +504,7 @@ To ensure that specifications from `beliefs.md`, `BRD.md`, `technical.md`, and `
 1. **Full-Specification Interactive Prototype ([`planning/prototype.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/prototype.html))**:
    - **Local Schema & Relational Integrity**: In-memory and `localStorage`-backed persistence mirroring the `ROOT_CATEGORY`, `INDIVIDUAL_ENTITY`, `PRAYER_POINT`, and `APP_CONFIG` SQLCipher tables.
    - **TouchGestureController**: Full mobile swipe engine enforcing horizontal discrimination ratio ($|\Delta X| \ge 1.5 \times |\Delta Y|$), distance thresholds ($\ge 40\text{px}$ / $\ge 60\text{px}$), and swipe-down exit.
-   - **Entity-First Adding Pathways**: Title-free Direct Entry with auto bullet-point list engine and asynchronous post-commit auto-titling to `/api/v1/title`; Prayer Assistant distillation with on-device entity masking, plain English clarifying inquiry, unconditional skip to candidate points, and strictly 2 candidate cards with high-level telegraphic scannable structure.
+   - **Typing-First Adding Pathways**: Title-free Lined Notepad with auto bullet-point list engine, advance-on-Next to condensed target entity selector with top root sphere dropdown (`People`, `Groups`, `General`, `Mission Partners`), 1-tap save with instant Undo toast feedback, and asynchronous post-commit auto-titling to `/api/v1/title`; Prayer Assistant distillation with on-device entity masking, plain English clarifying inquiry, unconditional skip to candidate points, and strictly 2 candidate cards with high-level telegraphic scannable structure.
    - **Passive Sanctuary Mode**: Full-screen buttonless immersion with pure typographic layout, expandable answered section, and anti-neglect queue balancing.
 2. **In-Browser Automated Spec & Layout Validator ([`planning/test_runner.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/test_runner.html))**:
    - Zero-dependency, browser-executable test suite running 100+ assertions across geometry, contrast, typography scaling, anti-neglect ordering, gestural navigation, and negative lexicon compliance.
