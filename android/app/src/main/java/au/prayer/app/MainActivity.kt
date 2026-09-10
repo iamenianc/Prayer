@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
@@ -53,6 +55,8 @@ class MainActivity : ComponentActivity() {
             var appConfig by remember { mutableStateOf(repository.getConfig()) }
             var allEntities by remember { mutableStateOf(repository.getAllEntities()) }
             var preselectedEntity by remember { mutableStateOf<IndividualEntity?>(null) }
+            var journalTargetEntity by remember { mutableStateOf<IndividualEntity?>(null) }
+            var journalNavKey by remember { mutableIntStateOf(0) }
 
             // Prayer sanctuary session state
             var prayerTopics by remember { mutableStateOf<List<TopicWithPoints>>(emptyList()) }
@@ -172,7 +176,10 @@ class MainActivity : ComponentActivity() {
                                         colors = colors,
                                         typography = typography,
                                         onStartPraying = { startPrayerSession() },
-                                        onOpenJournal = { backStack.push(ScreenState.JOURNAL) },
+                                        onOpenJournal = {
+                                            journalTargetEntity = null
+                                            backStack.push(ScreenState.JOURNAL)
+                                        },
                                         onAddPrayerPoints = {
                                             preselectedEntity = null
                                             backStack.push(ScreenState.LOG_PRAYER)
@@ -186,6 +193,8 @@ class MainActivity : ComponentActivity() {
                                         currentIndex = currentTopicIndex,
                                         colors = colors,
                                         typography = typography,
+                                        apiClient = apiClient,
+                                        repository = repository,
                                         onNextTopic = {
                                             if (currentTopicIndex < prayerTopics.size - 1) {
                                                 currentTopicIndex += 1
@@ -225,6 +234,7 @@ class MainActivity : ComponentActivity() {
                                         colors = colors,
                                         typography = typography,
                                         apiClient = apiClient,
+                                        repository = repository,
                                         onCreateEntity = { rootCode, name ->
                                             val entity = repository.createEntity(rootCode, name)
                                             refreshEntities()
@@ -239,9 +249,22 @@ class MainActivity : ComponentActivity() {
                                                 title = initialTitle ?: apiClient.generateOfflineFallbackTitle(body),
                                                 description = body
                                             )
+                                            val targetEntity = allEntities.find { it.id == entityId }
+                                            val entityName = targetEntity?.displayName ?: "Journal"
+                                            refreshEntities()
+
                                             coroutineScope.launch {
-                                                snackbarHostState.showSnackbar("Saved prayer point")
+                                                val result = snackbarHostState.showSnackbar(
+                                                    message = "Saved to $entityName",
+                                                    actionLabel = "Undo",
+                                                    duration = SnackbarDuration.Short
+                                                )
+                                                if (result == SnackbarResult.ActionPerformed) {
+                                                    repository.deletePrayerPoint(savedPoint.id)
+                                                    refreshEntities()
+                                                }
                                             }
+
                                             // Asynchronous post-commit background auto-titling
                                             lifecycleScope.launch {
                                                 val result = apiClient.generateTitle(body)
@@ -251,7 +274,6 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                 }
                                             }
-                                            refreshEntities()
                                         },
                                         onUpdateEntity = { id, name, rootCode ->
                                             repository.updateEntity(id, name, rootCode)
@@ -267,16 +289,29 @@ class MainActivity : ComponentActivity() {
                                                 snackbarHostState.showSnackbar("Deleted")
                                             }
                                         },
+                                        onSavedEntity = { entity ->
+                                            journalTargetEntity = entity
+                                            journalNavKey++
+                                            if (backStack.items.contains(ScreenState.JOURNAL)) {
+                                                backStack.pop()
+                                            } else {
+                                                backStack.replace(ScreenState.JOURNAL)
+                                            }
+                                        },
                                         onBackToHome = { backStack.pop() }
                                     )
                                 }
 
                                 ScreenState.JOURNAL -> {
                                     JournalScreen(
+                                        initialEntity = journalTargetEntity,
+                                        navigationKey = journalNavKey,
                                         entities = allEntities,
                                         colors = colors,
                                         typography = typography,
                                         config = appConfig,
+                                        apiClient = apiClient,
+                                        repository = repository,
                                         onUpdateConfig = { updated ->
                                             appConfig = updated
                                             repository.saveConfig(updated)

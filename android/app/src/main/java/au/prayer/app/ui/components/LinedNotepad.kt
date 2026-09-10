@@ -159,6 +159,15 @@ fun LinedNotepad(
                         )
                         belowY += singleLineHeight
                     }
+
+                    // Subtle authentic notebook vertical margin rule
+                    val marginX = with(density) { 36.dp.toPx() }
+                    drawLine(
+                        color = colors.borderStrong.copy(alpha = 0.28f),
+                        start = Offset(marginX, 0f),
+                        end = Offset(marginX, size.height),
+                        strokeWidth = strokeWidth
+                    )
                 }
         ) {
             BasicTextField(
@@ -169,7 +178,7 @@ fun LinedNotepad(
                 onTextLayout = { textLayoutResult = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = topMargin),
+                    .padding(top = topMargin, start = 44.dp, end = 16.dp),
                 decorationBox = { innerTextField ->
                     Box(modifier = Modifier.fillMaxWidth()) {
                         if (text.text.isEmpty()) {

@@ -14,7 +14,7 @@
 The *Pray Without Ceasing* repository is organized into three primary operational domains:
 
 1. **Planning, Conceptualization & Product Specification ([`planning/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning))**:
-   The doctrinal, functional, technical, and UX contract repository. It holds the living doctrinal specifications and the automated browser-based layout and gesture contract test suite.
+   The doctrinal, functional, technical, and UX contract repository. It holds the living doctrinal specifications, canonical journal design principles (`android_journal_design_principles.md`, read-only for agents, added later), and the automated browser-based layout and gesture contract test suite.
 2. **AI Agent API Production Engine ([`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api))**:
    A zero-cost, stateless Cloudflare Worker serverless edge proxy that interfaces anonymously with upstream LLM inference providers (OpenRouter) with strict Reformed theological guardrails, budget hard ceilings, and dual execution branches (Ambient Grounded Suggestions & Post-Commit Auto-Titling).
 3. **Native Android Production Client ([`android/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android))**:
@@ -27,6 +27,7 @@ graph TD
         BRD["BRD.md<br/>(Business Requirements)"]
         TECH["technical.md<br/>(Technical Reference)"]
         UX["UX.md<br/>(Design & Interaction)"]
+        JOURNAL_DESIGN["android_journal_design_principles.md<br/>(Canonical Journal Spec - Read-Only)"]
         TEST_RUNNER["test_runner.html<br/>(DOM & Layout Contract)"]
         SPEC_TESTS["planning/tests/*.spec.js<br/>(Playwright Verification)"]
     end
@@ -35,8 +36,6 @@ graph TD
         WORKER["worker.js<br/>(Cloudflare Worker Router)"]
         WRANGLER["wrangler.jsonc<br/>(Cloudflare Deployment Config)"]
         COMPILED_PROMPT["system_prompt.txt<br/>(Authoritative Compiled Prompt)"]
-        BENCHMARK["api/test/run_stress_test.py<br/>(100-Case Stress Suite)"]
-        CLI_TEST["interactive_guide.ps1<br/>(Interactive CLI Tester)"]
     end
 
     subgraph Android_Client ["3. Native Android Client (android/)"]
@@ -55,6 +54,7 @@ graph TD
     BRD -.->|"Functional Scope"| TECH
     UX -.->|"Planar 0dp Geometry"| UI_THEME
     UX -.->|"Buttonless Gestures"| UI_GESTURES
+    JOURNAL_DESIGN -.->|"Canonical Journal Contracts (Immutable)"| UI_SCREENS
     TECH -.->|"Offline SQLCipher Spec"| DATA_LOCAL
     TECH -.->|"API Proxy Contracts"| WORKER
     
@@ -257,12 +257,10 @@ The system prompt is organized under [`api/prompts/`](file:///c:/Users/ianch/sou
 - **[`PROMPT_CARD_STYLE.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_CARD_STYLE.txt)**: Suggested prayer point line structure: strictly 1 to 6 words per line; telegraphic scannable fragments; no preamble; zero ordinal tags.
 - **[`PROMPT_OUTPUT_SCHEMA.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/prompts/PROMPT_OUTPUT_SCHEMA.txt)**: Strict JSON output schema matching wire format `{"suggestions": ["line 1", "line 2", ...]}`.
 
-### 4.2 API Testing & Benchmark Suite (`api/test/`)
-- **`prayer_requests_stress_test.json`**: 100 diverse, realistic prayer burdens spanning all three roots, emotional states, pastoral trials, theological traps (e.g. prosperity decrees, praying to Mary), and privacy boundaries.
-- **`run_stress_test.py`**: Automated stress runner querying the live proxy or local endpoint and persisting raw model completions to `stress_test_responses.json`.
-- **`BENCHMARK_RESULTS.md`**: Systematic quantitative analysis measuring compliance across root mapping, suggestion generation, word counts (1–6 words per line), and theological boundaries.
-- **`AI_GENERATED_TEXT_REPORT.md`**: Qualitative linguistic analysis assessing telegraphic brevity, clause and punctuation variety, vocabulary tone, and absence of conversational filler.
-- **`interactive_guide.ps1`**: Interactive PowerShell terminal client simulating the ambient suggestion and post-commit titling flows.
+### 4.2 AI API Testing Policy: Strict Prohibition & Offline Validation
+- **No Live API Tests**: All automated test scripts, 100-request benchmark suites, and interactive CLI test clients against the AI API/OpenRouter proxy have been completely removed from the repository.
+- **Mandatory Prohibition**: Agents and developers must never execute automated test requests against the production Cloudflare Worker or OpenRouter upstream to prevent token consumption and unwanted cost.
+- **Offline Doctrinal & Schema Verification**: Guardrail enforcement and schema verification are handled statically via `system_prompt.txt` architecture and offline Android JVM unit tests (`TheologicalGuardrailsTest.kt`, `PrayerApiClientTest.kt`).
 
 ---
 
@@ -312,9 +310,10 @@ graph TD
     HOME --> SPACING
     SANCTUARY --> GESTURES
     SANCTUARY --> THEME
-    LOG --> API_CLIENT
+    SANCTUARY --> API_CLIENT
     LOG --> THEME
     JOURNAL --> THEME
+    JOURNAL --> API_CLIENT
 
     MAIN --> REPO
     LOG --> REPO
@@ -331,14 +330,15 @@ graph TD
 
 #### Presentation Layer (`au.prayer.app.ui`)
 - **[`MainActivity.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/MainActivity.kt)**: Root activity. Initializes `PrayerDatabaseHelper`, `PrayerRepository`, and `PrayerApiClient`. Hosts the `LifoBackStack` and renders directional slide/fade transitions via `AnimatedContent`. Launches asynchronous background auto-titling after prayer point committal.
-- **[`screens/HomeScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/HomeScreen.kt)**: Renders the pristine tripartite launch screen: **Start praying**, **Open Journal**, and **Add prayer points**. Implements 0dp flat rectangular tiles directly abutting each other with 1px hairline dividing seams.
-- **[`screens/SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)**: Full-screen buttonless prayer mode. Displays solely `Praying for [Name]`, followed by unadorned prayer points and expandable answered prayers. Employs `TouchGestureModifier` for swipe navigation and responsive touch zones.
-- **[`screens/LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt)**: Handles typing-first prayer point addition with ambient AI assistance. Users draft on an authentic lined ruled notepad with auto-bulleting (`• `) and select/create a target entity. Anchored at the bottom is a collapsible ambient suggestion pane (tapped to hide/show), showing a scrollable list of 1 to 5 suggested lines at a time (each 1–6 words long) grounded strictly in all user-recorded data on the target passed in one go. Scrolling within the suggestion list triggers a background API refresh call. Pushes direct single-tap saving with Undo toast.
-- **[`screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)**: Directory view of all people, groups, and general topics. Provides one-click editing of prayer points, swipe-to-answer, swipe-to-delete, search filtering, and access to sequestered application settings.
+- **[`components/LinedNotepad.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/components/LinedNotepad.kt)**: Authentic ruled paper notepad component featuring horizontal ruled lines and a subtle vertical margin line (36dp offset), auto-bulleting (`• `), and integration with standard Compose `TextFieldValue`.
+- **[`screens/HomeScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/HomeScreen.kt)**: Renders the tripartite launch screen: **Start praying**, **Open Journal**, and **Add prayer points**. Uses elevated planar cards (`elevationCard = 2.dp`) with subtle borders and 0dp right angles.
+- **[`screens/SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)**: Full-screen buttonless prayer mode. Displays solely `Praying for [Name]`, followed by unadorned prayer points wrapped in subtle planar cards (`elevationSubtle = 1.dp`), expandable answered prayers, and an asynchronous read-only AI prompts card when past points exist (strictly unlabelled in the UI). Employs `TouchGestureModifier` for swipe navigation and responsive touch zones.
+- **[`screens/LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt)**: Handles typing-first prayer point addition with **strictly zero AI assistance**. Users draft unencumbered on an authentic lined ruled notepad with auto-bulleting (`• `) and select/create a target entity. Pushes direct single-tap saving with Undo toast.
+- **[`screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)**: Directory view of all people, groups, general topics, and mission partners. Opens directly to collapsible accordion menus for `People`, `Groups`, `General`, and `Mission Partners` directly surfacing active lists for immediate selection; selecting an entity opens their Entity Detail screen with prayer points, one-click editing, and asynchronous read-only AI prompts (strictly unlabelled in the UI). Also hosts sequestered application settings.
 - **[`gestures/TouchGestureModifier.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/gestures/TouchGestureModifier.kt)**: High-precision pointer gesture detector. Distinguishes horizontal swipes ($\Delta X \ge 50\text{dp}$), vertical dismiss swipes ($\Delta Y \ge 50\text{dp}$), and left edge-swipe right navigation ($X_{start} \le 25\text{dp}$).
 - **[`navigation/LifoBackStack.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/navigation/LifoBackStack.kt)**: LIFO navigation stack ensuring predictable, sequential back navigation across screen states.
-- **[`theme/Theme.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt)**: Material 3 theme configuration enforcing `FlatSquareShape` (`RoundedCornerShape(0.dp)`) across all M3 components. Defines high-contrast monochrome palettes for Morning Light and Quiet Night.
-- **[`theme/Spacing.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Spacing.kt)**: Design tokens adhering to an 8dp spacing rhythm (`PrayerSpacing`).
+- **[`theme/Theme.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt)**: Material 3 theme configuration enforcing `FlatSquareShape` (`RoundedCornerShape(0.dp)`) across all M3 components. Defines high-contrast monochrome palettes with tonal container levels (`surface`, `surfaceSubtle`, `surfaceElevated`, `borderSubtle`, `borderStrong`).
+- **[`theme/Spacing.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Spacing.kt)**: Design tokens adhering to an 8dp spacing rhythm (`PrayerSpacing`), including elevation hierarchy (`elevationNone`, `elevationSubtle`, `elevationCard`, `elevationFloating`, `elevationModal`) and `cardMargin`.
 - **[`theme/Typography.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Typography.kt)**: Dynamic typography scaling supporting `LARGE`, `REGULAR`, and `COMPACT` modes with high-legibility sans-serif styles.
 
 #### Data & Local Persistence Layer (`au.prayer.app.data`)
@@ -434,38 +434,29 @@ sequenceDiagram
     Note over Repo: Title updated silently without interrupting user
 ```
 
-### 6.3 Ambient Background Prayer Suggestions Flow
+### 6.3 Read-Only AI Prompts Flow for Past Points
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Believer as Believer (User)
-    participant Log as LogPrayerScreen
+    participant View as SanctuaryPrayerScreen / JournalScreen
     participant Repo as PrayerRepository
     participant API as PrayerApiClient
     participant Worker as Cloudflare Worker (/api/v1/suggest)
     participant LLM as OpenRouter (LLM)
 
-    Believer->>Log: Selects target entity (or writes on notepad)
-    Log->>Repo: Fetch all recorded data for target in one go
-    Repo-->>Log: Context description, active/answered points, journal updates
-    Log->>API: getSuggestions(batchTargetPayload)
+    Believer->>View: Views past points for person / group
+    Note over View: Only triggered when viewing past recorded points.<br/>Strictly Zero AI in Add Prayer Points mode.
+    View->>Repo: Ingests all recorded points on target in one go
+    Repo-->>View: Active/answered points & context description
+    View->>API: getSuggestions(SuggestRequest with recordedPoints)
     API->>Worker: POST /api/v1/suggest (batch JSON payload)
-    Worker->>LLM: Ambient suggestion prompt with strict non-fabrication guardrails
-    LLM-->>Worker: JSON {"suggestions": ["Wisdom in decisions", "Patience under pressure", "Sovereign peace"]}
+    Worker->>LLM: Concise prompts with strict non-fabrication guardrails
+    LLM-->>Worker: JSON {"suggestions": ["Sovereign peace", "Steadfast faith in trial", "Patient endurance"]}
     Worker-->>API: 200 OK SuggestResponse
-    API-->>Log: SuggestResponse (List of 1-6 word lines)
-    Log-->>Believer: Displays collapsible bottom pane (1-5 lines visible, tapped to hide/show)
-    
-    Believer->>Log: Scrolls suggestion list
-    Log->>API: Background call triggers suggestion refresh
-    API->>Worker: POST /api/v1/suggest (refresh call)
-    Worker-->>Log: Updated suggestions list
-    
-    Believer->>Log: Taps suggestion line to insert into notepad draft
-    Log-->>Believer: Inserts line onto ruled notepad line
-    Believer->>Log: Taps "Save to [Name]"
-    Log->>Repo: Commits prayer point directly to database
+    API-->>View: SuggestResponse (3-5 concise lines, 1-6 words each)
+    View-->>Believer: Displays read-only prompts (unlabelled in UI, zero adopt buttons, zero edit actions)
 ```
 
 ---
@@ -541,16 +532,15 @@ graph LR
 | **[`planning/BRD.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/BRD.md)** | Specification / Product | Business requirements, MVP scope, core features | `beliefs.md` | `technical.md`, `UX.md`, Android App |
 | **[`planning/technical.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/technical.md)** | Specification / Tech | System architecture, SQLCipher schema, proxy specs | `beliefs.md`, `BRD.md` | `worker.js`, `PrayerRepository.kt`, `PrayerApiClient.kt` |
 | **[`planning/UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md)** | Specification / Design | Planar 0dp aesthetics, gestures, lexicon, motion tokens | `beliefs.md`, `BRD.md` | `Theme.kt`, `Spacing.kt`, `TouchGestureModifier.kt` |
-| **[`planning/test_runner.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/test_runner.html)** | Specification Harness | Interactive spec prototype and contract verification DOM | `UX.md`, `technical.md` | `planning/tests/*.spec.js` |
-| **[`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js)** | AI API / Edge Proxy | Multi-route Cloudflare Worker router & inference proxy | `system_prompt.txt`, OpenRouter API | `PrayerApiClient.kt`, `interactive_guide.ps1` |
+| **`android_journal_design_principles.md`** | Canonical Spec / Design | Immutable design principles for Android journal (Strictly read-only; added later) | User-authored | All Agents, `JournalScreen.kt` |
+| **[`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js)** | AI API / Edge Proxy | Multi-route Cloudflare Worker router & inference proxy | `system_prompt.txt`, OpenRouter API | `PrayerApiClient.kt` |
 | **[`api/wrangler.jsonc`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/wrangler.jsonc)** | AI API / Deployment | Cloudflare Workers deployment configuration | Cloudflare CLI | Cloudflare Edge Runtime |
-| **[`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt)** | AI API / Prompt | Authoritative compiled system prompt | `beliefs.md`, `BRD.md` | `worker.js`, `run_stress_test.py` |
-| **[`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json)** | AI API / Benchmark | 100-request benchmark suite for model compliance | `BRD.md`, `beliefs.md` | `run_stress_test.py`, `generate_report.py` |
+| **[`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt)** | AI API / Prompt | Authoritative compiled system prompt | `beliefs.md`, `BRD.md` | `worker.js` |
 | **[`android/app/src/main/java/au/prayer/app/MainActivity.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/MainActivity.kt)** | Android / Activity | Root activity, lifecycle, LIFO navigation, auto-titling | `PrayerRepository`, `LifoBackStack`, `Theme` | Android OS |
 | **[`android/app/src/main/java/au/prayer/app/ui/screens/HomeScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/HomeScreen.kt)** | Android / Screen | Tripartite home launch screen | `Theme.kt`, `Spacing.kt` | `MainActivity.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)** | Android / Screen | Buttonless full-screen prayer mode | `TouchGestureModifier.kt`, `Theme.kt` | `MainActivity.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt)** | Android / Screen | Ruled lined notepad & collapsible ambient suggestion pane | `PrayerApiClient.kt`, `Theme.kt` | `MainActivity.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)** | Android / Screen | Journal directory, prayer point editing, settings | `Theme.kt`, `Models.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)** | Android / Screen | Buttonless full-screen prayer mode with read-only AI prompts (unlabelled in UI) | `TouchGestureModifier.kt`, `Theme.kt`, `PrayerApiClient.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt)** | Android / Screen | Ruled lined notepad, zero AI assistance, single-tap save | `Theme.kt`, `Spacing.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)** | Android / Screen | Journal directory, prayer point editing, read-only AI prompts (unlabelled in UI) | `Theme.kt`, `Models.kt`, `PrayerApiClient.kt` | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/gestures/TouchGestureModifier.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/gestures/TouchGestureModifier.kt)** | Android / Gestures | High-precision swipe and edge-swipe detection | Android Compose Pointer API | `SanctuaryPrayerScreen.kt`, `JournalScreen.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/navigation/LifoBackStack.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/navigation/LifoBackStack.kt)** | Android / Navigation | LIFO screen state manager | Kotlin Collections | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt)** | Android / Theming | `FlatSquareShape` (0dp), monochrome color schemes | Material 3 Compose | All Screens |
@@ -560,4 +550,4 @@ graph LR
 | **[`android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt)** | Android / Repository | CRUD operations, Anti-Neglect queue query | `PrayerDatabaseHelper.kt`, `Models.kt` | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/data/models/Models.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt)** | Android / Domain Models | Enums and data classes | Kotlinx Serialization | Repository, API Client, UI |
 | **[`android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt)** | Android / Seed Data | Historic Reformed collects, creeds, Lord's prayer | `Models.kt` | `PrayerDatabaseHelper.kt`, `PrayerRepository.kt` |
-| **[`android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt)** | Android / Network | OkHttp client, wire payloads (`suggest`, `title`), fallback | OkHttp, Kotlinx Serialization | `MainActivity.kt`, `LogPrayerScreen.kt` |
+| **[`android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt)** | Android / Network | OkHttp client, wire payloads (`suggest`, `title`), fallback | OkHttp, Kotlinx Serialization | `MainActivity.kt`, `SanctuaryPrayerScreen.kt`, `JournalScreen.kt` |

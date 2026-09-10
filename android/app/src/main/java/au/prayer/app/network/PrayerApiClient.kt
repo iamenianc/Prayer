@@ -12,28 +12,32 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
 @Serializable
-data class GuideRequest(
-    @SerialName("initial_reflection") val initialReflection: String,
-    val root: String? = null,
-    val group: String? = null,
-    @SerialName("clarifying_question") val clarifyingQuestion: String? = null,
-    @SerialName("user_response") val userResponse: String? = null,
-    @SerialName("request_more") val requestMore: Boolean = false
-)
-
-@Serializable
-data class CandidatePrayerPoint(
+data class RecordedPoint(
     val title: String,
-    val description: String,
-    @SerialName("suggested_root") val suggestedRoot: String? = null,
-    @SerialName("suggested_group") val suggestedGroup: String? = null
+    val body: String,
+    val status: String
 )
 
 @Serializable
-data class GuideResponse(
-    @SerialName("skip_question") val skipQuestion: Boolean = false,
-    @SerialName("clarifying_question") val clarifyingQuestion: String? = null,
-    @SerialName("candidate_prayer_points") val candidatePrayerPoints: List<CandidatePrayerPoint> = emptyList()
+data class JournalUpdateItem(
+    val text: String
+)
+
+@Serializable
+data class SuggestRequest(
+    @SerialName("target_name") val targetName: String? = null,
+    val root: String,
+    val group: String? = null,
+    @SerialName("context_description") val contextDescription: String? = null,
+    @SerialName("recorded_points") val recordedPoints: List<RecordedPoint> = emptyList(),
+    @SerialName("journal_updates") val journalUpdates: List<JournalUpdateItem> = emptyList(),
+    @SerialName("current_draft") val currentDraft: String? = null,
+    @SerialName("locale_dialect") val localeDialect: String = "EN_AU_UK"
+)
+
+@Serializable
+data class SuggestResponse(
+    val suggestions: List<String> = emptyList()
 )
 
 @Serializable
@@ -44,6 +48,34 @@ data class TitleRequest(
 @Serializable
 data class TitleResponse(
     val title: String
+)
+
+@Deprecated("Legacy interactive wizard model; superseded by SuggestRequest")
+@Serializable
+data class CandidatePrayerPoint(
+    val title: String,
+    val description: String,
+    @SerialName("suggested_root") val suggestedRoot: String? = null,
+    @SerialName("suggested_group") val suggestedGroup: String? = null
+)
+
+@Deprecated("Legacy interactive wizard model; superseded by SuggestRequest")
+@Serializable
+data class GuideRequest(
+    @SerialName("initial_reflection") val initialReflection: String,
+    val root: String? = null,
+    val group: String? = null,
+    @SerialName("clarifying_question") val clarifyingQuestion: String? = null,
+    @SerialName("user_response") val userResponse: String? = null,
+    @SerialName("request_more") val requestMore: Boolean = false
+)
+
+@Deprecated("Legacy interactive wizard model; superseded by SuggestResponse")
+@Serializable
+data class GuideResponse(
+    @SerialName("skip_question") val skipQuestion: Boolean,
+    @SerialName("clarifying_question") val clarifyingQuestion: String? = null,
+    @SerialName("candidate_prayer_points") val candidatePrayerPoints: List<CandidatePrayerPoint> = emptyList()
 )
 
 class PrayerApiClient(
@@ -65,6 +97,30 @@ class PrayerApiClient(
 
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
+    suspend fun getSuggestions(request: SuggestRequest): Result<SuggestResponse> = withContext(Dispatchers.IO) {
+        try {
+            val bodyString = json.encodeToString(SuggestRequest.serializer(), request)
+            val httpRequest = Request.Builder()
+                .url("$baseUrl/api/v1/suggest")
+                .addHeader("X-Prayer-Gateway-Secret", gatewaySecret)
+                .addHeader("Content-Type", "application/json")
+                .post(bodyString.toRequestBody(jsonMediaType))
+                .build()
+
+            client.newCall(httpRequest).execute().use { response ->
+                if (!response.isSuccessful) {
+                    return@withContext Result.failure(Exception("HTTP ${response.code}"))
+                }
+                val responseBody = response.body?.string() ?: return@withContext Result.failure(Exception("Empty body"))
+                val suggestResponse = json.decodeFromString(SuggestResponse.serializer(), responseBody)
+                Result.success(suggestResponse)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    @Deprecated("Legacy interactive wizard endpoint; superseded by getSuggestions")
     suspend fun getGuidance(request: GuideRequest): Result<GuideResponse> = withContext(Dispatchers.IO) {
         try {
             val bodyString = json.encodeToString(GuideRequest.serializer(), request)

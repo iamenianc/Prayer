@@ -219,4 +219,68 @@ class DevotionalFlowsTest {
         assertNull(toggledBack.answeredAt)
         assertNull(toggledBack.answeredTestimony)
     }
+
+    @Test
+    fun `test read-only prompts request generation when viewing past points`() {
+        val person = IndividualEntity(
+            id = "person-123",
+            rootCode = RootCode.PEOPLE,
+            displayName = "Sarah",
+            contextDescription = "Sister in Christ undergoing trials"
+        )
+        val pastPoints = listOf(
+            PrayerPoint(
+                entityId = person.id,
+                title = "Surgery Recovery",
+                description = "• Rapid healing after knee surgery\n• Peace for family",
+                status = PrayerStatus.ACTIVE
+            ),
+            PrayerPoint(
+                entityId = person.id,
+                title = "Job Transition",
+                description = "• Faithfulness in workplace trial",
+                status = PrayerStatus.ANSWERED
+            )
+        )
+
+        // Construct request from past recorded points
+        val recorded = pastPoints.map {
+            au.prayer.app.network.RecordedPoint(title = it.title, body = it.description, status = it.status.name)
+        }
+        val request = au.prayer.app.network.SuggestRequest(
+            targetName = person.displayName,
+            root = person.rootCode.name,
+            group = null,
+            contextDescription = person.contextDescription,
+            recordedPoints = recorded,
+            journalUpdates = emptyList(),
+            currentDraft = null, // Invariant: no current draft in read-only view
+            localeDialect = "EN_AU_UK"
+        )
+
+        assertEquals("Sarah", request.targetName)
+        assertEquals("PEOPLE", request.root)
+        assertEquals(2, request.recordedPoints.size)
+        assertNull(request.currentDraft)
+        assertEquals("Surgery Recovery", request.recordedPoints[0].title)
+        assertEquals("ACTIVE", request.recordedPoints[0].status)
+    }
+
+    @Test
+    fun `test read-only prompts formatting constraints`() {
+        val mockPrompts = listOf(
+            "Steadfast faith in trials",
+            "Deepened peace of Christ",
+            "Patience under affliction",
+            "Comfort in sorrow"
+        )
+
+        assertTrue("Prompts should be 3 to 5 lines: ${mockPrompts.size}", mockPrompts.size in 3..5)
+        mockPrompts.forEach { prompt ->
+            val wordCount = prompt.split("\\s+".toRegex()).size
+            assertTrue("Each prompt should be 1 to 6 words: $wordCount ('$prompt')", wordCount in 1..6)
+            assertFalse("Must not start with 'Pray for'", prompt.startsWith("Pray for", ignoreCase = true))
+            assertFalse("Must not start with 'Ask God to'", prompt.startsWith("Ask God to", ignoreCase = true))
+        }
+    }
 }

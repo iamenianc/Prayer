@@ -33,6 +33,34 @@ Review the prayer point text and the Tier 1 candidate titles (if provided). Sele
   "title": "Concise Title Here"
 }`;
 
+const DEFAULT_TIER1_SUGGEST_PROMPT = `You are a concise, reverent prayer petition writer grounded in historic Reformed Christian theology.
+Your role is to examine the recorded context for a prayer target and draft 4 to 6 natural, grounded prayer petition intentions.
+- ABSOLUTELY NO CHAT OR QUESTIONS: Never ask questions. Never write conversational responses.
+- NON-FABRICATION: Strictly ground petitions in the provided recorded points, updates, and draft. Never invent medical conditions, tragedies, or unstated circumstances. If context is sparse, offer foundational, biblical petitions appropriate to the category (e.g., perseverance in faith, wisdom, peace in Christ).
+- FORMAT: Short, dignified petition ideas (each 2 to 5 words, e.g. "Peace awaiting biopsy results", "Patience in exhaustion", "Deepened trust in Christ").
+- Never use prefixes like "Pray for" or "Please pray".
+Output strictly valid JSON:
+{
+  "candidates": ["Petition One", "Petition Two", "Petition Three", "Petition Four"]
+}`;
+
+const DEFAULT_TIER2_SUGGEST_HARNESS_PROMPT = `You are the strict Verification, Brevity, and Compliance Harness for Ambient Prayer Suggestions.
+Review the target context and Tier 1 candidate suggestions. Output a refined list of 3 to 5 suggestions complying with ALL rules:
+1. HARD BREVITY LIMIT: STRICTLY 1 TO 6 WORDS PER SUGGESTION (target 2–5 words, hard cap 6 words).
+2. NO DIRECT PRAYER: NEVER write second-person prayers addressed to God (NO "Lord", "Father", "God", "we pray", "give them"). Output objective petitions/intentions only.
+3. NO PREFIXES: Never begin with "Pray for", "Prayer for", "Please pray", or bullet symbols.
+4. STRICT NON-FABRICATION: Faithful to recorded facts only; never invent unstated details.
+5. DIALECT: English (Australian / UK) spelling unless US is specified.
+6. OUTPUT FORMAT: Output STRICTLY valid JSON with no conversational text:
+{
+  "suggestions": [
+    "Petition one",
+    "Petition two",
+    "Petition three",
+    "Petition four"
+  ]
+}`;
+
 const DEFAULT_TIER1_DISTILLATION_PROMPT = `You are a thoughtful prayer distillation assistant grounded in historic Reformed Christian theology.
 Your role is to reflect on the user's unstructured burden and articulate natural, sober, non-robotic questions or candidate prayer points.
 - TONE: Dignified, sober, and plain. Strictly avoid artificial empathy, therapeutic clichés ("I hear how hard this is", "Bless you"), and overly poetic, dramatic, or cheesy sentimentality (no greeting-card fluff or flowery prose).
@@ -225,6 +253,8 @@ export default {
     // 5. Route to appropriate handler
     if (path === "/api/v1/title") {
       return handleTitleGeneration(request, env);
+    } else if (path === "/api/v1/suggest") {
+      return handleSuggestionGeneration(request, env);
     } else if (path === "/api/v1/assistant" || path === "/api/v1/guide" || path === "/" || path === "/guide" || path === "/assistant") {
       return handleDistillationGuide(request, env);
     } else {
@@ -551,3 +581,144 @@ async function handleDistillationGuide(request, env) {
     });
   }
 }
+
+/**
+ * Handle POST /api/v1/suggest — Ambient Background Prayer Suggestions
+ * Accepts batch target context, runs Two-Tier drafter & compliance harness,
+ * returns 1-6 word petitions grounded strictly in user records.
+ */
+async function handleSuggestionGeneration(request, env) {
+  try {
+    const body = await request.json();
+    const targetName = body.target_name || null;
+    const root = body.root || "GENERAL";
+    const contextDescription = body.context_description || "";
+    const recordedPoints = Array.isArray(body.recorded_points) ? body.recorded_points : [];
+    const journalUpdates = Array.isArray(body.journal_updates) ? body.journal_updates : [];
+    const currentDraft = body.current_draft || "";
+    const locale = body.locale_dialect || "EN_AU_UK";
+
+    const promptPayload = {
+      target_name: targetName,
+      root: root,
+      context_description: contextDescription,
+      recorded_points: recordedPoints.slice(0, 10),
+      journal_updates: journalUpdates.slice(0, 5),
+      current_draft: currentDraft.slice(0, 500),
+      locale: locale,
+    };
+
+    const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
+
+    // --- TIER 1: Grounded Petition Ideas Drafter (Temperature: 0.8, Top_P: 0.95) ---
+    const tier1Content = await callOpenRouter(env, {
+      model: upstreamModel,
+      temperature: 0.8,
+      top_p: 0.95,
+      max_tokens: 2000,
+      messages: [
+        { role: "system", content: env.PROMPT_SUGGEST_TIER1 || DEFAULT_TIER1_SUGGEST_PROMPT },
+        { role: "user", content: JSON.stringify(promptPayload) },
+      ],
+      title: "Prayer Suggestions - Tier 1",
+    });
+
+    let tier1Candidates = [];
+    if (tier1Content) {
+      try {
+        const parsed = JSON.parse(tier1Content);
+        if (Array.isArray(parsed.candidates)) {
+          tier1Candidates = parsed.candidates;
+        }
+      } catch {}
+    }
+
+    // --- TIER 2: Verification, Brevity & Compliance Harness (Temperature: 0.1) ---
+    const tier2Content = await callOpenRouter(env, {
+      model: upstreamModel,
+      temperature: 0.1,
+      max_tokens: 2000,
+      messages: [
+        { role: "system", content: env.PROMPT_SUGGEST_TIER2 || DEFAULT_TIER2_SUGGEST_HARNESS_PROMPT },
+        { role: "user", content: JSON.stringify({ context: promptPayload, candidates: tier1Candidates }) },
+      ],
+      title: "Prayer Suggestions - Tier 2",
+    });
+
+    let suggestions = [];
+    if (tier2Content) {
+      try {
+        const parsed = JSON.parse(tier2Content);
+        if (Array.isArray(parsed.suggestions)) {
+          suggestions = parsed.suggestions;
+        }
+      } catch {}
+    }
+
+    // Fallback if model failed or returned empty
+    if (!suggestions || suggestions.length === 0) {
+      suggestions = fallbackSuggestions(root, targetName);
+    }
+
+    // Final defensive sanitization: strip bullet prefixes, enforce 1-6 words limit
+    suggestions = suggestions
+      .map((s) => String(s).replace(/^[•\-\*\s]+/, "").trim())
+      .filter((s) => s.length > 0)
+      .map((s) => {
+        const words = s.split(/\s+/);
+        return words.length > 6 ? words.slice(0, 6).join(" ") : s;
+      })
+      .slice(0, 5);
+
+    return new Response(JSON.stringify({ suggestions }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    console.error("SUGGEST_HANDLER_ERROR", err && err.stack ? err.stack : String(err));
+    return new Response(JSON.stringify({ suggestions: fallbackSuggestions("GENERAL", null) }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  }
+}
+
+function fallbackSuggestions(root, targetName) {
+  if (root === "MISSION_PARTNERS") {
+    return [
+      "Fruitful gospel ministry",
+      "Perseverance in trials",
+      "Spiritual protection & unity",
+      "Open doors for truth",
+    ];
+  } else if (root === "GROUPS") {
+    return [
+      "Mutual love & fellowship",
+      "Faithful witness in community",
+      "Grace amidst disagreement",
+      "Steadfast growth in Christ",
+    ];
+  } else if (root === "PEOPLE") {
+    return [
+      "Steadfast faith in trials",
+      "Deepened peace of Christ",
+      "Wisdom and godly discernment",
+      "Comfort in distress",
+      "Strength for daily walk",
+    ];
+  } else {
+    return [
+      "Righteousness and gospel peace",
+      "Faithful endurance today",
+      "Quietness of heart in God",
+      "Grace for every need",
+    ];
+  }
+}
+

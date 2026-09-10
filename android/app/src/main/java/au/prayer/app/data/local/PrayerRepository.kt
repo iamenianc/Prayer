@@ -216,6 +216,21 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         return list
     }
 
+    data class TargetContextData(
+        val entity: IndividualEntity?,
+        val activePoints: List<PrayerPoint>,
+        val answeredPoints: List<PrayerPoint>
+    )
+
+    fun getTargetContext(entityId: String): TargetContextData {
+        val entity = getEntity(entityId)
+        val allPoints = getPointsForEntity(entityId)
+        val active = allPoints.filter { it.status == PrayerStatus.ACTIVE || it.status == PrayerStatus.HISTORIC }
+        val answered = allPoints.filter { it.status == PrayerStatus.ANSWERED }
+        return TargetContextData(entity, active, answered)
+    }
+
+
     // --- Devotional Queue & Anti-Neglect Balancing ---
 
     fun getContemplativeTopics(blendHistoric: Boolean = false): List<TopicWithPoints> {

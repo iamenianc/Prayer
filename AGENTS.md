@@ -7,12 +7,13 @@ This repository maintains three distinct domains:
 1. **Planning, Conceptualization & Product Specification (`planning/`)**:
    - The architectural foundation and product specification (*Pray Without Ceasing*).
    - **Strategic Focus**: Product requirements, domain modeling, user workflows, system architecture, feature roadmaps, and scenario analysis.
-   - **Liturgical Integrity**: Maintains `beliefs.md`, `BRD.md`, `technical.md`, `UX.md`, and `codebase_knowledge_graph.md` as living doctrinal and system contracts.
+   - **Liturgical Integrity & Design Contracts**: Maintains `beliefs.md`, `BRD.md`, `technical.md`, `UX.md`, and `codebase_knowledge_graph.md` as living doctrinal and system contracts. Canonical journal design principles are specified in `android_journal_design_principles.md` (to be added; strictly immutable and read-only for agents).
 
 2. **AI Agent API Production Code (`api/`)**:
    - The serverless proxy and inference engine supporting the companion app is **active production code**.
-   - Located under [`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api): Cloudflare Worker proxy (`worker.js`), deployment configuration (`wrangler.jsonc`), package manifests, authoritative compiled system prompt (`system_prompt.txt`), interactive CLI testing tools (`interactive_guide.ps1`), and the 100-request benchmark suite (`test/`).
-   - The agent **is permitted and expected** to maintain, update, test, benchmark, and deploy the API production codebase.
+   - Located under [`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api): Cloudflare Worker proxy (`worker.js`), deployment configuration (`wrangler.jsonc`), package manifests, and authoritative compiled system prompt (`system_prompt.txt`).
+   - The agent **is permitted and expected** to maintain, update, and deploy the API production codebase.
+   - **CRITICAL RESTRICTION**: **Do not run any AI API tests.** All AI API test suites, benchmarks, and test clients have been removed from the repository. The agent must never execute automated requests, benchmarks, or test scripts against the AI API/OpenRouter proxy.
 
 3. **Native Android Production Codebase (`android/`)**:
    - The native mobile client implementation targeting Samsung Galaxy Flip (and standard Android) devices is **active production code**.
@@ -46,12 +47,16 @@ If the agent finishes Android work and has not yet run `:app:deployToDrive`, it 
 
 ## 2. Prerequisite: Context Awareness & Markdown Reading Protocol
 
-**The agent MUST read the core workspace markdown files (`AGENTS.md`, `planning/beliefs.md`, `planning/BRD.md`, `planning/technical.md`, `planning/UX.md`, and `planning/codebase_knowledge_graph.md`) at the start of a session, and whenever it needs a refresher during a long or context-heavy session.**
+**The agent MUST read the core workspace markdown files (`AGENTS.md`, `planning/beliefs.md`, `planning/BRD.md`, `planning/technical.md`, `planning/UX.md`, `planning/codebase_knowledge_graph.md`, and `android_journal_design_principles.md` once present) at the start of a session, and whenever it needs a refresher during a long or context-heavy session.**
 
 - **Session Start & Refreshers**: Read the core files upon commencing a session to establish full context, or during extended conversations when context has drifted, truncated, or when explicit verification is needed before major architectural updates.
 - **Avoid Redundant Re-reading**: Do **not** mechanically re-read all context files for every consecutive queued prompt or rapid iterative message when the active context already contains the current document states.
 - **Context Continuity**: Ensure decisions remain faithful to established domain rules, theological foundations, scope boundaries, technical architectures, and user journeys.
 - **Knowledge Graph as Living Map**: Treat `planning/codebase_knowledge_graph.md` as the authoritative cross-layer architecture map. Read it alongside the other core files to understand how `api/`, `android/`, and `planning/` connect, and update it whenever code structure, module relationships, or the architecture changes (see §6).
+- **Android Journal Design Principles Protocol (`android_journal_design_principles.md`)**:
+  - The document `android_journal_design_principles.md` (to be added to the repository) defines canonical design principles for the Android journal experience.
+  - **MANDATORY READING**: Whenever this file is present in the workspace (whether in the root directory or under `planning/`), the agent **MUST READ** it before making any Android journal or UI/UX architectural decisions or code changes.
+  - **ABSOLUTE EDIT BAN**: The agent **MUST NEVER EVER EDIT, MODIFY, OVERWRITE, TRUNCATE, OR DELETE `android_journal_design_principles.md` UNDER ANY CIRCUMSTANCES**. It is strictly a read-only, immutable canonical contract for agents. All edits to this document are reserved exclusively for the human user.
 
 ---
 
@@ -92,6 +97,9 @@ The project maintains five central, living specification documents inside [`plan
 4. **`planning/UX.md`** (User Experience Specification): Business- and product-owner-facing document defining emotional tone, visual identity, core user journeys, ergonomics, and liturgical reverence.
 5. **`planning/codebase_knowledge_graph.md`** (Architecture Map & Cross-Layer Knowledge Graph): Authoritative map of how `api/`, `android/`, and `planning/` connect, including module relationships, data flows, and structural contracts. Must be read for full system context and updated whenever code structure, module relationships, or architecture changes (see §6).
 
+Additionally, the project incorporates a canonical, read-only design principles specification:
+6. **`android_journal_design_principles.md`** (Canonical Android Journal Design Principles — Added Later): Authoritative design principles governing the Android journal experience. **STRICTLY READ-ONLY**: Agents must read and adhere to this document, but **must NEVER EVER edit or modify it**.
+
 ---
 
 ## 6. Mandatory Document Synchronization Rule
@@ -108,6 +116,12 @@ The project maintains five central, living specification documents inside [`plan
   - Update **`planning/codebase_knowledge_graph.md`** whenever code structure, module relationships, data flows, file/folder layout, or the architecture of `api/`, `android/`, or `planning/` changes in any way — including new files, renamed modules, deleted components, or revised cross-layer contracts.
 - **Active State Principle**: Keep the documents lean and current. Do not retain full audit logs, historical trial decisions, or overruled/redundant decisions. Directly reflect all current decisions in the text.
 
+### STRICT EXCEPTION: Immutable Canonical Documents (DO NOT EDIT)
+- **`android_journal_design_principles.md`**:
+  - While living specification documents (`beliefs.md`, `BRD.md`, `technical.md`, `UX.md`, `codebase_knowledge_graph.md`) are kept synchronized with project decisions, **`android_journal_design_principles.md` is strictly immutable to agents**.
+  - **NEVER EVER EDIT**: Under no circumstances should an agent ever edit, modify, overwrite, append to, or delete `android_journal_design_principles.md` (or any file matching `android_journal_design_principles*`).
+  - **READ-ONLY MANDATE**: Agents must read this document when present in the workspace to align all code and designs with its principles, but any modifications to it must come directly from the user.
+
 ---
 
 ## 7. Repository Directory Structure
@@ -122,6 +136,7 @@ Prayer/
 │   ├── technical.md                   # Technical decisions & architecture reference
 │   ├── UX.md                          # UX & product design specification
 │   ├── codebase_knowledge_graph.md    # Architecture map & cross-layer knowledge graph
+│   ├── android_journal_design_principles.md # Canonical journal design principles (Read-only for agents — NEVER edit; added later)
 │   ├── test_runner.html               # In-browser spec & layout contract validator
 │   └── tests/                         # Automated Playwright layout & gesture test suite
 │       ├── anti_neglect_queue.spec.js # Anti-neglect priority queue tests
@@ -136,19 +151,8 @@ Prayer/
 ├── api/                               # Production AI Agent API codebase
 │   ├── worker.js                      # Cloudflare Worker serverless proxy (multi-route)
 │   ├── wrangler.jsonc                 # Cloudflare Worker deployment configuration
-│   ├── package.json                   # Worker dependencies & scripts (test, dev, deploy)
-│   ├── system_prompt.txt              # Authoritative compiled system prompt
-│   ├── interactive_guide.ps1          # Interactive CLI test client for the API
-│   └── test/                          # 100-case stress-test suite & benchmark reports
-│       ├── prayer_requests_stress_test.json # 100 benchmark test scenarios
-│       ├── stress_test_responses.json       # Recorded model responses
-│       ├── run_stress_test.py               # Stress test execution runner
-│       ├── build_dataset.py                 # Dataset generator & validator
-│       ├── generate_report.py               # HTML benchmark report generator
-│       ├── generate_text_report.py          # Markdown summary report generator
-│       ├── BENCHMARK_RESULTS.md             # Detailed benchmark evaluation report
-│       ├── AI_GENERATED_TEXT_REPORT.md      # Textual analysis report
-│       └── README.md                        # Benchmark documentation
+│   ├── package.json                   # Worker dependencies & scripts (dev, deploy)
+│   └── system_prompt.txt              # Authoritative compiled system prompt
 └── android/                           # Production Native Android Client (Kotlin + Jetpack Compose)
     ├── app/                           # Android application module
     │   ├── build.gradle.kts           # Application build script & dependencies

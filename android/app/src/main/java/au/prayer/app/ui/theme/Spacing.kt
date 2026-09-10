@@ -21,7 +21,13 @@ data class PrayerSpacingTokens(
     val minTouchTarget: Dp = 48.dp,
     val primaryActionHeight: Dp = 56.dp,
     val topAppBarHeight: Dp = 56.dp,
-    val sanctuaryBottom: Dp = 72.dp
+    val sanctuaryBottom: Dp = 72.dp,
+    val cardMargin: Dp = 16.dp,
+    val elevationNone: Dp = 0.dp,
+    val elevationSubtle: Dp = 1.dp,
+    val elevationCard: Dp = 2.dp,
+    val elevationFloating: Dp = 4.dp,
+    val elevationModal: Dp = 8.dp
 )
 
 val LocalPrayerSpacing = staticCompositionLocalOf { PrayerSpacingTokens() }
@@ -42,4 +48,10 @@ object PrayerSpacing {
     val primaryActionHeight: Dp = 56.dp
     val topAppBarHeight: Dp = 56.dp
     val sanctuaryBottom: Dp = 72.dp
+    val cardMargin: Dp = 16.dp
+    val elevationNone: Dp = 0.dp
+    val elevationSubtle: Dp = 1.dp
+    val elevationCard: Dp = 2.dp
+    val elevationFloating: Dp = 4.dp
+    val elevationModal: Dp = 8.dp
 }

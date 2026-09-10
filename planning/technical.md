@@ -100,16 +100,15 @@ erDiagram
 - **Architectural Imperative**: The OpenRouter API key must **never touch the mobile codebase, git repository, build environment, or client binaries**. Zero instances of the master key shall exist on client devices.
 
 #### 1.3.2 Data Exposure & Plaintext Pipeline Boundaries
-Because writing on the lined notepad is 100% offline-first while ambient suggestions and auto-titling leverage cloud inference, the architectural boundary between offline vaulting and external network transit is strictly defined:
+Because writing on the lined notepad is 100% offline-first while past points prompts and auto-titling leverage cloud inference, the architectural boundary between offline vaulting and external network transit is strictly defined:
 
 | Feature / Flow | Network Requirement | Plaintext Exposure Boundary |
 | :--- | :--- | :--- |
-| **"Start praying"** (Passive contemplation queue) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; decrypted only in device RAM from SQLCipher vault. |
-| **Journal Management** (Browsing, editing, answered tracking across People, Groups, General, Mission Partners) | **100% Offline** (Zero network calls) | Physically unreadable outside the device; local SQLite only. |
-| **"Add prayer points"** (Direct Lined Notepad writing & saving) | **100% Offline** (Zero network calls) | Committed immediately to device RAM and encrypted local SQLite. |
-| **Ambient Suggestion Pane** (Background prayer point suggestions based on target context) | **Online (Background async)** (Transit via Cloudflare Proxy) | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. All user recorded data on target is passed in one go; zero chat, zero questioning. |
+| **"Start praying"** (Passive contemplation queue + Read-Only Prompts) | **Online (Background async)** (Transit via Cloudflare Proxy) | Contemplation is offline-first. When viewing past points for an entity, past points are sent in batch to `POST /api/v1/suggest` to surface read-only prompts (strictly unlabelled in UI). Decrypted in device RAM; zero chat, zero questioning. |
+| **Journal Management** (Collapsible menus across People, Groups, General, Mission Partners; browsing, editing, answered tracking) | **100% Offline** (Zero network calls for vault) / **Online (Background async)** for Entity Detail read-only prompts | When viewing an entity's past points in detail, past points are sent to `POST /api/v1/suggest` to surface read-only prompts (strictly unlabelled in UI). |
+| **"Add prayer points"** (Direct Lined Notepad writing & saving) | **100% Offline** (Zero network calls; strictly no AI assistance) | Committed immediately to device RAM and encrypted local SQLite. Zero AI suggestions pane. |
 | **Post-Commit Auto-Titling** (Branched AI Title Generator) | **Online (Async background)** | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. Theological validation exempt. |
-| **Offline Fallback** (Local manual entry & snippet titling) | **100% Offline** (Zero network calls) | When offline, notepad saves locally, suggestion pane collapses gracefully, and auto-titling falls back to initial text snippet. |
+| **Offline Fallback** (Local manual entry & snippet titling) | **100% Offline** (Zero network calls) | When offline, notepad saves locally, read-only prompts gracefully omit or show cached items, and auto-titling falls back to initial text snippet. |
 
 #### 1.3.3 Two-Tier Zero-Leakage Architecture
 The system isolates the API key behind an impenetrable serverless edge barrier, separating credential storage from client interaction:
@@ -194,7 +193,6 @@ graph TD
   - `GET /health` (and `GET /`): Edge proxy health check and route discovery.
   - `OPTIONS`: Universal CORS preflight.
 - **Worker Script Source**: Tracked directly in repository at [`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js).
-- **Interactive CLI Testing Client**: Tracked at [`api/interactive_guide.ps1`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/interactive_guide.ps1) for terminal-based suggestion and title testing.
 - **Gateway Authentication Header**: `X-Prayer-Gateway-Secret: prayer-app-secret-key-2026`
 - **Active Upstream Model**: `nvidia/nemotron-3.5-lightning`
 - **Reasoning Architecture & Two-Tier Pipeline**:
@@ -312,6 +310,7 @@ graph TD
       ```
     - Viewing/advancing past a topic silently increments `e.interacted_count = e.interacted_count + 1`, updates `e.last_interacted_at = CURRENT_TIMESTAMP`, and synchronizes `p.last_interacted_at` across its constituent points.
   - **Expandable Answered Prayer Section**: Answered prayer points for that entity are retrieved and sequestered in a collapsed hairline tile (`Answered (N)`). Tapping toggles expansion, revealing answered items with soft strikethrough for thanksgiving without intruding upon active intercession.
+  - **Read-Only Prompts on Past Points (Strictly Unlabelled in UI)**: When contemplating an entity/topic, all recorded past points (active and answered) are sent in batch to `POST /api/v1/suggest`. The API returns 3–5 concise, grounded prompts displayed in an austere, **strictly read-only** planar card/section beneath active points. The prompts are strictly unlabelled in the UI (never headed or badged as "Petitions" or "Prompts"). Responses are cached per entity ID so swiping between topics does not trigger redundant network calls.
   - **100% Read-Only & Uncluttered**: Zero buttons, checkmarks, editing controls, or settings sliders during prayer.
   - **Self-Paced & Open-Ended**: Each screen is a complete topic. Users advance through topics at their own pace and exit whenever they wish.
 - **Adding Engine ("Add Prayer Points")**:
@@ -319,28 +318,19 @@ graph TD
     - Because every prayer point in the database maintains a foreign key `entity_id` linking to `INDIVIDUAL_ENTITY`, adding begins with selecting an existing person/group or creating a new one.
     - If initiated from an entity view in the Journal, the target entity is pre-bound.
     - If initiated from the main menu, an edge-to-edge entity picker allows selecting an existing entity or tapping a contiguous *"New Person / Group"* tile to quickly input a name and select `People` or `Groups`.
-  - **Integrated Lined Notepad & Pushed-Down Secondary Articulation (Post-Entity Selection)**:
-    1. `Integrated Lined Notepad (Direct Entry Replacement, Auto-Bullets & Post-Commit Auto-Titling)`:
-       - **Zero Title Field & Direct Access**: The intermediary "Direct Entry" button is completely removed. Upon entity selection, the UI renders strictly an integrated lined notepad pre-bound to the person or group.
-       - **Authentic Notepad Ruled Lines & Mathematical Line-Locking**: Text sits strictly *inside* the ruled lines without baseline drift or glyph slicing across all font scales and display densities. Enforced via `TextLayoutResult` integration (`onTextLayout`), extracting exact pixel line boundaries (`layout.getLineTop(0)` and `layout.getLineBottom(i)`), zero font padding (`includeFontPadding = false`), centered line-height styling, dynamically computed line height (`(fontSize * 1.9f).sp`), full-height viewport rules (`BoxWithConstraints`), hairline stroke (`0.75dp`), and unified single-canvas scrolling (`drawBehind` and `BasicTextField` sharing the same `Modifier.verticalScroll` Box).
-       - **Expanded Vertical Canvas & Bottom Ambient Pane**: The notepad takes up the primary vertical viewport (`Modifier.weight(1f)`), seamlessly integrating with the collapsible ambient suggestion pane anchored at the bottom of the screen.
-       - **Auto Bullet-Point List Engine**: The text pad automatically formats entries as bulleted lists. Initializing with a bullet prefix (`• `), `Enter` (newline) inserts `\n• ` and advances the cursor. Backspacing over an empty bullet clears the bullet cleanly.
-       - **Immediate Local Commit**: Tapping **Save to [Name]** (or the header Save action) immediately executes `INSERT INTO PRAYER_POINT (entity_id, body, status, created_at)` into local SQLite. 100% offline-first.
-       - **Branched AI Title Generation (Post-Committal)**: After local committal, an asynchronous background task dispatches the prayer point body to the branched AI title generator (`POST /api/v1/title`). The model generates a concise 2–6 word title and updates the local record (`UPDATE PRAYER_POINT SET title = ? WHERE id = ?`).
-       - **Theological Validation Exemption**: This branch performs solely the simple task of generating a concise title from the user's committed text; theological validation is not required.
-       - **Offline Fallback**: In offline scenarios, the record uses an initial clean snippet (first 3–5 words) as a temporary label until network connectivity allows the background title generator to populate the permanent title.
-    2. `Ambient Suggestion Pane (Bottom Collapsible Pane, Batch Context & Scroll-Refresh)`:
-       - **Bottom Collapsible Pane**: Anchored at the bottom of the viewport as a small, non-intrusive pane that can be **tapped to hide or show** at any time.
-       - **Non-Conversational Operation**: The AI assistant will **not** ask questions and will **not** be able to chat to. It works silently in the background based strictly on existing content.
-       - **Batch Target Context**: Transmits all user recorded data on the target entity (all active and answered points, journal notes, context description, and current draft) in one go (not line by line) to `POST /api/v1/suggest`.
-       - **Scrollable Suggestions**: Shows **1 to 5 lines at a time** in a smooth scrollable list.
-       - **Line Brevity**: Each suggested line is strictly between **1 and 6 words long**.
-       - **Strict Non-Fabrication**: The lines produced by the AI shall **never make up content if existing data is limited**. The model is constrained to facts already present in the recorded data.
-       - **Scroll-Triggered Refresh**: Scrolling within the suggestion list detects list displacement and automatically dispatches a background refresh call to fetch fresh or additional suggested lines.
-       - **Single-Tap Adoption**: Tapping any suggested line immediately appends or inserts it as a bulleted prayer point into the active lined notepad draft.
+  - **Integrated Lined Notepad & Pure Unmediated Capture (Post-Entity Selection)**:
+    - **Zero Title Field & Direct Access**: The intermediary "Direct Entry" button is completely removed. Upon entity selection, the UI renders strictly an integrated lined notepad pre-bound to the person or group.
+    - **Authentic Notepad Ruled Lines & Mathematical Line-Locking**: Text sits strictly *inside* the ruled lines without baseline drift or glyph slicing across all font scales and display densities. Enforced via `TextLayoutResult` integration (`onTextLayout`), extracting exact pixel line boundaries (`layout.getLineTop(0)` and `layout.getLineBottom(i)`), zero font padding (`includeFontPadding = false`), centered line-height styling, dynamically computed line height (`(fontSize * 1.9f).sp`), full-height viewport rules (`BoxWithConstraints`), hairline stroke (`0.75dp`), and unified single-canvas scrolling (`drawBehind` and `BasicTextField` sharing the same `Modifier.verticalScroll` Box).
+    - **Strictly No AI Assistance in Adding Mode**: The lined notepad canvas occupies the primary vertical viewport. There is strictly no ambient suggestion pane, no AI buttons, and zero AI generation during entry.
+    - **Auto Bullet-Point List Engine**: The text pad automatically formats entries as bulleted lists. Initializing with a bullet prefix (`• `), `Enter` (newline) inserts `\n• ` and advances the cursor. Backspacing over an empty bullet clears the bullet cleanly.
+    - **Immediate Local Commit**: Tapping **Save to [Name]** (or the header Save action) immediately executes `INSERT INTO PRAYER_POINT (entity_id, body, status, created_at)` into local SQLite. 100% offline-first.
+    - **Branched AI Title Generation (Post-Committal)**: After local committal, an asynchronous background task dispatches the prayer point body to the branched AI title generator (`POST /api/v1/title`). The model generates a concise 2–6 word title and updates the local record (`UPDATE PRAYER_POINT SET title = ? WHERE id = ?`).
+    - **Theological Validation Exemption**: This branch performs solely the simple task of generating a concise title from the user's committed text; theological validation is not required.
+    - **Offline Fallback**: In offline scenarios, the record uses an initial clean snippet (first 3–5 words) as a temporary label until network connectivity allows the background title generator to populate the permanent title.
 - **Saved Prayer Point Editing & Permanent Deletion Engine**:
   - **Single-Click Activation**: In the Entity Detail view, tapping any saved prayer point once immediately opens the prayer point editor.
-  - **Editable Properties**:
+  - **Read-Only Past Points Prompts in Entity Detail (Strictly Unlabelled in UI)**: In `JournalView.ENTITY_DETAIL`, an entity's past recorded points are sent in batch to `POST /api/v1/suggest`. The returned prompts are displayed in a dedicated, **strictly read-only** card below the saved prayer points list (strictly unlabelled in the UI), with cached responses per entity.
+333:   - **Editable Properties**:
     - `title`: Fully editable text input, allowing believers to customize or refine auto-generated titles.
     - `body`: Fully editable textarea with the auto bullet-point list engine.
     - `status`: State toggle between `ACTIVE` and `ANSWERED` (with optional thanksgiving note).
@@ -382,9 +372,9 @@ graph TD
       3. `Delete` (triggers prayer point deletion confirmation)
     - **Sanctuary Prayer Mode Touch Layering**: Inside `SanctuaryPrayerScreen`, ambient accessibility tap zones (left 25% / right 75% advance overlay) are positioned behind the central prayer card `Column` in the Compose `Box` hierarchy. This prevents ambient overlays from intercepting touch gestures, allowing prayer points to directly capture clicks and long-presses for quick status toggling without breaking contemplative focus.
 - **Surface & Geometry Token Specifications**:
-  - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners.
-  - `surface_elevation`: Flat tiles (`elevation: 0`, `box-shadow: none`). Zero skeuomorphic depth, gradients, or drop shadows.
-  - `layout_pattern`: Contiguous planar tessellation (`grid_gap: 0px`, `margin: 0px`). Zero visible gaps or gutters between elements. All on-screen components, cards, and buttons are directly adjacent to each other, abutting and sharing 1px crisp hairline borders (`#333333` in Quiet Night, `#E0E0E0` in Morning Light) to form a seamless, interlocking rectilinear grid across the entire display.
+  - `border_radius`: `0px` universal across all components (buttons, prayer cards, text inputs, dialogs, sheets, and badges). Strictly zero curved edges or rounded corners (`FlatSquareShape = RoundedCornerShape(0.dp)`).
+  - `surface_elevation`: Structured planar elevation hierarchy (`elevationNone = 0.dp`, `elevationSubtle = 1.dp`, `elevationCard = 2.dp`, `elevationFloating = 4.dp`, `elevationModal = 8.dp`) providing tactile depth and visual separation while preserving orthogonal, sharp-cornered geometry.
+  - `layout_pattern`: Orthogonal planar layout with subtle structural borders (`borderSubtle = 0.5.dp`, `borderStrong = 1.dp`) and defined card margins (`cardMargin = 16.dp`).
   - `edge_style`: Pure orthogonal rectangles (100% rectilinear geometry).
 - **Material Design 3 (M3) Compliance & Spacing Rhythm**:
   - **Material 3 Foundation with 0dp Geometry**: The native Android application is built on Jetpack Compose Material 3 (`androidx.compose.material3:material3`). To reconcile Material 3 compliance with liturgical solemnity, all M3 shape tokens (`extraSmall`, `small`, `medium`, `large`, `extraLarge`) are explicitly configured with `FlatSquareShape = RoundedCornerShape(0.dp)`.
@@ -396,7 +386,7 @@ graph TD
     - Card surfaces: M3 `OutlinedCard` with 0dp corners, 0.5dp hairline borders, and 24dp internal padding.
     - Status & option selectors: Single-choice button groups with animated color state transitions (`animateColorAsState`).
   - **Formal 8dp Spacing Grid Tokens (`PrayerSpacing`)**:
-    - Centralized in `au.prayer.app.ui.theme.PrayerSpacing`: `extraSmall = 4.dp`, `small = 8.dp`, `medium = 16.dp`, `large = 24.dp`, `extraLarge = 32.dp`, `huge = 48.dp`, `minTouchTarget = 48.dp`, `primaryActionHeight = 56.dp`, `topAppBarHeight = 56.dp`, `sanctuaryBottom = 72.dp`.
+    - Centralized in `au.prayer.app.ui.theme.PrayerSpacing`: `extraSmall = 4.dp`, `small = 8.dp`, `medium = 16.dp`, `large = 24.dp`, `extraLarge = 32.dp`, `huge = 48.dp`, `minTouchTarget = 48.dp`, `primaryActionHeight = 56.dp`, `topAppBarHeight = 56.dp`, `sanctuaryBottom = 72.dp`, `cardMargin = 16.dp`, and elevation tokens (`elevationNone = 0.dp`, `elevationSubtle = 1.dp`, `elevationCard = 2.dp`, `elevationFloating = 4.dp`, `elevationModal = 8.dp`).
   - **Edge-to-Edge & Foldable Display Insets**: Full edge-to-edge rendering via `enableEdgeToEdge()` and Compose `Modifier.safeDrawingPadding()`, guaranteeing content avoids camera cutouts, status bars, and navigation pills, specifically calibrated for Samsung Galaxy Flip aspect ratios (21.9:9 / 22:9).
 - **Devotional Motion & Animation Mechanics**:
   - **Staggered Launch Sequence**: Home screen action slabs glide into view with subtle staggered fade-and-settle animations (0ms, 60ms, 120ms delays, `FastOutSlowInEasing`).
@@ -473,28 +463,14 @@ To guarantee fluid, native smartphone responsiveness without relying on heavy th
 
 ---
 
-### 1.7 Engine Stress-Testing & Theological Benchmark Suite
+### 1.7 AI API Testing Prohibition & Offline Validation Architecture
 
-To ensure continuous compliance with theological guardrails, root categorization rules, and mobile card brevity constraints, the repository maintains a 100-request benchmark suite located under [`api/test/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test):
-- **Primary Dataset**: [`api/test/prayer_requests_stress_test.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/prayer_requests_stress_test.json) containing exactly 100 diverse, multi-perspective prayer requests.
-- **Documentation & Execution**: [`api/test/README.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/README.md) cataloging evaluation criteria, schema structure, single-item runner, and full battery execution via [`api/test/run_stress_test.py`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/run_stress_test.py).
-- **Live Response Vault**: [`api/test/stress_test_responses.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/stress_test_responses.json) storing complete wire response payloads, timing, and analytical metrics across all 100 test items.
-- **Evaluation & Benchmark Reports**:
-  - [`api/test/BENCHMARK_RESULTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/BENCHMARK_RESULTS.md): Comprehensive 100-item system-level evaluation scorecard and full catalog.
-  - [`api/test/AI_GENERATED_TEXT_REPORT.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/test/AI_GENERATED_TEXT_REPORT.md): Dedicated qualitative and linguistic quality report focusing on AI-generated text, telegraphic syntax, theological reframing, and clarifying question analysis.
-  - *Transport & Availability*: 100/100 (100.0%) HTTP 200 OK.
-  - *JSON Schema Integrity*: 100/100 (100.0%) valid JSON matching distillation output schema.
-  - *Cardinality Invariant*: 100.0% compliance (strictly 0 or 2 candidates per turn; zero cases of 1 or 3).
-  - *Title Brevity Ceiling*: 99.4% (175/176 cards) adhering to 2–4 words and 100.0% adhering to the approved 2–6 word ceiling (mean: 2.88 words).
-  - *Description Brevity Ceiling*: 100.0% (176/176 cards) adhering to telegraphic shorthand $\le$ 20–25 words (mean: 17.25 words, range: 11–23 words).
-  - *Theological Guardrail Redirection*: 100% compliance across all negative boundaries (refusal of Word-Faith decrees, elimination of saint/angel/ancestor invocations, and stripping of works-righteousness bargaining).
-  - *Objective Prayer Points Invariant*: 100% compliance with zero scripted prayers or second-person invocations addressed directly to God.
-- **Coverage Dimensions**:
-  1. *Theological Guardrails & Negative Boundaries*: Invariant testing of *Solus Christus* (rejecting saint/angel/ancestor intercession), *Sola Gratia* (eliminating works-righteousness bargaining and karma), God's absolute sovereignty (rejecting Word-Faith decrees and manifestation), and Heidelberg Catechism Q1 comfort.
-  2. *Ontological Root Categorization*: Calibrated distribution across `PEOPLE` (58%), `GENERAL` (22%), and `GROUPS` (20%).
-  3. *Wordiness Tiers*: Input lengths spanning Ultra-Short (5–9 words), Short (10–25 words), Medium (26–70 words), Long (71–150 words), and Extreme Wall of Text (151–253 words).
-  4. *Dialect & Tone*: Comprehensive coverage across Australian/UK English, US English, and Global South cultural contexts.
-  5. *Mobile Brevity Compliance*: Programmatic verification that output titles strictly respect 2–6 words (targeting 2–4) and descriptions adhere to telegraphic shorthand capped at 20–25 words.
+To conserve API token usage, eliminate external latency, and maintain strict control over external model requests, all live AI API test suites, benchmarks, stress runners, and test datasets have been completely excised from the repository.
+
+- **Prohibition Directive**: The agent and developer must never execute automated requests, load tests, or benchmark scripts against the AI API/OpenRouter edge proxy.
+- **Offline Validation**: Doctrinal integrity, confessional boundaries, and schema compliance are verified purely through offline mechanisms:
+  1. *Prompt Engineering & Architectural Guardrails*: Authoritative, compiled rules embedded in [`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt) and two-tier pipeline sanitization in [`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js).
+  2. *Android Offline Unit Tests*: Comprehensive JVM unit tests in [`TheologicalGuardrailsTest.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/test/java/au/prayer/app/TheologicalGuardrailsTest.kt) and [`PrayerApiClientTest.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/test/java/au/prayer/app/PrayerApiClientTest.kt) testing serialisation, parsing, and boundary strings offline without network invocation.
 
 ---
 

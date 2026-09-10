@@ -20,20 +20,33 @@ class LayoutGeometryTest {
 
     @Test
     fun `test morning light color tokens`() {
-        assertEquals(Color(0xFFFFFFFF), MorningLightColors.background)
+        assertEquals(Color(0xFFF7F7F6), MorningLightColors.background)
         assertEquals(Color(0xFFFFFFFF), MorningLightColors.surface)
         assertEquals(Color(0xFF111111), MorningLightColors.textPrimary)
         assertEquals(Color(0xFF666666), MorningLightColors.textSubtle)
         assertEquals(Color(0xFFE0E0E0), MorningLightColors.border)
+        assertEquals(Color(0xFFECECE9), MorningLightColors.borderSubtle)
+        assertEquals(Color(0xFFD0D0CE), MorningLightColors.borderStrong)
     }
 
     @Test
     fun `test quiet night color tokens`() {
-        assertEquals(Color(0xFF000000), QuietNightColors.background)
-        assertEquals(Color(0xFF000000), QuietNightColors.surface)
+        assertEquals(Color(0xFF0A0A0A), QuietNightColors.background)
+        assertEquals(Color(0xFF141414), QuietNightColors.surface)
         assertEquals(Color(0xFFFFFFFF), QuietNightColors.textPrimary)
         assertEquals(Color(0xFF888888), QuietNightColors.textSubtle)
         assertEquals(Color(0xFF333333), QuietNightColors.border)
+        assertEquals(Color(0xFF222222), QuietNightColors.borderSubtle)
+        assertEquals(Color(0xFF3E3E3E), QuietNightColors.borderStrong)
+    }
+
+    @Test
+    fun `test z-axis elevation tokens`() {
+        assertEquals(0.dp, PrayerSpacing.elevationNone)
+        assertEquals(1.dp, PrayerSpacing.elevationSubtle)
+        assertEquals(2.dp, PrayerSpacing.elevationCard)
+        assertEquals(4.dp, PrayerSpacing.elevationFloating)
+        assertEquals(8.dp, PrayerSpacing.elevationModal)
     }
 
     @Test
@@ -116,8 +129,8 @@ class LayoutGeometryTest {
 
         // Verify Quiet Night M3 roles
         assertEquals(Color(0xFFFFFFFF), QuietNightColorScheme.primary)
-        assertEquals(Color(0xFF000000), QuietNightColorScheme.onPrimary)
-        assertEquals(Color(0xFF000000), QuietNightColorScheme.surface)
+        assertEquals(Color(0xFF0A0A0A), QuietNightColorScheme.onPrimary)
+        assertEquals(Color(0xFF141414), QuietNightColorScheme.surface)
         assertEquals(Color(0xFFFFFFFF), QuietNightColorScheme.onSurface)
     }
 

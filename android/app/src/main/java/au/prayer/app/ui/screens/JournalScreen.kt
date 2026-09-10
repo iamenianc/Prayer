@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,7 +27,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.*
+import au.prayer.app.network.PrayerApiClient
+import au.prayer.app.network.RecordedPoint
+import au.prayer.app.network.SuggestRequest
 import au.prayer.app.ui.gestures.edgeSwipeRight
 import au.prayer.app.ui.navigation.LifoBackStack
 import androidx.compose.ui.text.input.TextFieldValue
@@ -36,8 +42,7 @@ import au.prayer.app.ui.theme.PrayerSpacing
 import au.prayer.app.ui.theme.PrayerTypography
 
 private enum class JournalView {
-    ROOT_SELECTION,
-    ENTITY_LIST,
+    OVERVIEW,
     ENTITY_DETAIL,
     EDIT_PRAYER_POINT,
     SETTINGS
@@ -46,6 +51,8 @@ private enum class JournalView {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun JournalScreen(
+    initialEntity: IndividualEntity? = null,
+    navigationKey: Int = 0,
     entities: List<IndividualEntity>,
     colors: PrayerColors,
     typography: PrayerTypography,
@@ -58,14 +65,40 @@ fun JournalScreen(
     onUpdateEntity: (id: String, displayName: String, rootCode: RootCode) -> Unit = { _, _, _ -> },
     onAddForEntity: (IndividualEntity) -> Unit = {},
     onLogForEntity: (IndividualEntity) -> Unit = onAddForEntity,
+    apiClient: PrayerApiClient? = null,
+    repository: PrayerRepository? = null,
     onBackToHome: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val journalBackStack = remember { LifoBackStack(JournalView.ROOT_SELECTION) }
+    val journalBackStack = remember {
+        if (initialEntity != null) {
+            LifoBackStack(JournalView.OVERVIEW).apply { push(JournalView.ENTITY_DETAIL) }
+        } else {
+            LifoBackStack(JournalView.OVERVIEW)
+        }
+    }
     val currentView = journalBackStack.current
-    var selectedRoot by remember { mutableStateOf(RootCode.PEOPLE) }
-    var selectedEntity by remember { mutableStateOf<IndividualEntity?>(null) }
+    val expandedRoots = remember {
+        mutableStateMapOf<RootCode, Boolean>(
+            RootCode.PEOPLE to true,
+            RootCode.GROUPS to true,
+            RootCode.GENERAL to true,
+            RootCode.MISSION_PARTNERS to true
+        )
+    }
+    var selectedEntity by remember { mutableStateOf<IndividualEntity?>(initialEntity) }
+
+    LaunchedEffect(navigationKey) {
+        if (initialEntity != null) {
+            selectedEntity = initialEntity
+            if (journalBackStack.current != JournalView.ENTITY_DETAIL) {
+                journalBackStack.push(JournalView.ENTITY_DETAIL)
+            }
+        }
+    }
     var editingPoint by remember { mutableStateOf<PrayerPoint?>(null) }
+    val journalPromptsCache = remember { mutableStateMapOf<String, List<String>>() }
+    val journalPromptsLoading = remember { mutableStateMapOf<String, Boolean>() }
 
     // Long-press context action states for entities (people/groups)
     var entityForContextActions by remember { mutableStateOf<IndividualEntity?>(null) }
@@ -107,8 +140,7 @@ fun JournalScreen(
                 title = {
                     Text(
                         text = when (currentView) {
-                            JournalView.ROOT_SELECTION -> "Journal"
-                            JournalView.ENTITY_LIST -> selectedRoot.displayTitle
+                            JournalView.OVERVIEW -> "Journal"
                             JournalView.ENTITY_DETAIL -> selectedEntity?.displayName ?: "Prayer points"
                             JournalView.EDIT_PRAYER_POINT -> "Edit Prayer Point"
                             JournalView.SETTINGS -> "Settings"
@@ -118,7 +150,7 @@ fun JournalScreen(
                     )
                 },
                 navigationIcon = {
-                    if (currentView != JournalView.ROOT_SELECTION) {
+                    if (currentView != JournalView.OVERVIEW) {
                         IconButton(onClick = { handleJournalBack() }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -129,7 +161,7 @@ fun JournalScreen(
                     }
                 },
                 actions = {
-                    if (currentView == JournalView.ROOT_SELECTION) {
+                    if (currentView == JournalView.OVERVIEW) {
                         IconButton(onClick = { journalBackStack.push(JournalView.SETTINGS) }) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
@@ -177,8 +209,8 @@ fun JournalScreen(
                 targetState = currentView,
                 transitionSpec = {
                     val isGoingDeeper = when {
-                        initialState == JournalView.ROOT_SELECTION -> true
-                        initialState == JournalView.ENTITY_LIST && targetState == JournalView.ENTITY_DETAIL -> true
+                        initialState == JournalView.OVERVIEW && targetState == JournalView.ENTITY_DETAIL -> true
+                        initialState == JournalView.OVERVIEW && targetState == JournalView.SETTINGS -> true
                         initialState == JournalView.ENTITY_DETAIL && targetState == JournalView.EDIT_PRAYER_POINT -> true
                         else -> false
                     }
@@ -203,155 +235,110 @@ fun JournalScreen(
                     .fillMaxSize()
             ) { view ->
                 when (view) {
-                    JournalView.ROOT_SELECTION -> {
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            // People Slab
-                            Surface(
-                                onClick = {
-                                    selectedRoot = RootCode.PEOPLE
-                                    journalBackStack.push(JournalView.ENTITY_LIST)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                shape = FlatSquareShape,
-                                color = colors.surface,
-                                contentColor = colors.textPrimary,
-                                tonalElevation = 0.dp
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("People", style = typography.homeAction, color = colors.textPrimary)
-                                }
-                            }
-
-                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-                            // Groups Slab
-                            Surface(
-                                onClick = {
-                                    selectedRoot = RootCode.GROUPS
-                                    journalBackStack.push(JournalView.ENTITY_LIST)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                shape = FlatSquareShape,
-                                color = colors.surface,
-                                contentColor = colors.textPrimary,
-                                tonalElevation = 0.dp
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("Groups", style = typography.homeAction, color = colors.textPrimary)
-                                }
-                            }
-
-                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-                            // General Slab
-                            Surface(
-                                onClick = {
-                                    selectedRoot = RootCode.GENERAL
-                                    journalBackStack.push(JournalView.ENTITY_LIST)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                shape = FlatSquareShape,
-                                color = colors.surface,
-                                contentColor = colors.textPrimary,
-                                tonalElevation = 0.dp
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("General", style = typography.homeAction, color = colors.textPrimary)
-                                }
-                            }
-
-                            HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-                            // Mission Partners Slab
-                            Surface(
-                                onClick = {
-                                    selectedRoot = RootCode.MISSION_PARTNERS
-                                    journalBackStack.push(JournalView.ENTITY_LIST)
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                shape = FlatSquareShape,
-                                color = colors.surface,
-                                contentColor = colors.textPrimary,
-                                tonalElevation = 0.dp
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text("Mission Partners", style = typography.homeAction, color = colors.textPrimary)
-                                }
-                            }
-                        }
-                    }
-
-                    JournalView.ENTITY_LIST -> {
-                        val filteredEntities = entities.filter { it.rootCode == selectedRoot }
+                    JournalView.OVERVIEW -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            if (filteredEntities.isEmpty()) {
-                                item {
-                                    Box(
+                            RootCode.values().forEach { root ->
+                                item(key = "header_${root.name}") {
+                                    val isExpanded = expandedRoots[root] ?: true
+                                    Surface(
+                                        onClick = {
+                                            expandedRoots[root] = !isExpanded
+                                        },
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(PrayerSpacing.extraLarge),
-                                        contentAlignment = Alignment.Center
+                                            .heightIn(min = PrayerSpacing.primaryActionHeight),
+                                        shape = FlatSquareShape,
+                                        color = colors.surfaceSubtle,
+                                        contentColor = colors.textPrimary,
+                                        tonalElevation = PrayerSpacing.elevationSubtle,
+                                        border = BorderStroke(0.5.dp, colors.borderSubtle)
                                     ) {
-                                        Text("No records yet", style = typography.caption, color = colors.textSubtle)
-                                    }
-                                }
-                            }
-                            items(filteredEntities, key = { it.id }) { entity ->
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .animateItem()
-                                        .combinedClickable(
-                                            onClick = {
-                                                selectedEntity = entity
-                                                journalBackStack.push(JournalView.ENTITY_DETAIL)
-                                            },
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                entityForContextActions = entity
-                                            }
-                                        ),
-                                    shape = FlatSquareShape,
-                                    color = colors.surface,
-                                    contentColor = colors.textPrimary,
-                                    tonalElevation = 0.dp
-                                ) {
-                                    Column {
-                                        Box(
+                                        Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(
                                                     horizontal = PrayerSpacing.large,
                                                     vertical = PrayerSpacing.medium
-                                                )
+                                                ),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = entity.displayName,
+                                                text = root.displayTitle,
                                                 style = typography.prayerPointTitle,
                                                 color = colors.textPrimary
                                             )
+                                            Icon(
+                                                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                contentDescription = if (isExpanded) "Collapse ${root.displayTitle}" else "Expand ${root.displayTitle}",
+                                                tint = colors.textSubtle
+                                            )
                                         }
-                                        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                                    }
+                                    HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                }
+
+                                val isExpanded = expandedRoots[root] ?: true
+                                if (isExpanded) {
+                                    val groupEntities = entities.filter { it.rootCode == root }
+                                    if (groupEntities.isEmpty()) {
+                                        item(key = "empty_${root.name}") {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(
+                                                        horizontal = PrayerSpacing.large + PrayerSpacing.small,
+                                                        vertical = PrayerSpacing.medium
+                                                    )
+                                            ) {
+                                                Text(
+                                                    text = "No records yet",
+                                                    style = typography.caption,
+                                                    color = colors.textSubtle
+                                                )
+                                            }
+                                            HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                        }
+                                    } else {
+                                        items(groupEntities, key = { it.id }) { entity ->
+                                            Surface(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .animateItem()
+                                                    .combinedClickable(
+                                                        onClick = {
+                                                            selectedEntity = entity
+                                                            journalBackStack.push(JournalView.ENTITY_DETAIL)
+                                                        },
+                                                        onLongClick = {
+                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                            entityForContextActions = entity
+                                                        }
+                                                    ),
+                                                shape = FlatSquareShape,
+                                                color = colors.surface,
+                                                contentColor = colors.textPrimary,
+                                                tonalElevation = PrayerSpacing.elevationNone
+                                            ) {
+                                                Column {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(
+                                                                horizontal = PrayerSpacing.large + PrayerSpacing.small,
+                                                                vertical = PrayerSpacing.medium
+                                                            )
+                                                    ) {
+                                                        Text(
+                                                            text = entity.displayName,
+                                                            style = typography.prayerPointBody,
+                                                            color = colors.textPrimary
+                                                        )
+                                                    }
+                                                    HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -361,6 +348,38 @@ fun JournalScreen(
                     JournalView.ENTITY_DETAIL -> {
                         selectedEntity?.let { entity ->
                             val points = getPointsForEntity(entity.id)
+
+                            LaunchedEffect(entity.id) {
+                                if (apiClient != null && points.isNotEmpty() && !journalPromptsCache.containsKey(entity.id) && !entity.isPreloadedHistoric) {
+                                    journalPromptsLoading[entity.id] = true
+                                    val contextData = repository?.getTargetContext(entity.id)
+                                    val recorded = (contextData?.activePoints.orEmpty() + contextData?.answeredPoints.orEmpty()).ifEmpty {
+                                        points
+                                    }.map {
+                                        RecordedPoint(title = it.title, body = it.description, status = it.status.name)
+                                    }
+                                    val request = SuggestRequest(
+                                        targetName = entity.displayName,
+                                        root = entity.rootCode.name,
+                                        group = null,
+                                        contextDescription = entity.contextDescription?.takeIf { it.isNotBlank() },
+                                        recordedPoints = recorded,
+                                        journalUpdates = emptyList(),
+                                        currentDraft = null,
+                                        localeDialect = "EN_AU_UK"
+                                    )
+                                    val result = apiClient.getSuggestions(request)
+                                    journalPromptsLoading[entity.id] = false
+                                    result.onSuccess { resp ->
+                                        if (resp.suggestions.isNotEmpty()) {
+                                            journalPromptsCache[entity.id] = resp.suggestions
+                                        }
+                                    }.onFailure {
+                                        journalPromptsLoading[entity.id] = false
+                                    }
+                                }
+                            }
+
                             Column(modifier = Modifier.fillMaxSize()) {
                                 // Quick Action: Add prayer point for this person/group
                                 OutlinedButton(
@@ -379,6 +398,55 @@ fun JournalScreen(
                                 }
 
                                 HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+
+                                // Read-Only AI Prompts on past points (Strictly unlabelled in UI)
+                                val cachedPrompts = journalPromptsCache[entity.id].orEmpty()
+                                val isLoadingPrompts = journalPromptsLoading[entity.id] == true
+
+                                if (cachedPrompts.isNotEmpty() || isLoadingPrompts) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                horizontal = PrayerSpacing.large,
+                                                vertical = PrayerSpacing.medium
+                                            ),
+                                        shape = FlatSquareShape,
+                                        color = colors.surfaceSubtle,
+                                        tonalElevation = PrayerSpacing.elevationSubtle,
+                                        border = BorderStroke(0.5.dp, colors.borderSubtle)
+                                    ) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(PrayerSpacing.medium)
+                                        ) {
+                                            if (isLoadingPrompts && cachedPrompts.isEmpty()) {
+                                                Box(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(14.dp),
+                                                        strokeWidth = 1.5.dp,
+                                                        color = colors.textSubtle
+                                                    )
+                                                }
+                                            }
+                                            if (cachedPrompts.isNotEmpty()) {
+                                                cachedPrompts.forEach { prompt ->
+                                                    Text(
+                                                        text = "• $prompt",
+                                                        style = typography.prayerPointBody,
+                                                        color = colors.textPrimary,
+                                                        modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                    HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                }
 
                                 LazyColumn(modifier = Modifier.weight(1f)) {
                                     items(points, key = { it.id }) { point ->
@@ -405,7 +473,8 @@ fun JournalScreen(
                                             shape = FlatSquareShape,
                                             color = colors.surface,
                                             contentColor = colors.textPrimary,
-                                            tonalElevation = 0.dp
+                                            tonalElevation = PrayerSpacing.elevationSubtle,
+                                            shadowElevation = PrayerSpacing.elevationSubtle
                                         ) {
                                             Column {
                                                 Column(
@@ -445,7 +514,7 @@ fun JournalScreen(
                                                         )
                                                     }
                                                 }
-                                                HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                                                HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
                                             }
                                         }
                                     }

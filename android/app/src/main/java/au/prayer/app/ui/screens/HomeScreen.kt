@@ -3,6 +3,7 @@ package au.prayer.app.ui.screens
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.HorizontalDivider
@@ -73,12 +74,13 @@ fun HomeScreen(
         label = "Slab3TranslationY"
     )
 
-    // Blank edge-to-edge canvas with strictly three contiguous slabs
+    // Blank edge-to-edge canvas with three elevated tactile action slabs
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(colors.background)
             .safeDrawingPadding()
+            .padding(vertical = PrayerSpacing.small)
             .prayerSwipeGestures(
                 onSwipeLeft = onOpenJournal
             )
@@ -89,6 +91,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.extraSmall)
                 .graphicsLayer {
                     alpha = slab1Alpha
                     translationY = slab1TranslationY
@@ -96,7 +99,9 @@ fun HomeScreen(
             shape = FlatSquareShape,
             color = colors.surface,
             contentColor = colors.textPrimary,
-            tonalElevation = 0.dp
+            tonalElevation = PrayerSpacing.elevationCard,
+            shadowElevation = PrayerSpacing.elevationCard,
+            border = BorderStroke(0.5.dp, colors.border)
         ) {
             Box(
                 modifier = Modifier
@@ -112,14 +117,13 @@ fun HomeScreen(
             }
         }
 
-        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
         // Slab 2: Open Journal
         Surface(
             onClick = onOpenJournal,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.extraSmall)
                 .graphicsLayer {
                     alpha = slab2Alpha
                     translationY = slab2TranslationY
@@ -127,7 +131,9 @@ fun HomeScreen(
             shape = FlatSquareShape,
             color = colors.surface,
             contentColor = colors.textPrimary,
-            tonalElevation = 0.dp
+            tonalElevation = PrayerSpacing.elevationCard,
+            shadowElevation = PrayerSpacing.elevationCard,
+            border = BorderStroke(0.5.dp, colors.border)
         ) {
             Box(
                 modifier = Modifier
@@ -143,14 +149,13 @@ fun HomeScreen(
             }
         }
 
-        HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
         // Slab 3: Add prayer points
         Surface(
             onClick = onAddPrayerPoints,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
+                .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.extraSmall)
                 .graphicsLayer {
                     alpha = slab3Alpha
                     translationY = slab3TranslationY
@@ -158,7 +163,9 @@ fun HomeScreen(
             shape = FlatSquareShape,
             color = colors.surface,
             contentColor = colors.textPrimary,
-            tonalElevation = 0.dp
+            tonalElevation = PrayerSpacing.elevationCard,
+            shadowElevation = PrayerSpacing.elevationCard,
+            border = BorderStroke(0.5.dp, colors.border)
         ) {
             Box(
                 modifier = Modifier
