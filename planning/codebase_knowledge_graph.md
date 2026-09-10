@@ -122,7 +122,7 @@ erDiagram
 
     APP_CONFIG {
         string localeDialect "EN_AU_UK (default) | EN_US"
-        string themeMode "MORNING_LIGHT (default) | QUIET_NIGHT"
+        string themeMode "WARM_VINTAGE_WHITE (single unified theme)"
         string textScale "LARGE (default) | REGULAR | COMPACT"
         boolean blendHistoricPrayers "Interleave historic collects into rotation"
     }
@@ -186,7 +186,7 @@ graph LR
 - **[`beliefs.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/beliefs.md)**: Establishes confessional commitments, 1662 BCP liturgical roots, the Heidelberg Q1 comfort model, and explicit prohibitions against prosperity gospel, saintly intercession, and AI prayer generation.
 - **[`BRD.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/BRD.md)**: Product scope, target audience (<100 users, personal distribution), 3-choice home canvas, passive prayer mode, lined notepad entry with pushed-down assistant, and $5/month operational budget ceiling.
 - **[`technical.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/technical.md)**: SQLCipher database schema, zero-leakage API key security, Cloudflare Worker proxy specs, OkHttp client configurations, and anti-neglect queue balancing logic.
-- **[`UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md)**: Material 3 0dp planar geometry, 8dp spacing tokens (`PrayerSpacing`), buttonless smartphone swipe navigation, LIFO back stack transitions, Morning Light vs Quiet Night visual modes, and sacred terminology lexicon.
+- **[`UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md)**: Material 3 0dp planar geometry, 8dp spacing tokens (`PrayerSpacing`), buttonless smartphone swipe navigation, LIFO back stack transitions, single warm vintage whites visual identity, and sacred terminology lexicon.
 
 ### 3.2 Automated Specification Verification (`planning/tests/`)
 Driven by Playwright, validating the specification contracts directly against [`test_runner.html`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/test_runner.html):
@@ -337,7 +337,7 @@ graph TD
 - **[`screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)**: Directory view of all people, groups, general topics, and mission partners. Opens directly to collapsible accordion menus for `People`, `Groups`, `General`, and `Mission Partners` directly surfacing active lists for immediate selection; selecting an entity opens their Entity Detail screen with prayer points, one-click editing, and asynchronous read-only AI prompts (strictly unlabelled in the UI). Also hosts sequestered application settings.
 - **[`gestures/TouchGestureModifier.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/gestures/TouchGestureModifier.kt)**: High-precision pointer gesture detector. Distinguishes horizontal swipes ($\Delta X \ge 50\text{dp}$), vertical dismiss swipes ($\Delta Y \ge 50\text{dp}$), and left edge-swipe right navigation ($X_{start} \le 25\text{dp}$).
 - **[`navigation/LifoBackStack.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/navigation/LifoBackStack.kt)**: LIFO navigation stack ensuring predictable, sequential back navigation across screen states.
-- **[`theme/Theme.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt)**: Material 3 theme configuration enforcing `FlatSquareShape` (`RoundedCornerShape(0.dp)`) across all M3 components. Defines high-contrast monochrome palettes with tonal container levels (`surface`, `surfaceSubtle`, `surfaceElevated`, `borderSubtle`, `borderStrong`).
+- **[`theme/Theme.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt)**: Material 3 theme configuration enforcing `FlatSquareShape` (`RoundedCornerShape(0.dp)`) across all M3 components. Defines single unified warm vintage white palette with tonal container levels (`surface`, `surfaceSubtle`, `surfaceElevated`, `borderSubtle`, `borderStrong`).
 - **[`theme/Spacing.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Spacing.kt)**: Design tokens adhering to an 8dp spacing rhythm (`PrayerSpacing`), including elevation hierarchy (`elevationNone`, `elevationSubtle`, `elevationCard`, `elevationFloating`, `elevationModal`) and `cardMargin`.
 - **[`theme/Typography.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Typography.kt)**: Dynamic typography scaling supporting `LARGE`, `REGULAR`, and `COMPACT` modes with high-legibility sans-serif styles.
 

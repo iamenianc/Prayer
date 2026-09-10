@@ -67,7 +67,7 @@
 67:      - When adding is triggered from within an existing entity detail screen in the Journal, the target entity is already locked and this initial step is seamlessly satisfied.
 68:    - **Integrated Lined Notepad (Direct Entry Replacement, Auto-Bullets & Post-Commit Auto-Titling)**:
 69:      - Selecting a person or group immediately opens a dedicated **lined notepad** for writing prayer points directly, completely removing the intermediary "Direct Entry" button.
-70:      - **Authentic Notepad Ruled Lines**: The notepad renders subtle, light horizontal lines across the entire writing area and a vertical left margin guide line mirroring an authentic physical notebook or legal pad, adapting seamlessly across Morning Light and Quiet Night modes.
+70:      - **Authentic Notepad Ruled Lines**: The notepad renders subtle, light horizontal lines across the entire writing area and a vertical left margin guide line mirroring an authentic physical notebook or legal pad, rendered upon the warm vintage white parchment canvas.
 71:      - The user **shall not be able to see or add a title** when adding new points. The view provides strictly an unadorned ruled text canvas pre-bound to the selected person or group.
 72:      - **Auto Bullet-Point Writing Pad**: The writing pad automatically formats input as a bulleted list, auto-prefixing with a bullet (`• `) and triggering a new bullet on line space (Enter / Return).
 73:      - **Strictly No AI Assistance in Adding Mode**: The "Add prayer points" screen contains **zero AI assistance, zero suggestions pane, and zero AI interaction**. Believers write directly and unmediated from the heart onto the lined notepad canvas.
@@ -105,7 +105,7 @@
 
 8. **Sequestered Settings & Hidden Preferences**:
    - The active interface is strictly free from settings, display switches, or configuration controls.
-   - All user preferences (Quiet Night vs. Morning Light, dialect selection, and historic prayer blending) are sequestered in a dedicated Settings panel reached exclusively via intentional navigation from the Journal.
+   - All user preferences (text scaling, dialect selection, and historic prayer blending) are sequestered in a dedicated Settings panel reached exclusively via intentional navigation from the Journal.
 
 9. **Lexicon & Devotional Terminology Standard**:
    - The application strictly translates raw functional, database, and engineering language into reverent, personal, and liturgically grounded app vocabulary.
