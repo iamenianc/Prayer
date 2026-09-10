@@ -19,25 +19,17 @@ class LayoutGeometryTest {
     }
 
     @Test
-    fun `test morning light color tokens`() {
-        assertEquals(Color(0xFFF7F7F6), MorningLightColors.background)
-        assertEquals(Color(0xFFFFFFFF), MorningLightColors.surface)
-        assertEquals(Color(0xFF111111), MorningLightColors.textPrimary)
-        assertEquals(Color(0xFF666666), MorningLightColors.textSubtle)
-        assertEquals(Color(0xFFE0E0E0), MorningLightColors.border)
-        assertEquals(Color(0xFFECECE9), MorningLightColors.borderSubtle)
-        assertEquals(Color(0xFFD0D0CE), MorningLightColors.borderStrong)
-    }
-
-    @Test
-    fun `test quiet night color tokens`() {
-        assertEquals(Color(0xFF0A0A0A), QuietNightColors.background)
-        assertEquals(Color(0xFF141414), QuietNightColors.surface)
-        assertEquals(Color(0xFFFFFFFF), QuietNightColors.textPrimary)
-        assertEquals(Color(0xFF888888), QuietNightColors.textSubtle)
-        assertEquals(Color(0xFF333333), QuietNightColors.border)
-        assertEquals(Color(0xFF222222), QuietNightColors.borderSubtle)
-        assertEquals(Color(0xFF3E3E3E), QuietNightColors.borderStrong)
+    fun `test warm vintage white color tokens`() {
+        assertEquals(Color(0xFFFAF7F2), WarmVintageWhiteColors.background)
+        assertEquals(Color(0xFFFFFDF9), WarmVintageWhiteColors.surface)
+        assertEquals(Color(0xFFFFFFFF), WarmVintageWhiteColors.surfaceElevated)
+        assertEquals(Color(0xFFF0ECE1), WarmVintageWhiteColors.surfaceSubtle)
+        assertEquals(Color(0xFF1C1917), WarmVintageWhiteColors.textPrimary)
+        assertEquals(Color(0xFF6E675F), WarmVintageWhiteColors.textSubtle)
+        assertEquals(Color(0xFFE3DDD3), WarmVintageWhiteColors.border)
+        assertEquals(Color(0xFFEDE8DF), WarmVintageWhiteColors.borderSubtle)
+        assertEquals(Color(0xFFD5CCC0), WarmVintageWhiteColors.borderStrong)
+        assertEquals(Color(0xFF8E867C), WarmVintageWhiteColors.answeredText)
     }
 
     @Test
@@ -121,17 +113,14 @@ class LayoutGeometryTest {
         assertEquals(FlatSquareShape, PrayerShapes.large)
         assertEquals(FlatSquareShape, PrayerShapes.extraLarge)
 
-        // Verify Morning Light M3 roles
-        assertEquals(Color(0xFF111111), MorningLightColorScheme.primary)
-        assertEquals(Color(0xFFFFFFFF), MorningLightColorScheme.onPrimary)
-        assertEquals(Color(0xFFFFFFFF), MorningLightColorScheme.surface)
-        assertEquals(Color(0xFF111111), MorningLightColorScheme.onSurface)
-
-        // Verify Quiet Night M3 roles
-        assertEquals(Color(0xFFFFFFFF), QuietNightColorScheme.primary)
-        assertEquals(Color(0xFF0A0A0A), QuietNightColorScheme.onPrimary)
-        assertEquals(Color(0xFF141414), QuietNightColorScheme.surface)
-        assertEquals(Color(0xFFFFFFFF), QuietNightColorScheme.onSurface)
+        // Verify Warm Vintage White M3 roles
+        assertEquals(Color(0xFF1C1917), WarmVintageWhiteColorScheme.primary)
+        assertEquals(Color(0xFFFFFDF9), WarmVintageWhiteColorScheme.onPrimary)
+        assertEquals(Color(0xFFFFFDF9), WarmVintageWhiteColorScheme.surface)
+        assertEquals(Color(0xFF1C1917), WarmVintageWhiteColorScheme.onSurface)
+        assertEquals(Color(0xFFFAF7F2), WarmVintageWhiteColorScheme.background)
+        assertEquals(Color(0xFF1C1917), WarmVintageWhiteColorScheme.onBackground)
+        assertEquals(Color(0xFFE3DDD3), WarmVintageWhiteColorScheme.outline)
     }
 
     @Test

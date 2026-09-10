@@ -23,8 +23,7 @@ enum class LocaleDialect(val code: String, val displayName: String) {
 }
 
 enum class ThemeMode(val displayName: String) {
-    MORNING_LIGHT("Morning Light"),
-    QUIET_NIGHT("Quiet Night")
+    WARM_VINTAGE_WHITE("Warm Vintage White")
 }
 
 enum class TextScale(val displayName: String) {
@@ -69,7 +68,7 @@ data class TopicWithPoints(
 @Serializable
 data class AppConfig(
     val localeDialect: LocaleDialect = LocaleDialect.EN_AU_UK,
-    val themeMode: ThemeMode = ThemeMode.MORNING_LIGHT,
+    val themeMode: ThemeMode = ThemeMode.WARM_VINTAGE_WHITE,
     val textScale: TextScale = TextScale.LARGE,
     val blendHistoricPrayers: Boolean = false
 )

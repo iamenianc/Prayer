@@ -39,85 +39,52 @@ data class PrayerColors(
     val answeredText: Color
 )
 
-val MorningLightColors = PrayerColors(
-    background = Color(0xFFF7F7F6),
-    surface = Color(0xFFFFFFFF),
+val WarmVintageWhiteColors = PrayerColors(
+    background = Color(0xFFFAF7F2),
+    surface = Color(0xFFFFFDF9),
     surfaceElevated = Color(0xFFFFFFFF),
-    surfaceSubtle = Color(0xFFEEEEEC),
-    textPrimary = Color(0xFF111111),
-    textSubtle = Color(0xFF666666),
-    border = Color(0xFFE0E0E0),
-    borderSubtle = Color(0xFFECECE9),
-    borderStrong = Color(0xFFD0D0CE),
-    answeredText = Color(0xFF888888)
+    surfaceSubtle = Color(0xFFF0ECE1),
+    textPrimary = Color(0xFF1C1917),
+    textSubtle = Color(0xFF6E675F),
+    border = Color(0xFFE3DDD3),
+    borderSubtle = Color(0xFFEDE8DF),
+    borderStrong = Color(0xFFD5CCC0),
+    answeredText = Color(0xFF8E867C)
 )
 
-val QuietNightColors = PrayerColors(
-    background = Color(0xFF0A0A0A),
-    surface = Color(0xFF141414),
-    surfaceElevated = Color(0xFF1E1E1E),
-    surfaceSubtle = Color(0xFF181818),
-    textPrimary = Color(0xFFFFFFFF),
-    textSubtle = Color(0xFF888888),
-    border = Color(0xFF333333),
-    borderSubtle = Color(0xFF222222),
-    borderStrong = Color(0xFF3E3E3E),
-    answeredText = Color(0xFF666666)
-)
+// Legacy alias for compatibility
+val MorningLightColors = WarmVintageWhiteColors
 
-val MorningLightColorScheme: ColorScheme = lightColorScheme(
-    primary = MorningLightColors.textPrimary,
-    onPrimary = MorningLightColors.surface,
-    primaryContainer = MorningLightColors.surfaceSubtle,
-    onPrimaryContainer = MorningLightColors.textPrimary,
-    secondary = MorningLightColors.textPrimary,
-    onSecondary = MorningLightColors.surface,
-    secondaryContainer = MorningLightColors.surfaceSubtle,
-    onSecondaryContainer = MorningLightColors.textPrimary,
-    background = MorningLightColors.background,
-    onBackground = MorningLightColors.textPrimary,
-    surface = MorningLightColors.surface,
-    onSurface = MorningLightColors.textPrimary,
-    surfaceVariant = MorningLightColors.surfaceSubtle,
-    onSurfaceVariant = MorningLightColors.textSubtle,
+val WarmVintageWhiteColorScheme: ColorScheme = lightColorScheme(
+    primary = WarmVintageWhiteColors.textPrimary,
+    onPrimary = WarmVintageWhiteColors.surface,
+    primaryContainer = WarmVintageWhiteColors.surfaceSubtle,
+    onPrimaryContainer = WarmVintageWhiteColors.textPrimary,
+    secondary = WarmVintageWhiteColors.textPrimary,
+    onSecondary = WarmVintageWhiteColors.surface,
+    secondaryContainer = WarmVintageWhiteColors.surfaceSubtle,
+    onSecondaryContainer = WarmVintageWhiteColors.textPrimary,
+    background = WarmVintageWhiteColors.background,
+    onBackground = WarmVintageWhiteColors.textPrimary,
+    surface = WarmVintageWhiteColors.surface,
+    onSurface = WarmVintageWhiteColors.textPrimary,
+    surfaceVariant = WarmVintageWhiteColors.surfaceSubtle,
+    onSurfaceVariant = WarmVintageWhiteColors.textSubtle,
     surfaceContainerLowest = Color(0xFFFFFFFF),
-    surfaceContainerLow = Color(0xFFFAFAFA),
-    surfaceContainer = Color(0xFFF4F4F3),
-    surfaceContainerHigh = Color(0xFFECECEB),
-    surfaceContainerHighest = Color(0xFFE2E2E0),
-    outline = MorningLightColors.border,
-    outlineVariant = MorningLightColors.borderSubtle,
+    surfaceContainerLow = Color(0xFFFAF7F2),
+    surfaceContainer = Color(0xFFF4F0E8),
+    surfaceContainerHigh = Color(0xFFEBE6DC),
+    surfaceContainerHighest = Color(0xFFE2DDD2),
+    outline = WarmVintageWhiteColors.border,
+    outlineVariant = WarmVintageWhiteColors.borderSubtle,
     error = Color(0xFFB00020),
     onError = Color(0xFFFFFFFF)
 )
 
-val QuietNightColorScheme: ColorScheme = darkColorScheme(
-    primary = QuietNightColors.textPrimary,
-    onPrimary = QuietNightColors.background,
-    primaryContainer = Color(0xFF1E1E1E),
-    onPrimaryContainer = QuietNightColors.textPrimary,
-    secondary = QuietNightColors.textPrimary,
-    onSecondary = QuietNightColors.background,
-    secondaryContainer = Color(0xFF242424),
-    onSecondaryContainer = QuietNightColors.textPrimary,
-    background = QuietNightColors.background,
-    onBackground = QuietNightColors.textPrimary,
-    surface = QuietNightColors.surface,
-    onSurface = QuietNightColors.textPrimary,
-    surfaceVariant = QuietNightColors.surfaceSubtle,
-    onSurfaceVariant = QuietNightColors.textSubtle,
-    surfaceContainerLowest = Color(0xFF000000),
-    surfaceContainerLow = Color(0xFF121212),
-    surfaceContainer = Color(0xFF181818),
-    surfaceContainerHigh = Color(0xFF202020),
-    surfaceContainerHighest = Color(0xFF2A2A2A),
-    outline = QuietNightColors.border,
-    outlineVariant = QuietNightColors.borderSubtle,
-    error = Color(0xFFCF6679),
-    onError = Color(0xFF000000)
-)
+// Legacy alias for compatibility
+val MorningLightColorScheme: ColorScheme = WarmVintageWhiteColorScheme
 
-val LocalPrayerColors = staticCompositionLocalOf { MorningLightColors }
+val LocalPrayerColors = staticCompositionLocalOf { WarmVintageWhiteColors }
 val LocalPrayerTypography = staticCompositionLocalOf { getPrayerTypography(TextScale.LARGE) }
 
 object PrayerThemeTokens {
@@ -139,12 +106,12 @@ object PrayerThemeTokens {
 
 @Composable
 fun PrayerTheme(
-    themeMode: ThemeMode = ThemeMode.MORNING_LIGHT,
+    themeMode: ThemeMode = ThemeMode.WARM_VINTAGE_WHITE,
     textScale: TextScale = TextScale.LARGE,
     content: @Composable () -> Unit
 ) {
-    val colors = if (themeMode == ThemeMode.QUIET_NIGHT) QuietNightColors else MorningLightColors
-    val colorScheme = if (themeMode == ThemeMode.QUIET_NIGHT) QuietNightColorScheme else MorningLightColorScheme
+    val colors = WarmVintageWhiteColors
+    val colorScheme = WarmVintageWhiteColorScheme
     val typography = getPrayerTypography(textScale)
     val materialTypography = getMaterialTypography(prayerTypography = typography)
 

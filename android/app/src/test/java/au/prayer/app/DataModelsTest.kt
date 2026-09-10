@@ -89,19 +89,19 @@ class DataModelsTest {
         val defaultConfig = AppConfig()
 
         assertEquals(LocaleDialect.EN_AU_UK, defaultConfig.localeDialect)
-        assertEquals(ThemeMode.MORNING_LIGHT, defaultConfig.themeMode)
+        assertEquals(ThemeMode.WARM_VINTAGE_WHITE, defaultConfig.themeMode)
         assertEquals(TextScale.LARGE, defaultConfig.textScale)
         assertFalse(defaultConfig.blendHistoricPrayers)
 
         val customConfig = defaultConfig.copy(
             localeDialect = LocaleDialect.EN_US,
-            themeMode = ThemeMode.QUIET_NIGHT,
+            themeMode = ThemeMode.WARM_VINTAGE_WHITE,
             textScale = TextScale.COMPACT,
             blendHistoricPrayers = true
         )
 
         assertEquals(LocaleDialect.EN_US, customConfig.localeDialect)
-        assertEquals(ThemeMode.QUIET_NIGHT, customConfig.themeMode)
+        assertEquals(ThemeMode.WARM_VINTAGE_WHITE, customConfig.themeMode)
         assertEquals(TextScale.COMPACT, customConfig.textScale)
         assertTrue(customConfig.blendHistoricPrayers)
     }
@@ -140,8 +140,7 @@ class DataModelsTest {
 
     @Test
     fun `test ThemeMode and TextScale display names`() {
-        assertEquals("Morning Light", ThemeMode.MORNING_LIGHT.displayName)
-        assertEquals("Quiet Night", ThemeMode.QUIET_NIGHT.displayName)
+        assertEquals("Warm Vintage White", ThemeMode.WARM_VINTAGE_WHITE.displayName)
 
         assertEquals("Large", TextScale.LARGE.displayName)
         assertEquals("Regular", TextScale.REGULAR.displayName)

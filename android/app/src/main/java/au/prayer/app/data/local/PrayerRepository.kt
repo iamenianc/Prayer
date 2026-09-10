@@ -303,7 +303,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
 
     fun getConfig(): AppConfig {
         var locale = LocaleDialect.EN_AU_UK
-        var theme = ThemeMode.MORNING_LIGHT
+        var theme = ThemeMode.WARM_VINTAGE_WHITE
         var scale = TextScale.LARGE
         var blendHistoric = false
 
@@ -314,7 +314,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
                 val value = it.getString(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_CONFIG_VAL))
                 when (key) {
                     "locale_dialect" -> locale = runCatching { LocaleDialect.valueOf(value) }.getOrDefault(LocaleDialect.EN_AU_UK)
-                    "theme_mode" -> theme = runCatching { ThemeMode.valueOf(value) }.getOrDefault(ThemeMode.MORNING_LIGHT)
+                    "theme_mode" -> theme = runCatching { ThemeMode.valueOf(value) }.getOrDefault(ThemeMode.WARM_VINTAGE_WHITE)
                     "text_scale" -> scale = runCatching { TextScale.valueOf(value) }.getOrDefault(TextScale.LARGE)
                     "blend_historic_prayers" -> blendHistoric = value.toBoolean()
                 }

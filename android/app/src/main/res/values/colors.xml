@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Morning Light (Default) -->
-    <color name="morning_bg">#FFFFFF</color>
-    <color name="morning_surface">#FFFFFF</color>
-    <color name="morning_text">#111111</color>
-    <color name="morning_text_subtle">#666666</color>
-    <color name="morning_border">#E0E0E0</color>
-    
-    <!-- Quiet Night -->
-    <color name="night_bg">#000000</color>
-    <color name="night_surface">#000000</color>
-    <color name="night_text">#FFFFFF</color>
-    <color name="night_text_subtle">#888888</color>
-    <color name="night_border">#333333</color>
+    <!-- Warm Vintage White (Single Unified Theme) -->
+    <color name="vintage_bg">#FAF7F2</color>
+    <color name="vintage_surface">#FFFDF9</color>
+    <color name="vintage_surface_subtle">#F0ECE1</color>
+    <color name="vintage_text">#1C1917</color>
+    <color name="vintage_text_subtle">#6E675F</color>
+    <color name="vintage_border">#E3DDD3</color>
+    <color name="vintage_border_subtle">#EDE8DF</color>
+    <color name="vintage_border_strong">#D5CCC0</color>
+    <color name="vintage_answered">#8E867C</color>
 </resources>

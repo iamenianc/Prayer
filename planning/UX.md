@@ -29,14 +29,20 @@ The Prayer app is conceived as a quiet, sacred personal vault. Most consumer app
 
 ---
 
-## 2. Visual Identity: High-Contrast Monochrome & Contiguous Tessellation
+## 2. Visual Identity: Warm Vintage Whites & Contiguous Tessellation
 
-The product uses a pure black-and-white visual identity that reflects dignity, simplicity, architectural order, and liturgical focus.
+The product uses a single, unified color identity built around warm vintage whites and antique printing press charcoal ink, reflecting the solemnity of historic liturgical folios, prayer books, and authentic parchment notebooks.
 
-### 2.1 The Two Visual Modes
-Users can toggle between two high-contrast modes depending on environment and preference, with **Morning Light** serving as the default:
-1. **Morning Light (White & Black) — *(Default)***: Clean white canvas with stark black lettering, subtle soft-gray hairline borders, and subdued gray metadata. Tailored for bright reading conditions, daytime contemplation, and structured readability.
-2. **Quiet Night (Black & White)**: Pure black canvas with crisp white typography and subtle charcoal dividers. Tailored for evening devotions, bedside prayer, and low-light environments.
+### 2.1 The Single Warm Vintage Whites Palette
+The application uses a single unified aesthetic that eliminates dark and light mode toggles, providing an authentic, distraction-free devotional sanctuary:
+- **Base Canvas / Background (`#FAF7F2`)**: Warm vintage white / antique book parchment providing a gentle, unglared reading surface.
+- **Surface / Card / Action Slabs (`#FFFDF9`)**: Lighter warm ivory surface for planar cards and action tiles.
+- **Surface Elevated (`#FFFFFF`)**: Pure warm white elevation.
+- **Surface Subtle (`#F0ECE1`)**: Warm soft linen container for secondary sections.
+- **Primary Typography (`#1C1917`)**: Deep warm antique charcoal / carbon ink, ensuring crisp legibility with a 16.2:1 contrast ratio exceeding WCAG AAA.
+- **Subtle Typography (`#6E675F`)**: Muted warm stone / sepia metadata.
+- **Structural Hairlines (`#E3DDD3`, `#EDE8DF`, `#D5CCC0`)**: Delicate warm tan borders separating contiguous planar surfaces.
+- **Answered Prayer Text (`#8E867C`)**: Soft warm slate.
 
 ### 2.2 Planar Geometry with Tonal Depth & Elevation Hierarchy (Zero Curved Edges)
 - **Strict Orthogonality**: Every card, button, input box, dialog, sheet, and container adheres to sharp 90-degree right angles (`FlatSquareShape`, `border-radius: 0`). Curved edges, rounded corners, and pill buttons are strictly forbidden.
@@ -250,14 +256,13 @@ Tapping **Open Journal** (or swiping left from the home screen) opens the comple
    - **Click Once to Start Editing**: In the Entity Detail view, clicking or tapping any saved prayer point once immediately transitions into edit mode for that prayer point.
    - **Editable Title**: The prayer point title (initially auto-generated upon creation) is fully exposed and editable. Users can freely modify, refine, or rename the title to reflect evolving pastoral circumstances.
    - **Editable Body & Auto-Bullets**: The prayer point body is fully editable, maintaining the auto bullet-point behavior (line space triggers a new bullet).
-   - **Status & Thanksgiving Toggle**: Within the editor, users can mark the prayer point as `Active` or `Answered` (with an optional thanksgiving note). Answered points in the list display with subdued text and an ultra-faint strikethrough line (`rgba(255, 255, 255, 0.2)` in dark mode / `rgba(0, 0, 0, 0.2)` in light mode) so the text remains cleanly legible while visually resolved.
+    - **Status & Thanksgiving Toggle**: Within the editor, users can mark the prayer point as `Active` or `Answered` (with an optional thanksgiving note). Answered points in the list display with subdued text and an ultra-faint strikethrough line so the text remains cleanly legible while visually resolved.
 3. **Permanent Deletion (`Delete prayer point`)**:
    - Believers can permanently remove prayer points that have ended or were added in error.
    - Tapping **Delete prayer point** reveals a stark, planar confirmation prompt (*"Delete this prayer point? This cannot be undone."*).
    - Confirming permanently purges the record from local SQLite storage (`DELETE FROM PRAYER_POINT WHERE id = ?`).
    - Editor controls: **Save changes**, **Cancel**, and **Delete prayer point**.
 4. **Settings Access**:
-   - Theme toggle (*Morning Light* [Default] vs. *Quiet Night*).
    - **Text Scaling**: Dedicated three-tier selector with pronounced, distinct jumps (**Large** *(Default)*, **Regular**, and **Compact**). The **Large** default features prominent, high-presence typography (28px home buttons, 22px card titles, 18px prayer points) for effortless, strain-free devotional contemplation. **Regular** offers balanced density (20px buttons, 16px card titles, 13px prayer points), and **Compact** provides high-density scannability (15px buttons, 12.5px card titles, 10.5px prayer points).
    - **Language / Dialect configuration**: Dedicated selector between **English (Australian / UK)** *(Default)* and **US English**. Switching immediately adjusts UI copy, prayer collects, and distillation orthography.
    - Historic Reformed prayers rotation toggle (blend into daily rotation vs. library-only).
@@ -331,7 +336,7 @@ Across all touch-first views, long-pressing interactive devotional records or en
 To guarantee that the austere, non-commercial, liturgical visual identity is never degraded by accidental style drift, the user experience is continuously verified by automated UI layout and contract test suites across three mobile viewports (Standard 390x844, Compact 360x740, and Large 428x926):
 1. **Zero-Radius Contract**: Automated DOM traversal asserting `borderRadius === '0px'` across all interactive components, buttons, inputs, tiles, and dialogue surfaces.
 2. **Contiguity & Adjacency Contract**: Sub-pixel bounding rect measurement confirming that adjacent slabs (such as the three vertical home slabs and journal tiles) maintain 0px margins/padding gutters and directly abut along 1px hairline boundary seams (`Math.abs(rect[i+1].top - rect[i].bottom) <= 1.5px`).
-3. **Monochrome Contrast & Theme Invariants**: Programmatic verification of color tokens in Morning Light (`--bg: #FFFFFF`, `--text: #111111`) and Quiet Night (`--bg: #000000`, `--text: #FFFFFF`), maintaining WCAG AAA contrast ratios.
+3. **Warm Vintage White Contrast & Theme Invariants**: Programmatic verification of color tokens (`--bg: #FAF7F2`, `--text: #1C1917`), maintaining WCAG AAA contrast ratios.
 4. **Three-Tier Typography Scale Verification**: Automated evaluation asserting exact font size tokens across Large (Default), Regular, and Compact scales.
 5. **Full-Screen Buttonless Sanctuary Invariant**: Automated assertion verifying that in `screen-pray`, `#top-bar` and all buttons are suppressed (`display: none`), with zero card borders or gridlines.
 6. **Tactile Gesture Discrimination Testing**: Synthetic touch event simulation testing horizontal topic advance ($\Delta X \le -40\text{px}$), return ($\Delta X \ge +40\text{px}$), swipe-down exit ($\Delta Y \ge +60\text{px}$ in upper screen), and diagonal rejection ($|\Delta X| < 1.5 |\Delta Y|$).

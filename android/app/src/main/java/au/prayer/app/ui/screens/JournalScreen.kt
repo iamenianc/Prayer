@@ -737,44 +737,6 @@ fun JournalScreen(
                                 .fillMaxSize()
                                 .padding(PrayerSpacing.large)
                         ) {
-                            Text("Theme", style = typography.caption, color = colors.textSubtle)
-                            Spacer(modifier = Modifier.height(PrayerSpacing.small))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
-                            ) {
-                                listOf(
-                                    ThemeMode.MORNING_LIGHT to "Morning Light",
-                                    ThemeMode.QUIET_NIGHT to "Quiet Night"
-                                ).forEach { (mode, label) ->
-                                    val isSelected = config.themeMode == mode
-                                    val bg by animateColorAsState(
-                                        targetValue = if (isSelected) colors.textPrimary else colors.surface,
-                                        label = "ThemeBg"
-                                    )
-                                    val textCol by animateColorAsState(
-                                        targetValue = if (isSelected) colors.background else colors.textPrimary,
-                                        label = "ThemeText"
-                                    )
-                                    Button(
-                                        onClick = { onUpdateConfig(config.copy(themeMode = mode)) },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(PrayerSpacing.minTouchTarget),
-                                        shape = FlatSquareShape,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = bg,
-                                            contentColor = textCol
-                                        ),
-                                        border = BorderStroke(if (isSelected) 1.5.dp else 0.5.dp, colors.border)
-                                    ) {
-                                        Text(label, style = typography.button)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(PrayerSpacing.large))
-
                             Text("Text Size", style = typography.caption, color = colors.textSubtle)
                             Spacer(modifier = Modifier.height(PrayerSpacing.small))
                             Row(

@@ -66,8 +66,8 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
 
-            // Dynamic theme and typography resolution
-            val colors = if (appConfig.themeMode == ThemeMode.QUIET_NIGHT) QuietNightColors else MorningLightColors
+            // Dynamic typography and single warm vintage white theme resolution
+            val colors = WarmVintageWhiteColors
             val typography = getPrayerTypography(appConfig.textScale)
 
             fun refreshEntities() {
