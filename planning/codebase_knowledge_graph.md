@@ -46,7 +46,8 @@ graph TD
 
         UI_GESTURES["ui/gestures/<br/>(TouchGestureModifier, LIFO)"]
         DATA_LOCAL["data/local/<br/>(PrayerDatabaseHelper, Repository)"]
-        DATA_MODELS["data/models/<br/>(Models.kt, PreloadedContent.kt)"]
+        DATA_MODELS["data/models/<br/>(Models.kt, PreloadedContent.kt JSON loader)"]
+        RAW_HISTORIC["res/raw/historic_prayers.json<br/>(Standalone 14-prayer catalog)"]
         NETWORK["network/<br/>(PrayerApiClient.kt)"]
         JVM_TESTS["android/src/test/java/<br/>(75 Replicated JVM Tests)"]
     end
@@ -69,6 +70,7 @@ graph TD
     MAIN --> UI_SCREENS
     UI_SCREENS --> DATA_LOCAL
     DATA_LOCAL --> DATA_MODELS
+    DATA_MODELS --> RAW_HISTORIC
     
     SPEC_TESTS -.->|"Validates Layout Spec"| TEST_RUNNER
     JVM_TESTS -.->|"Verifies Implementation"| Android_Client
@@ -274,7 +276,8 @@ graph TD
         REPO["PrayerRepository.kt<br/>(Entity/Point CRUD, Anti-Neglect Queue, getHistoricEntities)"]
         DB_HELPER["PrayerDatabaseHelper.kt<br/>(SQLite Schema, DB v3 Migration, Multi-Entity Historic Seeding)"]
         MODELS["Models.kt<br/>(Domain & Data Classes)"]
-        PRELOADED["PreloadedContent.kt<br/>(14 individual historic entities via PreloadedHistoricTopic:<br/>6 BCP/Creed + 8 Spurgeon pulpit prayers)"]
+        PRELOADED["PreloadedContent.kt<br/>(JSON catalog loader: parses res/raw/historic_prayers.json<br/>into 14 PreloadedHistoricTopic pairs:<br/>6 BCP/Creed + 8 Spurgeon pulpit prayers)"]
+        RAW_HISTORIC["res/raw/historic_prayers.json<br/>(Standalone structured historic prayer catalog)"]
     end
 
     MAIN --> LIFO
@@ -306,6 +309,7 @@ graph TD
     REPO --> MODELS
     REPO --> PRELOADED
     DB_HELPER --> MODELS
+    PRELOADED --> RAW_HISTORIC
 ```
 
 ---
@@ -457,5 +461,6 @@ graph LR
 | **[`android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt)** | Android / Database | SQLite schema definition and table creation | Android SQLite | `PrayerRepository.kt` |
 | **[`android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt)** | Android / Repository | CRUD operations, Anti-Neglect queue query | `PrayerDatabaseHelper.kt`, `Models.kt` | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/data/models/Models.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt)** | Android / Domain Models | Enums and data classes | Kotlinx Serialization | Repository, API Client, UI |
-| **[`android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt)** | Android / Seed Data | Historic Reformed collects, creeds, Lord's prayer | `Models.kt` | `PrayerDatabaseHelper.kt`, `PrayerRepository.kt` |
+| **[`android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt)** | Android / Seed Data | Parses `res/raw/historic_prayers.json` into 14 `PreloadedHistoricTopic` pairs (entities + HISTORIC points); lazy singleton cache | `Models.kt`, Kotlinx Serialization, `res/raw/historic_prayers.json` | `PrayerDatabaseHelper.kt`, `PrayerRepository.kt` |
+| **[`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json)** | Android / Seed Data | Standalone structured catalog of the 14 public-domain historic prayers (Lord's Prayer, 1662 BCP collects, Apostles' Creed, Spurgeon pulpit prayers); single source of truth for historic content | User-authored (public domain texts) | `PreloadedContent.kt`, JVM test classpath (`AntiNeglectQueueTest.kt`) |
 | **[`android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt)** | Android / Network | OkHttp client, wire payloads (`suggest`), grouped ambient prompts (Praise God, Thank God, Ask God) | OkHttp, Kotlinx Serialization | `MainActivity.kt`, `SanctuaryPrayerScreen.kt`, `JournalScreen.kt` |

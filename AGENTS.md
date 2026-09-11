@@ -207,7 +207,9 @@ Prayer/
     │       │   │           ├── Spacing.kt
     │       │   │           ├── Theme.kt
     │       │   │           └── Typography.kt
-    │       │   └── res/                # App drawables, mipmaps, strings, colors
+    │       │       └── res/                # App drawables, mipmaps, strings, colors
+    │           └── raw/            # Standalone structured content documents
+    │               └── historic_prayers.json  # 14 public-domain historic prayers (single source of truth)
     │       └── test/java/au/prayer/app/ # Replicated JVM unit test suite (65 tests)
     │           ├── AntiNeglectQueueTest.kt
     │           ├── DataModelsTest.kt

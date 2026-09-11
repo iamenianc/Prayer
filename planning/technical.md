@@ -64,7 +64,8 @@ erDiagram
 ```
 
 - **Preloaded Historic Content (DB Version 3)**:
-  - **Architecture**: Each historic prayer is its own distinct `IndividualEntity` (`is_preloaded_historic = true`, `rootCode = GENERAL`), paired 1:1 with a `PrayerPoint` (`status = HISTORIC`). Defined in `PreloadedContent.HISTORIC_TOPICS: List<PreloadedHistoricTopic>`.
+  - **Architecture**: Each historic prayer is its own distinct `IndividualEntity` (`is_preloaded_historic = true`, `rootCode = GENERAL`), paired 1:1 with a `PrayerPoint` (`status = HISTORIC`).
+  - **Standalone Content Document**: The full catalog of 14 prayers (entities + full prayer text) is maintained as a standalone structured JSON document at [`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json). It is the single source of truth for historic content: `PreloadedContent` parses it (via `kotlinx.serialization`) into `PreloadedHistoricTopic(entity, prayerPoint)` pairs at runtime and seeds the encrypted database on first launch. The same document is wired onto the JVM test classpath (`build.gradle.kts` test sourceSet) so unit tests parse the identical file.
   - **Data Class**: `PreloadedHistoricTopic(entity: IndividualEntity, prayerPoint: PrayerPoint)` — the fundamental pairing unit.
   - **DB Version**: `DATABASE_VERSION = 3`. Migration from v2→v3 deletes any legacy single-aggregate `historic-reformed-prayers` row and reseeds all 14 individual entities/points.
   - **14 distinct topics** seeded under `General`:

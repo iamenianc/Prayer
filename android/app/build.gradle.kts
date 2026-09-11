@@ -46,6 +46,12 @@ android {
     buildFeatures {
         compose = true
     }
+
+    sourceSets {
+        getByName("test") {
+            resources.srcDir("src/main/res/raw")
+        }
+    }
 }
 
 dependencies {

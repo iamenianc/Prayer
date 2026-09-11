@@ -2,9 +2,18 @@ package au.prayer.app
 
 import au.prayer.app.data.models.*
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 
 class AntiNeglectQueueTest {
+
+    @Before
+    fun setUp() {
+        val json = javaClass.getResourceAsStream("/historic_prayers.json")
+            ?.readBytes()?.decodeToString()
+            ?: error("historic_prayers.json not found on the test classpath")
+        PreloadedContent.loadFromText(json)
+    }
 
     // Mirroring the exact SQL ORDER BY contract from PrayerRepository:
     // e.last_interacted_at IS NOT NULL ASC, e.last_interacted_at ASC, e.interacted_count ASC

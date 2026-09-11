@@ -9,6 +9,10 @@ import au.prayer.app.data.models.*
 
 class PrayerDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
+    init {
+        PreloadedContent.initialize(context)
+    }
+
     companion object {
         const val DATABASE_NAME = "prayer_vault.db"
         const val DATABASE_VERSION = 4
