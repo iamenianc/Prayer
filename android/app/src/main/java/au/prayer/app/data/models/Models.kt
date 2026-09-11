@@ -23,7 +23,11 @@ enum class LocaleDialect(val code: String, val displayName: String) {
 }
 
 enum class ThemeMode(val displayName: String) {
-    WARM_VINTAGE_WHITE("Warm Vintage White")
+    WARM_VINTAGE_WHITE("Warm Vintage White"),
+    SADDLE_TAN("Saddle Tan"),
+    HORWEEN_CORDOVAN("Horween Cordovan"),
+    HUNTER_FOREST("Hunter Forest"),
+    OBSIDIAN_HIDE("Obsidian Hide")
 }
 
 enum class TextScale(val displayName: String) {
@@ -39,6 +43,7 @@ data class IndividualEntity(
     val displayName: String,
     val contextDescription: String = "",
     val isPreloadedHistoric: Boolean = false,
+    val isPinned: Boolean = false,
     val interactedCount: Int = 0,
     val lastInteractedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis()
@@ -70,5 +75,6 @@ data class AppConfig(
     val localeDialect: LocaleDialect = LocaleDialect.EN_AU_UK,
     val themeMode: ThemeMode = ThemeMode.WARM_VINTAGE_WHITE,
     val textScale: TextScale = TextScale.LARGE,
-    val blendHistoricPrayers: Boolean = false
+    val blendHistoricPrayers: Boolean = false,
+    val highContrastMode: Boolean = false
 )

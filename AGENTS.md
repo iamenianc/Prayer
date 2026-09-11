@@ -22,26 +22,46 @@ This repository maintains three distinct domains:
 
 ---
 
-## 1.5. Mandatory Deploy-on-Completion Protocol (Android)
+## 1.5. Mandatory Deploy-on-Completion Protocol (Android Client & Cloudflare Worker API)
 
-**Whenever any Android production work is complete** — a bug fix, feature implementation, refactor, or any change that compiles cleanly — the agent **MUST proactively deploy a fresh release build to Google Drive before declaring the task finished.**
+**Whenever any production work is complete** — whether Android client modifications, Cloudflare Worker API changes, or both — the agent **MUST proactively execute the required deployment procedures before declaring the task finished.**
 
-### Deploy Procedure
-1. From the `android/` directory, run the bundled Gradle task:
-   ```powershell
-   .\gradlew.bat :app:deployToDrive
-   ```
-   This task depends on `assembleRelease`, so it compiles the release APK and then copies it to `G:\My Drive\myApps\Prayer.apk` (overwrite).
-2. The destination `G:\My Drive\myApps` folder **must exist** before running. If it does not, halt and ask the user to mount/start Google Drive for Desktop rather than inventing an alternate path.
-3. After the build, **verify** the deployed file with `Get-Item -LiteralPath "G:\My Drive\myApps\Prayer.apk"` and confirm a non-zero `Length` and a fresh `LastWriteTime`.
-4. **Do not** deploy if the release build fails to compile. Fix all compile errors first (see the `LinedNotepad` / `JournalScreen` String-vs-`TextFieldValue` contract as a known gotcha), then re-run the deploy task.
+### 1.5.1 Android Client Deployment (`deployToDrive`)
+- **Trigger**: Any changes to Kotlin source code, XML resources, assets, manifests, or build scripts under `android/`.
+- **Procedure**:
+  1. From the `android/` directory, run the bundled Gradle task:
+     ```powershell
+     .\gradlew.bat :app:deployToDrive
+     ```
+     This task compiles the release APK (`assembleRelease`) and copies it to `G:\My Drive\myApps\Prayer.apk` (overwrite).
+  2. The destination `G:\My Drive\myApps` folder **must exist** before running. If it does not, halt and ask the user to mount/start Google Drive for Desktop rather than inventing an alternate path.
+  3. After the build, **verify** the deployed file with `Get-Item -LiteralPath "G:\My Drive\myApps\Prayer.apk"` and confirm a non-zero `Length` and a fresh `LastWriteTime`.
+  4. **Do not** deploy if the release build fails to compile. Fix all compile errors first, then re-run the deploy task.
+
+### 1.5.2 Cloudflare Worker API Deployment (Wrangler Script)
+- **Trigger**: Any changes to `api/worker.js`, `api/system_prompt.txt`, prompt definitions, dependencies (`package.json`), or configuration (`wrangler.jsonc`) under `api/`, or when explicitly requested / needed to synchronize the edge API.
+- **Procedure**:
+  1. From the `api/` directory, verify syntax first:
+     ```powershell
+     node --check worker.js
+     ```
+  2. Run the Wrangler deployment script:
+     ```powershell
+     npm run deploy
+     ```
+     *(alternatively: `npx wrangler deploy`)*
+  3. Confirm that the deployment succeeded, verify the active endpoint (`https://pray-proxy.reflex-game.workers.dev`), and report the deployment status and Version ID in the closing summary.
 
 ### When to Skip
-- Pure planning, documentation, or `api/`-only changes that touch no Kotlin source under `android/`.
-- When the user explicitly instructs a build-only or no-deploy run for this turn.
+- Skip Android deployment (`deployToDrive`) if no Kotlin source, XML resources, or files under `android/` were modified.
+- Skip Wrangler deployment (`npm run deploy`) if no files under `api/` were modified and the edge API is already up to date.
+- Skip when the user explicitly instructs a build-only or no-deploy run for this turn.
 
-### Reminder Trigger
-If the agent finishes Android work and has not yet run `:app:deployToDrive`, it **must** do so as the final action of the turn, and report the deployed APK path and size in its closing summary.
+### Mandatory End-of-Turn Checklist
+Before concluding any turn:
+1. **Android changes present?** $\rightarrow$ Execute `.\gradlew.bat :app:deployToDrive`, verify `Prayer.apk` on Drive, and report size/timestamp.
+2. **API changes present / edge sync needed?** $\rightarrow$ Execute `npm run deploy` (or `npx wrangler deploy`) in `api/`, verify live endpoint, and report Version ID.
+3. Report the completion status of all relevant deployment actions in the final response.
 
 ---
 

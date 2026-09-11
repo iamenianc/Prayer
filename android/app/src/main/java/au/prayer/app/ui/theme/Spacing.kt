@@ -27,7 +27,16 @@ data class PrayerSpacingTokens(
     val elevationSubtle: Dp = 1.dp,
     val elevationCard: Dp = 2.dp,
     val elevationFloating: Dp = 4.dp,
-    val elevationModal: Dp = 8.dp
+    val elevationModal: Dp = 8.dp,
+    // Modern Folio Spatial & Stationery Geometry
+    val marginTrackWidth: Dp = 56.dp,
+    val textInset: Dp = 64.dp,
+    val narrativeRightPadding: Dp = 24.dp,
+    val hairlineWidth: Dp = 0.75.dp,
+    val ribbonWidth: Dp = 18.dp,
+    val ribbonRestingHeight: Dp = 40.dp,
+    val ribbonPinnedHeight: Dp = 54.dp,
+    val spineGutterWidth: Dp = 24.dp
 )
 
 val LocalPrayerSpacing = staticCompositionLocalOf { PrayerSpacingTokens() }
@@ -54,4 +63,12 @@ object PrayerSpacing {
     val elevationCard: Dp = 2.dp
     val elevationFloating: Dp = 4.dp
     val elevationModal: Dp = 8.dp
+    val marginTrackWidth: Dp = 56.dp
+    val textInset: Dp = 64.dp
+    val narrativeRightPadding: Dp = 24.dp
+    val hairlineWidth: Dp = 0.75.dp
+    val ribbonWidth: Dp = 18.dp
+    val ribbonRestingHeight: Dp = 40.dp
+    val ribbonPinnedHeight: Dp = 54.dp
+    val spineGutterWidth: Dp = 24.dp
 }

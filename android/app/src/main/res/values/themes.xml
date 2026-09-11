@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Modern Leatherbound Folio Application Theme -->
+    <style name="Theme.Prayer" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <!-- Zero-flash warm vellum window background on launch -->
+        <item name="android:windowBackground">@color/paper_background</item>
+        <item name="android:colorBackground">@color/paper_background</item>
+        
+        <!-- Edge-to-edge transparent system bars with dark icons -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

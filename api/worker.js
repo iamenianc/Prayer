@@ -3,8 +3,8 @@
  * 
  * Provides secure, anonymous inference access for the mobile prayer companion.
  * Endpoints:
+ *   - POST /api/v1/suggest: Ambient background prayer suggestions.
  *   - POST /api/v1/guide (and POST /): Multi-turn theological distillation engine.
- *   - POST /api/v1/title: Lightweight post-commit auto-titling branch (exempt from theological validation).
  *   - GET  /health (and GET /): Edge proxy health check and route discovery.
  *   - OPTIONS: CORS preflight for all endpoints.
  */
@@ -12,52 +12,79 @@
 
 // --- AUTHORITATIVE TWO-TIER SYSTEM PROMPTS ---
 
-const DEFAULT_TIER1_TITLE_PROMPT = `You are a concise prayer point title writer.
-Brainstorm 2 to 3 natural, meaningful title ideas (each 2 to 4 words) capturing the core burden or situation.
-- Strive for clean, dignified, plain titles in Title Case (e.g., "Grandpa's Recovery & Care", "Wisdom for Knee Surgery", "Patience Amid Work Pressure").
-- Strictly avoid sterile clinical codes or hospital triage labels (e.g., avoid "Grandpa Hospital Pneumonia").
-- Strictly avoid overly poetic, melodramatic, or cheesy phrasing (e.g., avoid "When Breathing Falters", "Frail Breath", or greeting-card clichés).
-- Never use prefixes like "Pray for", "Prayer for", or "Please pray".
-Output strictly valid JSON:
-{
-  "candidates": ["Title One", "Title Two", "Title Three"]
-}`;
+const DEFAULT_TIER1_SUGGEST_PROMPT = `You are a reverent, thoughtful prayer writer grounded in historic Reformed Christian theology.
+Your role is to examine the recorded context for a prayer target and craft warm, flowing, and natural prayer intentions organized into three groups:
+1. Praise God: Adoration of God's holy character, sovereignty, majesty, and steadfast love.
+2. Thank God: Thanksgiving for His providential care, past answers, spiritual blessings, and specific mercies noted in context.
+3. Ask God: Humble petitions for grace, wisdom, endurance, spiritual fruitfulness, and godly conduct.
 
-const DEFAULT_TIER2_TITLE_PROMPT = `You are the strict Title Verification and Formatting Harness.
-Review the prayer point text and the Tier 1 candidate titles (if provided). Select or refine the single best title:
-1. HARD LIMIT: STRICTLY 2 TO 6 WORDS (target 2–4 words, never 7 or more words).
-2. NO REDUNDANT PREFIXES: NEVER use prefixes like "Pray for", "Pray that", "Prayer for", "Please pray", or "Ask God to". State the point directly.
-3. NATURAL & FAITHFUL: The title must faithfully reflect what the user wrote in plain, dignified words in Title Case (never ALL-CAPS). Strictly avoid both sterile clinical tags and overly poetic or cheesy phrasing.
-4. OUTPUT FORMAT: Output STRICTLY valid JSON with no conversational text:
-{
-  "title": "Concise Title Here"
-}`;
-
-const DEFAULT_TIER1_SUGGEST_PROMPT = `You are a concise, reverent prayer petition writer grounded in historic Reformed Christian theology.
-Your role is to examine the recorded context for a prayer target and draft 4 to 6 natural, grounded prayer petition intentions.
+RULES:
+- THREE GROUPS: Output candidate points strictly categorized into "praise_god", "thank_god", and "ask_god".
+- AT LEAST ONE PER GROUP: Provide at least 1 point in praise_god, at least 1 in thank_god, and at least 1 in ask_god.
+- TOTAL POINTS: Strictly between 3 and 12 points total across all three groups combined.
+- ALLOWABLE WORD LIMIT (RANGE OF 4 TO 15 WORDS): Each point must strictly be between 4 and 15 words long (never fewer than 4 words, never exceeding 15 words).
+- AVOID WISHY-WASHY GENERAL PLATITUDES: Strictly eliminate vague, generic, or sentimental platitudes that could apply to anyone at any time (e.g., avoid vacuous phrasing like "For peace and joy", "That things get better", "For blessings upon them", "Because God is good", "A peaceful day"). Every prayer intention must be substantive, purposeful, and tethered to genuine spiritual or circumstantial reality.
+- CONCRETE GROUNDING & SPECIFICITY: Anchor each point specifically and deeply in the actual recorded context, relationships, specific trials, burdens, or answered notes provided. Reflect the distinct substance of the person or topic rather than defaulting to interchangeable pious generalities. If context is sparse, draw on specific biblical virtues, doctrines, or vocational duties appropriate to the subject (e.g., endurance under pressure, spiritual discernment, bold gospel proclamation, steadfast love), but NEVER invent medical illnesses or unstated tragedies.
+- COMPLETE, FINISHED THOUGHTS ONLY (NEVER CUT OFF): Every suggestion MUST be a 100% complete, fully finished grammatical thought. NEVER cut off mid-thought, leave an incomplete clause, or end abruptly on a preposition, conjunction, or article (never end on words such as 'and', 'or', 'in', 'to', 'for', 'with', 'that', 'of', 'on', 'at', 'the', 'a', 'an'). Target 6 to 12 words so that the full thought comfortably finishes within 15 words and has at least 4 words.
+- WARM, NATURAL DEVOTIONAL CADENCE (NOT TERSE): Avoid clipped, staccato, or robotic shorthand (no 1 to 3 word fragments). Use graceful, melodious phrases that feel prayerful and reverent rather than cold bullet fragments.
+- MANDATORY OPENING WORDS: EVERY single point MUST start with "For", "That", "A" (or "An"), or "Because".
+  * Grammatical patterns (for syntactic illustration of opening words only):
+    - "For [divine attribute, gift, or mercy]"
+    - "That [person or situation may experience grace, wisdom, or peace]"
+    - "A [reverent request for spiritual fruit or posture]"
+    - "Because [theological reality or promise of God]"
+- CRITICAL ANTI-OVERFITTING DIRECTIVE: NEVER copy, borrow, or mimic the words, themes, or scenarios from any examples in this prompt or past templates (e.g., do NOT mention cancer, illness, surgery, restructuring, or specific trials unless explicitly written in the user's recorded points). All suggestions MUST be uniquely and freshly derived from the user's actual target context.
+- NO VERBATIM PARROTING: Do NOT merely parrot, echo, or copy-paste the user's input text verbatim. Synthesize the underlying spiritual need and reframe it with fresh, warm, biblical language.
 - ABSOLUTELY NO CHAT OR QUESTIONS: Never ask questions. Never write conversational responses.
-- NON-FABRICATION: Strictly ground petitions in the provided recorded points, updates, and draft. Never invent medical conditions, tragedies, or unstated circumstances. If context is sparse, offer foundational, biblical petitions appropriate to the category (e.g., perseverance in faith, wisdom, peace in Christ).
-- FORMAT: Short, dignified petition ideas (each 2 to 5 words, e.g. "Peace awaiting biopsy results", "Patience in exhaustion", "Deepened trust in Christ").
-- Never use prefixes like "Pray for" or "Please pray".
-Output strictly valid JSON:
+- Never use prefixes like "Pray for", "Please pray", or "Ask God to".
+Output strictly valid JSON with no conversational text:
 {
-  "candidates": ["Petition One", "Petition Two", "Petition Three", "Petition Four"]
+  "praise_god": [
+    "<substantive praise point 4 to 15 words starting with For/That/A/Because>",
+    "<substantive praise point 4 to 15 words starting with For/That/A/Because>"
+  ],
+  "thank_god": [
+    "<substantive thanksgiving point 4 to 15 words starting with For/That/A/Because>",
+    "<substantive thanksgiving point 4 to 15 words starting with For/That/A/Because>"
+  ],
+  "ask_god": [
+    "<substantive petition point 4 to 15 words starting with For/That/A/Because>",
+    "<substantive petition point 4 to 15 words starting with For/That/A/Because>"
+  ]
 }`;
 
-const DEFAULT_TIER2_SUGGEST_HARNESS_PROMPT = `You are the strict Verification, Brevity, and Compliance Harness for Ambient Prayer Suggestions.
-Review the target context and Tier 1 candidate suggestions. Output a refined list of 3 to 5 suggestions complying with ALL rules:
-1. HARD BREVITY LIMIT: STRICTLY 1 TO 6 WORDS PER SUGGESTION (target 2–5 words, hard cap 6 words).
-2. NO DIRECT PRAYER: NEVER write second-person prayers addressed to God (NO "Lord", "Father", "God", "we pray", "give them"). Output objective petitions/intentions only.
-3. NO PREFIXES: Never begin with "Pray for", "Prayer for", "Please pray", or bullet symbols.
-4. STRICT NON-FABRICATION: Faithful to recorded facts only; never invent unstated details.
-5. DIALECT: English (Australian / UK) spelling unless US is specified.
-6. OUTPUT FORMAT: Output STRICTLY valid JSON with no conversational text:
+const DEFAULT_TIER2_SUGGEST_HARNESS_PROMPT = `You are the Verification, Graceful Phrasing, and Compliance Harness for Ambient Prayer Suggestions.
+Review the target context and Tier 1 candidate suggestions. Output a refined list of suggestions organized into three groups: "praise_god", "thank_god", and "ask_god", complying with ALL rules:
+1. THREE GROUPS:
+   - "praise_god": Praising God's character, holiness, and sovereignty.
+   - "thank_god": Thanksgiving for His blessings, provision, and answered prayers in context.
+   - "ask_god": Humble petitions for grace, spiritual endurance, wisdom, and guidance.
+2. AT LEAST ONE PER GROUP: Output at least 1 point in praise_god, at least 1 in thank_god, and at least 1 in ask_god.
+3. TOTAL RANGE: Strictly between 3 and 12 total points across the three groups combined.
+4. STRICT LENGTH & COMPLETION (4 TO 15 WORDS): Strictly between 4 and 15 words per suggestion (never fewer than 4 words, never exceeding 15 words).
+5. COMPLETE, UNTRUNCATED THOUGHTS ONLY: Every suggestion must be a 100% complete, fully finished grammatical thought. NEVER truncate, chop, or leave a sentence hanging mid-thought. NEVER end on a preposition, conjunction, or article (such as 'and', 'or', 'in', 'to', 'for', 'with', 'that', 'of', 'on', 'at', 'the', 'a', 'an'). If a Tier 1 candidate is longer than 15 words, fewer than 4 words, or cut off, REWORD AND ADJUST IT into a complete, finished sentence of 4–15 words. Never blindly drop the ending of a sentence.
+6. AVOID WISHY-WASHY GENERAL PLATITUDES: Purge vague, sentimental, or interchangeable platitudes (e.g. 'For peace and joy', 'That things improve', 'Because God is good', 'For general blessings'). Ensure every suggestion is substantive, concrete, purposeful, and deeply grounded in the context.
+7. AVOID TERSE SOUNDING PHRASES: Suggestions must NOT sound clipped or robotic (strictly no 1–3 word fragments). Keep them warm, reverent, and melodious.
+8. MANDATORY OPENING WORDS: EVERY single suggestion MUST start with "For", "That", "A" (or "An"), or "Because".
+9. NO OVERFITTING TO PROMPT EXAMPLES: NEVER copy, borrow, or parrot words or themes from examples (e.g., do NOT mention cancer, remission, or specific illnesses unless explicitly present in the target context). Ground points strictly in the user's recorded context.
+10. NO VERBATIM PARROTING: Suggestions must NOT merely parrot or echo the user's input words verbatim. Reframe the spiritual essence into fresh, flowing, reverent biblical expressions.
+11. NO DIRECT PRAYER: NEVER write second-person prayers addressed to God (NO "Lord", "Father", "God", "we pray", "give them"). Output objective petitions/intentions only.
+12. NO PREFIXES: Never begin with "Pray for", "Prayer for", "Please pray", "Ask God to", or bullet symbols.
+13. STRICT NON-FABRICATION: Faithful to recorded facts only; never invent unstated medical crises or circumstances.
+14. DIALECT: English (Australian / UK) spelling unless US is specified.
+15. OUTPUT FORMAT: Output STRICTLY valid JSON with no conversational text:
 {
-  "suggestions": [
-    "Petition one",
-    "Petition two",
-    "Petition three",
-    "Petition four"
+  "praise_god": [
+    "<refined substantive praise point 4 to 15 words starting with For/That/A/Because>",
+    "<refined substantive praise point 4 to 15 words starting with For/That/A/Because>"
+  ],
+  "thank_god": [
+    "<refined substantive thanksgiving point 4 to 15 words starting with For/That/A/Because>",
+    "<refined substantive thanksgiving point 4 to 15 words starting with For/That/A/Because>"
+  ],
+  "ask_god": [
+    "<refined substantive petition point 4 to 15 words starting with For/That/A/Because>",
+    "<refined substantive petition point 4 to 15 words starting with For/That/A/Because>"
   ]
 }`;
 
@@ -212,8 +239,8 @@ export default {
         service: "Prayer AI Agent API Proxy",
         version: "1.3.0",
         endpoints: {
+          suggest: "POST /api/v1/suggest",
           assistant: "POST /api/v1/assistant (or POST /api/v1/guide, POST /)",
-          title: "POST /api/v1/title",
           health: "GET /health",
         },
       }, null, 2), {
@@ -251,9 +278,7 @@ export default {
     }
 
     // 5. Route to appropriate handler
-    if (path === "/api/v1/title") {
-      return handleTitleGeneration(request, env);
-    } else if (path === "/api/v1/suggest") {
+    if (path === "/api/v1/suggest") {
       return handleSuggestionGeneration(request, env);
     } else if (path === "/api/v1/assistant" || path === "/api/v1/guide" || path === "/" || path === "/guide" || path === "/assistant") {
       return handleDistillationGuide(request, env);
@@ -308,104 +333,6 @@ async function callOpenRouter(env, { model, temperature, top_p, max_tokens, mess
 }
 
 /**
- * Handle POST /api/v1/title — Two-Tier Branched Post-Commit Auto-Titling
- * Tier 1: Thoughtful, non-sterile title brainstorming (Temperature: 1.0, Top_P: 0.95).
- * Tier 2: Low temperature (0.1) compliance harness enforcing word ceilings, prefix elimination, and JSON format.
- */
-async function handleTitleGeneration(request, env) {
-  try {
-    const body = await request.json();
-    const prayerPointBody = (body.body || body.text || body.initial_reflection || "").trim();
-
-    if (!prayerPointBody) {
-      return new Response(JSON.stringify({ error: "Missing or empty prayer point body" }), {
-        status: 400,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
-    }
-
-    const dialect = body.dialect === "EN_US" ? "US English (e.g., Savior, Honor, Neighbor)" : "English (Australian / UK; e.g., Saviour, Honour, Neighbour)";
-    const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
-
-    // --- TIER 1: Creative & Plain Brainstorming (Temperature: 1.0, Top_P: 0.95) ---
-    const tier1Content = await callOpenRouter(env, {
-      model: upstreamModel,
-      temperature: 1.0,
-      top_p: 0.95,
-      max_tokens: 9000,
-      messages: [
-        { role: "system", content: DEFAULT_TIER1_TITLE_PROMPT },
-        { role: "user", content: prayerPointBody.slice(0, 2000) },
-      ],
-      title: "Prayer Title Generator - Tier 1",
-    });
-
-    let tier1Candidates = [];
-    if (tier1Content) {
-      try {
-        const parsed = JSON.parse(tier1Content);
-        if (Array.isArray(parsed.candidates)) {
-          tier1Candidates = parsed.candidates;
-        }
-      } catch {
-        // Soft fail: proceed directly to Tier 2
-      }
-    }
-
-    // --- TIER 2: Verification & Compliance Harness (Low Temperature: 0.1) ---
-    const tier2Prompt = `${env.PROMPT_TITLE || DEFAULT_TIER2_TITLE_PROMPT}
-Dialect requirement: ${dialect}.`;
-
-    const tier2Input = JSON.stringify({
-      prayer_point_text: prayerPointBody.slice(0, 2000),
-      tier1_candidates: tier1Candidates.length > 0 ? tier1Candidates : undefined,
-      dialect: dialect,
-    });
-
-    const tier2Content = await callOpenRouter(env, {
-      model: upstreamModel,
-      temperature: 0.1,
-      max_tokens: 9000,
-      messages: [
-        { role: "system", content: tier2Prompt },
-        { role: "user", content: tier2Input },
-      ],
-      title: "Prayer Title Generator - Tier 2",
-    });
-
-    if (!tier2Content) {
-      return new Response(JSON.stringify({ error: "Empty or truncated model response" }), {
-        status: 502,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
-    }
-
-    return new Response(tier2Content, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      },
-    });
-  }
-}
-
-/**
  * Handle POST /api/v1/assistant, POST /api/v1/guide (and POST /) — "Prayer Assistant" Distillation Engine
  * Multi-turn, confessional Reformed inquiry and candidate prayer point generation.
  */
@@ -455,7 +382,7 @@ async function handleDistillationGuide(request, env) {
     };
 
     const promptJsonString = JSON.stringify(promptPayload);
-    const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
+    const upstreamModel = env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct";
 
     // --- DETERMINISTIC TURN-1 INQUIRY GATE ---
     // When the user has not yet provided a response (fresh Turn 1), a brief or
@@ -585,7 +512,8 @@ async function handleDistillationGuide(request, env) {
 /**
  * Handle POST /api/v1/suggest — Ambient Background Prayer Suggestions
  * Accepts batch target context, runs Two-Tier drafter & compliance harness,
- * returns 1-6 word petitions grounded strictly in user records.
+ * returns 3-12 points partitioned into Praise God, Thank God, and Ask God,
+ * with max 10 words per line, grounded strictly in user records.
  */
 async function handleSuggestionGeneration(request, env) {
   try {
@@ -608,14 +536,14 @@ async function handleSuggestionGeneration(request, env) {
       locale: locale,
     };
 
-    const upstreamModel = env.OPENROUTER_MODEL || "nvidia/nemotron-3.5-lightning";
+    const upstreamModel = env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct";
 
     // --- TIER 1: Grounded Petition Ideas Drafter (Temperature: 0.8, Top_P: 0.95) ---
     const tier1Content = await callOpenRouter(env, {
       model: upstreamModel,
       temperature: 0.8,
       top_p: 0.95,
-      max_tokens: 2000,
+      max_tokens: 3000,
       messages: [
         { role: "system", content: env.PROMPT_SUGGEST_TIER1 || DEFAULT_TIER1_SUGGEST_PROMPT },
         { role: "user", content: JSON.stringify(promptPayload) },
@@ -623,12 +551,18 @@ async function handleSuggestionGeneration(request, env) {
       title: "Prayer Suggestions - Tier 1",
     });
 
-    let tier1Candidates = [];
+    let tier1Candidates = { praise_god: [], thank_god: [], ask_god: [] };
     if (tier1Content) {
       try {
         const parsed = JSON.parse(tier1Content);
-        if (Array.isArray(parsed.candidates)) {
-          tier1Candidates = parsed.candidates;
+        if (parsed) {
+          if (Array.isArray(parsed.praise_god)) tier1Candidates.praise_god = parsed.praise_god;
+          if (Array.isArray(parsed.thank_god)) tier1Candidates.thank_god = parsed.thank_god;
+          if (Array.isArray(parsed.ask_god)) tier1Candidates.ask_god = parsed.ask_god;
+          // Legacy support if model returned flat candidates array
+          if (Array.isArray(parsed.candidates) && tier1Candidates.ask_god.length === 0) {
+            tier1Candidates.ask_god = parsed.candidates;
+          }
         }
       } catch {}
     }
@@ -637,7 +571,7 @@ async function handleSuggestionGeneration(request, env) {
     const tier2Content = await callOpenRouter(env, {
       model: upstreamModel,
       temperature: 0.1,
-      max_tokens: 2000,
+      max_tokens: 3000,
       messages: [
         { role: "system", content: env.PROMPT_SUGGEST_TIER2 || DEFAULT_TIER2_SUGGEST_HARNESS_PROMPT },
         { role: "user", content: JSON.stringify({ context: promptPayload, candidates: tier1Candidates }) },
@@ -645,32 +579,127 @@ async function handleSuggestionGeneration(request, env) {
       title: "Prayer Suggestions - Tier 2",
     });
 
-    let suggestions = [];
+    let resultGroups = { praise_god: [], thank_god: [], ask_god: [] };
     if (tier2Content) {
       try {
         const parsed = JSON.parse(tier2Content);
-        if (Array.isArray(parsed.suggestions)) {
-          suggestions = parsed.suggestions;
+        if (parsed) {
+          if (Array.isArray(parsed.praise_god)) resultGroups.praise_god = parsed.praise_god;
+          if (Array.isArray(parsed.thank_god)) resultGroups.thank_god = parsed.thank_god;
+          if (Array.isArray(parsed.ask_god)) resultGroups.ask_god = parsed.ask_god;
+          // Legacy support if model returned flat suggestions
+          if (Array.isArray(parsed.suggestions) && resultGroups.ask_god.length === 0) {
+            resultGroups.ask_god = parsed.suggestions;
+          }
         }
       } catch {}
     }
 
-    // Fallback if model failed or returned empty
-    if (!suggestions || suggestions.length === 0) {
-      suggestions = fallbackSuggestions(root, targetName);
+    // Defensive sanitization: ensure complete thoughts, valid starters, 4-15 words, and no dangling endings
+    const DANGLING_ENDINGS = /\b(and|or|nor|but|yet|so|in|into|to|unto|for|with|within|without|that|which|who|whom|whose|of|off|on|onto|at|by|from|as|about|regarding|during|through|throughout|over|under|upon|against|among|between|the|a|an|his|her|their|our|my|its|your|this|these|those)\b$/i;
+    const VALID_STARTERS = /^(for|that|a|an|because)\b/i;
+
+    function finalizeSuggestion(rawText, maxWords = 15, minWords = 4) {
+      if (!rawText || typeof rawText !== "string") return null;
+
+      // 1. Strip leading bullets, numbers, quotes, dashes, or whitespace
+      let text = rawText.replace(/^[\s•\-\*"'0-9.)]+/, "").replace(/["']$/, "").trim();
+      if (!text) return null;
+
+      // 2. Strip any trailing ellipses or cut-off dashes
+      text = text.replace(/(\.{2,}|…|--|-)$/, "").trim();
+
+      // 3. Remove trailing punctuation marks that precede trimming
+      text = text.replace(/[,;:]+$/, "").trim();
+
+      // 4. Split into words
+      let words = text.split(/\s+/).filter(Boolean);
+      if (words.length === 0) return null;
+
+      // 5. If word count exceeds maxWords, intelligently find a complete clause or trim safely
+      if (words.length > maxWords) {
+        // Check if there is a natural clause break (comma, semicolon, dash) within [minWords, maxWords] words
+        const clauseMatch = text.match(/^([^,;—–-]+)[,;—–-]/);
+        if (clauseMatch) {
+          const clauseWords = clauseMatch[1].trim().split(/\s+/).filter(Boolean);
+          if (clauseWords.length >= minWords && clauseWords.length <= maxWords) {
+            words = clauseWords;
+          }
+        }
+
+        // If still > maxWords, slice to maxWords and recursively strip dangling prepositions/conjunctions
+        if (words.length > maxWords) {
+          let trimmedWords = words.slice(0, maxWords);
+          while (trimmedWords.length > minWords && DANGLING_ENDINGS.test(trimmedWords[trimmedWords.length - 1])) {
+            trimmedWords.pop();
+          }
+          words = trimmedWords;
+        }
+      }
+
+      // 6. Ensure no dangling connectors or prepositions at the end
+      while (words.length > minWords && DANGLING_ENDINGS.test(words[words.length - 1])) {
+        words.pop();
+      }
+
+      // 7. Ensure valid starting word (For, That, A, An, Because)
+      if (words.length > 0 && !VALID_STARTERS.test(words[0])) {
+        words.unshift("For");
+        if (words.length > maxWords) {
+          words.pop();
+          while (words.length > minWords && DANGLING_ENDINGS.test(words[words.length - 1])) {
+            words.pop();
+          }
+        }
+      }
+
+      // 8. Enforce minimum word count of 4 words
+      if (words.length < minWords) {
+        return null;
+      }
+
+      let result = words.join(" ").replace(/[,;:\s]+$/, "").trim();
+      return result.length > 0 ? result : null;
     }
 
-    // Final defensive sanitization: strip bullet prefixes, enforce 1-6 words limit
-    suggestions = suggestions
-      .map((s) => String(s).replace(/^[•\-\*\s]+/, "").trim())
-      .filter((s) => s.length > 0)
-      .map((s) => {
-        const words = s.split(/\s+/);
-        return words.length > 6 ? words.slice(0, 6).join(" ") : s;
-      })
-      .slice(0, 5);
+    const sanitizeList = (list) =>
+      (list || [])
+        .map((s) => finalizeSuggestion(String(s), 15, 4))
+        .filter(Boolean);
 
-    return new Response(JSON.stringify({ suggestions }), {
+    let praiseGod = sanitizeList(resultGroups.praise_god);
+    let thankGod = sanitizeList(resultGroups.thank_god);
+    let askGod = sanitizeList(resultGroups.ask_god);
+
+    // Ensure at least one per group by falling back if missing
+    const fallbacks = fallbackGroupSuggestions(root, targetName);
+    if (praiseGod.length === 0) praiseGod = [fallbacks.praise_god[0]];
+    if (thankGod.length === 0) thankGod = [fallbacks.thank_god[0]];
+    if (askGod.length === 0) askGod = [fallbacks.ask_god[0]];
+
+    // Bounding total points to range 3 to 12
+    let total = praiseGod.length + thankGod.length + askGod.length;
+    while (total > 12) {
+      if (askGod.length > 1) {
+        askGod.pop();
+      } else if (thankGod.length > 1) {
+        thankGod.pop();
+      } else if (praiseGod.length > 1) {
+        praiseGod.pop();
+      } else {
+        break;
+      }
+      total = praiseGod.length + thankGod.length + askGod.length;
+    }
+
+    const allSuggestions = [...praiseGod, ...thankGod, ...askGod];
+
+    return new Response(JSON.stringify({
+      praise_god: praiseGod,
+      thank_god: thankGod,
+      ask_god: askGod,
+      suggestions: allSuggestions,
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -679,7 +708,13 @@ async function handleSuggestionGeneration(request, env) {
     });
   } catch (err) {
     console.error("SUGGEST_HANDLER_ERROR", err && err.stack ? err.stack : String(err));
-    return new Response(JSON.stringify({ suggestions: fallbackSuggestions("GENERAL", null) }), {
+    const fallbacks = fallbackGroupSuggestions("GENERAL", null);
+    return new Response(JSON.stringify({
+      praise_god: fallbacks.praise_god,
+      thank_god: fallbacks.thank_god,
+      ask_god: fallbacks.ask_god,
+      suggestions: [...fallbacks.praise_god, ...fallbacks.thank_god, ...fallbacks.ask_god],
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -689,36 +724,73 @@ async function handleSuggestionGeneration(request, env) {
   }
 }
 
-function fallbackSuggestions(root, targetName) {
+function fallbackGroupSuggestions(root, targetName) {
   if (root === "MISSION_PARTNERS") {
-    return [
-      "Fruitful gospel ministry",
-      "Perseverance in trials",
-      "Spiritual protection & unity",
-      "Open doors for truth",
-    ];
+    return {
+      praise_god: [
+        "For the Lord's sovereign dominion over all nations and peoples",
+      ],
+      thank_god: [
+        "For faithful gospel proclamation and open doors for biblical truth",
+        "That the scriptures are reaching unreached communities",
+      ],
+      ask_god: [
+        "For fruitful gospel ministry and perseverance in difficult trials",
+        "That ministry team workers remain united in Christ",
+        "A steadfast spirit of courage in the mission field",
+      ],
+    };
   } else if (root === "GROUPS") {
-    return [
-      "Mutual love & fellowship",
-      "Faithful witness in community",
-      "Grace amidst disagreement",
-      "Steadfast growth in Christ",
-    ];
+    return {
+      praise_god: [
+        "For Christ the cornerstone and head of His gathered church",
+      ],
+      thank_god: [
+        "For mutual love and faithful fellowship in the community",
+        "That believers are growing together in grace",
+      ],
+      ask_god: [
+        "For steadfast growth in Christ and grace amidst disagreement",
+        "That our community reflects Christ as salt and light",
+        "A spirit of humble service among one another",
+      ],
+    };
   } else if (root === "PEOPLE") {
-    return [
-      "Steadfast faith in trials",
-      "Deepened peace of Christ",
-      "Wisdom and godly discernment",
-      "Comfort in distress",
-      "Strength for daily walk",
-    ];
+    return {
+      praise_god: [
+        "For His steadfast love shown in Christ",
+        "Because God is faithful in all His promises",
+      ],
+      thank_god: [
+        "For His daily mercies and sustaining presence each morning",
+        "That the Lord hears and answers our earnest prayers",
+      ],
+      ask_god: [
+        "For wisdom, godly discernment, and comfort in distress",
+        "That he may experience the deepened peace of Christ",
+        "A steadfast heart anchored in God's holy word",
+      ],
+    };
   } else {
-    return [
-      "Righteousness and gospel peace",
-      "Faithful endurance today",
-      "Quietness of heart in God",
-      "Grace for every need",
-    ];
+    return {
+      praise_god: [
+        "For Almighty God sovereign over all human history",
+      ],
+      thank_god: [
+        "For His enduring patience and common grace toward all creation",
+        "That the light of the gospel shines in darkness",
+      ],
+      ask_god: [
+        "For righteousness, justice, and gospel peace across our land",
+        "A renewed reverence for God's holy word today",
+        "That the church remains faithful amidst cultural pressures",
+      ],
+    };
   }
+}
+
+function fallbackSuggestions(root, targetName) {
+  const groups = fallbackGroupSuggestions(root, targetName);
+  return [...groups.praise_god, ...groups.thank_god, ...groups.ask_god];
 }
 

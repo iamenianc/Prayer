@@ -26,6 +26,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             put(PrayerDatabaseHelper.COL_ENTITY_INTERACTED, 0)
             put(PrayerDatabaseHelper.COL_ENTITY_LAST_INTERACTED, null as Long?)
             put(PrayerDatabaseHelper.COL_ENTITY_CREATED, entity.createdAt)
+            put(PrayerDatabaseHelper.COL_ENTITY_PINNED, if (entity.isPinned) 1 else 0)
         }
         db.insert(PrayerDatabaseHelper.TABLE_ENTITIES, null, values)
         return entity
@@ -98,6 +99,18 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             if (contextDescription != null) {
                 put(PrayerDatabaseHelper.COL_ENTITY_CONTEXT, contextDescription.trim())
             }
+        }
+        db.update(
+            PrayerDatabaseHelper.TABLE_ENTITIES,
+            values,
+            "${PrayerDatabaseHelper.COL_ENTITY_ID} = ?",
+            arrayOf(id)
+        )
+    }
+
+    fun toggleEntityPinned(id: String, isPinned: Boolean) {
+        val values = ContentValues().apply {
+            put(PrayerDatabaseHelper.COL_ENTITY_PINNED, if (isPinned) 1 else 0)
         }
         db.update(
             PrayerDatabaseHelper.TABLE_ENTITIES,
@@ -231,6 +244,25 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
     }
 
 
+    fun getHistoricEntities(): List<IndividualEntity> {
+        val list = mutableListOf<IndividualEntity>()
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_ENTITIES,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_HISTORIC} = 1",
+            null,
+            null,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_CREATED} ASC"
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(cursorToEntity(it))
+            }
+        }
+        return list.ifEmpty { PreloadedContent.getHistoricEntities() }
+    }
+
     // --- Devotional Queue & Anti-Neglect Balancing ---
 
     fun getContemplativeTopics(blendHistoric: Boolean = false): List<TopicWithPoints> {
@@ -260,11 +292,11 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
 
         // If no user prayers exist, fallback to preloaded historic prayers
         val entitiesToServe = if (userEntities.isEmpty() || blendHistoric) {
-            val historicEntity = getEntity(PreloadedContent.HISTORIC_ENTITY_ID)
+            val historicEntities = getHistoricEntities()
             if (userEntities.isEmpty()) {
-                listOfNotNull(historicEntity)
+                historicEntities
             } else {
-                userEntities + listOfNotNull(historicEntity)
+                userEntities + historicEntities
             }
         } else {
             userEntities
@@ -306,6 +338,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         var theme = ThemeMode.WARM_VINTAGE_WHITE
         var scale = TextScale.LARGE
         var blendHistoric = false
+        var highContrast = false
 
         val cursor = db.query(PrayerDatabaseHelper.TABLE_CONFIG, null, null, null, null, null, null)
         cursor.use {
@@ -317,10 +350,11 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
                     "theme_mode" -> theme = runCatching { ThemeMode.valueOf(value) }.getOrDefault(ThemeMode.WARM_VINTAGE_WHITE)
                     "text_scale" -> scale = runCatching { TextScale.valueOf(value) }.getOrDefault(TextScale.LARGE)
                     "blend_historic_prayers" -> blendHistoric = value.toBoolean()
+                    "high_contrast_mode" -> highContrast = value.toBoolean()
                 }
             }
         }
-        return AppConfig(locale, theme, scale, blendHistoric)
+        return AppConfig(locale, theme, scale, blendHistoric, highContrast)
     }
 
     fun saveConfig(config: AppConfig) {
@@ -328,6 +362,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         saveConfigValue("theme_mode", config.themeMode.name)
         saveConfigValue("text_scale", config.textScale.name)
         saveConfigValue("blend_historic_prayers", config.blendHistoricPrayers.toString())
+        saveConfigValue("high_contrast_mode", config.highContrastMode.toString())
     }
 
     private fun saveConfigValue(key: String, value: String) {
@@ -349,7 +384,13 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             isPreloadedHistoric = c.getInt(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_ENTITY_HISTORIC)) == 1,
             interactedCount = c.getInt(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_ENTITY_INTERACTED)),
             lastInteractedAt = if (c.isNull(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_ENTITY_LAST_INTERACTED))) null else c.getLong(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_ENTITY_LAST_INTERACTED)),
-            createdAt = c.getLong(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_ENTITY_CREATED))
+            createdAt = c.getLong(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_ENTITY_CREATED)),
+            isPinned = try {
+                val pinnedIdx = c.getColumnIndex(PrayerDatabaseHelper.COL_ENTITY_PINNED)
+                if (pinnedIdx >= 0 && !c.isNull(pinnedIdx)) c.getInt(pinnedIdx) == 1 else false
+            } catch (e: Exception) {
+                false
+            }
         )
     }
 

@@ -27,15 +27,23 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.*
 import au.prayer.app.network.PrayerApiClient
+import au.prayer.app.network.PromptGroup
 import au.prayer.app.network.RecordedPoint
 import au.prayer.app.network.SuggestRequest
 import au.prayer.app.ui.gestures.edgeSwipeRight
 import au.prayer.app.ui.navigation.LifoBackStack
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.font.FontWeight
 import au.prayer.app.ui.components.LinedNotepad
+import au.prayer.app.ui.components.SilkMarkerRibbon
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
 import au.prayer.app.ui.theme.PrayerSpacing
@@ -46,6 +54,11 @@ private enum class JournalView {
     ENTITY_DETAIL,
     EDIT_PRAYER_POINT,
     SETTINGS
+}
+
+private fun formatJournalDate(timestamp: Long): String {
+    val sdf = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.ENGLISH)
+    return sdf.format(Date(timestamp))
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -63,6 +76,8 @@ fun JournalScreen(
     onDeletePrayerPoint: (String) -> Unit,
     onDeleteEntity: (String) -> Unit,
     onUpdateEntity: (id: String, displayName: String, rootCode: RootCode) -> Unit = { _, _, _ -> },
+    onTogglePinEntity: ((id: String, isPinned: Boolean) -> Unit)? = null,
+    onCreateEntity: ((rootCode: RootCode, displayName: String) -> IndividualEntity)? = null,
     onAddForEntity: (IndividualEntity) -> Unit = {},
     onLogForEntity: (IndividualEntity) -> Unit = onAddForEntity,
     apiClient: PrayerApiClient? = null,
@@ -97,7 +112,7 @@ fun JournalScreen(
         }
     }
     var editingPoint by remember { mutableStateOf<PrayerPoint?>(null) }
-    val journalPromptsCache = remember { mutableStateMapOf<String, List<String>>() }
+    val journalPromptsCache = remember { mutableStateMapOf<String, List<PromptGroup>>() }
     val journalPromptsLoading = remember { mutableStateMapOf<String, Boolean>() }
 
     // Long-press context action states for entities (people/groups)
@@ -106,6 +121,9 @@ fun JournalScreen(
     var editEntityName by remember { mutableStateOf("") }
     var editEntityRoot by remember { mutableStateOf(RootCode.PEOPLE) }
     var entityToDelete by remember { mutableStateOf<IndividualEntity?>(null) }
+    var addingToRoot by remember { mutableStateOf<RootCode?>(null) }
+    var newEntityName by remember { mutableStateOf("") }
+    var newEntityRoot by remember { mutableStateOf(RootCode.PEOPLE) }
 
     // Long-press context action states for individual prayer records
     var pointForContextActions by remember { mutableStateOf<PrayerPoint?>(null) }
@@ -126,7 +144,6 @@ fun JournalScreen(
     }
 
     // Editor fields
-    var editTitle by remember { mutableStateOf("") }
     var editBody by remember { mutableStateOf(TextFieldValue("")) }
     var editStatus by remember { mutableStateOf(PrayerStatus.ACTIVE) }
     var editTestimony by remember { mutableStateOf("") }
@@ -250,8 +267,8 @@ fun JournalScreen(
                                         shape = FlatSquareShape,
                                         color = colors.surfaceSubtle,
                                         contentColor = colors.textPrimary,
-                                        tonalElevation = PrayerSpacing.elevationSubtle,
-                                        border = BorderStroke(0.5.dp, colors.borderSubtle)
+                                        tonalElevation = PrayerSpacing.elevationNone,
+                                        border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
                                     ) {
                                         Row(
                                             modifier = Modifier
@@ -264,23 +281,64 @@ fun JournalScreen(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = root.displayTitle,
-                                                style = typography.prayerPointTitle,
-                                                color = colors.textPrimary
+                                                text = root.displayTitle.uppercase(),
+                                                style = typography.categoryLedgerHeader,
+                                                color = colors.leatherActive
                                             )
                                             Icon(
                                                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                                 contentDescription = if (isExpanded) "Collapse ${root.displayTitle}" else "Expand ${root.displayTitle}",
-                                                tint = colors.textSubtle
+                                                tint = colors.leatherActive
                                             )
                                         }
                                     }
-                                    HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                                 }
 
                                 val isExpanded = expandedRoots[root] ?: true
                                 if (isExpanded) {
                                     val groupEntities = entities.filter { it.rootCode == root }
+
+                                    // Option to add at the top of each listing under each group
+                                    item(key = "add_${root.name}") {
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = PrayerSpacing.primaryActionHeight)
+                                                .clickable {
+                                                    addingToRoot = root
+                                                    newEntityRoot = root
+                                                    newEntityName = ""
+                                                },
+                                            shape = FlatSquareShape,
+                                            color = colors.surface,
+                                            contentColor = colors.textPrimary,
+                                            tonalElevation = PrayerSpacing.elevationNone
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(
+                                                        horizontal = PrayerSpacing.large + PrayerSpacing.small,
+                                                        vertical = PrayerSpacing.medium
+                                                    ),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = when (root) {
+                                                        RootCode.PEOPLE -> "+ Add person"
+                                                        RootCode.GROUPS -> "+ Add group"
+                                                        RootCode.GENERAL -> "+ Add topic"
+                                                        RootCode.MISSION_PARTNERS -> "+ Add mission partner"
+                                                    },
+                                                    style = typography.button,
+                                                    color = colors.leatherActive
+                                                )
+                                            }
+                                        }
+                                        HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                    }
+
                                     if (groupEntities.isEmpty()) {
                                         item(key = "empty_${root.name}") {
                                             Box(
@@ -297,7 +355,7 @@ fun JournalScreen(
                                                     color = colors.textSubtle
                                                 )
                                             }
-                                            HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                                         }
                                     } else {
                                         items(groupEntities, key = { it.id }) { entity ->
@@ -321,21 +379,31 @@ fun JournalScreen(
                                                 tonalElevation = PrayerSpacing.elevationNone
                                             ) {
                                                 Column {
-                                                    Box(
+                                                    Row(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
                                                             .padding(
                                                                 horizontal = PrayerSpacing.large + PrayerSpacing.small,
                                                                 vertical = PrayerSpacing.medium
-                                                            )
+                                                            ),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
                                                     ) {
                                                         Text(
                                                             text = entity.displayName,
                                                             style = typography.prayerPointBody,
-                                                            color = colors.textPrimary
+                                                            color = colors.textPrimary,
+                                                            modifier = Modifier.weight(1f)
                                                         )
+                                                        if (entity.isPinned) {
+                                                            Text(
+                                                                text = "• PINNED",
+                                                                style = typography.marginStatus,
+                                                                color = colors.ribbonPrimary
+                                                            )
+                                                        }
                                                     }
-                                                    HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+                                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                                                 }
                                             }
                                         }
@@ -346,8 +414,10 @@ fun JournalScreen(
                     }
 
                     JournalView.ENTITY_DETAIL -> {
-                        selectedEntity?.let { entity ->
+                        selectedEntity?.let { rawEntity ->
+                            val entity = entities.find { it.id == rawEntity.id } ?: rawEntity
                             val points = getPointsForEntity(entity.id)
+                            var isJournalPromptsExpanded by remember(entity.id) { mutableStateOf(false) }
 
                             LaunchedEffect(entity.id) {
                                 if (apiClient != null && points.isNotEmpty() && !journalPromptsCache.containsKey(entity.id) && !entity.isPreloadedHistoric) {
@@ -371,8 +441,8 @@ fun JournalScreen(
                                     val result = apiClient.getSuggestions(request)
                                     journalPromptsLoading[entity.id] = false
                                     result.onSuccess { resp ->
-                                        if (resp.suggestions.isNotEmpty()) {
-                                            journalPromptsCache[entity.id] = resp.suggestions
+                                        if (resp.promptGroups.isNotEmpty()) {
+                                            journalPromptsCache[entity.id] = resp.promptGroups
                                         }
                                     }.onFailure {
                                         journalPromptsLoading[entity.id] = false
@@ -380,145 +450,278 @@ fun JournalScreen(
                                 }
                             }
 
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                // Quick Action: Add prayer point for this person/group
-                                OutlinedButton(
-                                    onClick = { onAddForEntity(entity) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(PrayerSpacing.primaryActionHeight),
-                                    shape = FlatSquareShape,
-                                    border = BorderStroke(0.5.dp, colors.border),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = colors.surface,
-                                        contentColor = colors.textPrimary
-                                    )
-                                ) {
-                                    Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
-                                }
-
-                                HorizontalDivider(thickness = 0.5.dp, color = colors.border)
-
-                                // Read-Only AI Prompts on past points (Strictly unlabelled in UI)
-                                val cachedPrompts = journalPromptsCache[entity.id].orEmpty()
-                                val isLoadingPrompts = journalPromptsLoading[entity.id] == true
-
-                                if (cachedPrompts.isNotEmpty() || isLoadingPrompts) {
-                                    Surface(
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    // Quick Action: Add prayer point for this person/group
+                                    Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(
-                                                horizontal = PrayerSpacing.large,
-                                                vertical = PrayerSpacing.medium
-                                            ),
-                                        shape = FlatSquareShape,
-                                        color = colors.surfaceSubtle,
-                                        tonalElevation = PrayerSpacing.elevationSubtle,
-                                        border = BorderStroke(0.5.dp, colors.borderSubtle)
+                                            .height(PrayerSpacing.primaryActionHeight),
+                                        verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Column(
+                                        OutlinedButton(
+                                            onClick = { onAddForEntity(entity) },
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(PrayerSpacing.medium)
+                                                .fillMaxHeight(),
+                                            shape = FlatSquareShape,
+                                            border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                containerColor = colors.surface,
+                                                contentColor = colors.textPrimary
+                                            )
                                         ) {
-                                            if (isLoadingPrompts && cachedPrompts.isEmpty()) {
-                                                Box(
-                                                    modifier = Modifier.fillMaxWidth(),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    CircularProgressIndicator(
-                                                        modifier = Modifier.size(14.dp),
-                                                        strokeWidth = 1.5.dp,
-                                                        color = colors.textSubtle
-                                                    )
-                                                }
-                                            }
-                                            if (cachedPrompts.isNotEmpty()) {
-                                                cachedPrompts.forEach { prompt ->
-                                                    Text(
-                                                        text = "• $prompt",
-                                                        style = typography.prayerPointBody,
-                                                        color = colors.textPrimary,
-                                                        modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
-                                                    )
-                                                }
-                                            }
+                                            Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
                                         }
                                     }
-                                    HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
-                                }
 
-                                LazyColumn(modifier = Modifier.weight(1f)) {
-                                    items(points, key = { it.id }) { point ->
+                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+
+                                    // Read-Only AI Prompts on past points (Grouped into Praise God, Thank God, Ask God) - Collapsed by default
+                                    val cachedGroups = journalPromptsCache[entity.id].orEmpty()
+                                    val isLoadingPrompts = journalPromptsLoading[entity.id] == true
+
+                                    if (cachedGroups.isNotEmpty() || isLoadingPrompts) {
                                         Surface(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .animateItem()
-                                                .combinedClickable(
-                                                    onClick = {
-                                                        // Click Once to Edit Prayer Point
-                                                        editingPoint = point
-                                                        editTitle = point.title
-                                                        editBody = TextFieldValue(point.description)
-                                                        editStatus = point.status
-                                                        editTestimony = point.answeredTestimony ?: ""
-                                                        showDeleteConfirm = false
-                                                        journalBackStack.push(JournalView.EDIT_PRAYER_POINT)
-                                                    },
-                                                    onLongClick = {
-                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                        pointForContextActions = point
-                                                    }
-                                                ),
+                                                .padding(
+                                                    horizontal = PrayerSpacing.large,
+                                                    vertical = PrayerSpacing.small
+                                                )
+                                                .clickable { isJournalPromptsExpanded = !isJournalPromptsExpanded },
                                             shape = FlatSquareShape,
-                                            color = colors.surface,
-                                            contentColor = colors.textPrimary,
-                                            tonalElevation = PrayerSpacing.elevationSubtle,
-                                            shadowElevation = PrayerSpacing.elevationSubtle
+                                            color = colors.surfaceSubtle,
+                                            tonalElevation = PrayerSpacing.elevationNone,
+                                            border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
                                         ) {
-                                            Column {
-                                                Column(
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.small)
+                                            ) {
+                                                Row(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(
-                                                            horizontal = PrayerSpacing.large,
-                                                            vertical = PrayerSpacing.medium
-                                                        )
+                                                        .heightIn(min = PrayerSpacing.minTouchTarget),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.SpaceBetween
                                                 ) {
-                                                    val isAnswered = point.status == PrayerStatus.ANSWERED
                                                     Text(
-                                                        text = point.title,
-                                                        style = if (isAnswered) {
-                                                            typography.prayerPointTitle.copy(textDecoration = TextDecoration.LineThrough)
-                                                        } else {
-                                                            typography.prayerPointTitle
-                                                        },
-                                                        color = if (isAnswered) colors.answeredText else colors.textPrimary
+                                                        text = "Prompts for Prayer",
+                                                        style = typography.caption.copy(fontWeight = FontWeight.SemiBold),
+                                                        color = colors.leatherPrimary
                                                     )
-                                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
-                                                    Text(
-                                                        text = point.description,
-                                                        style = if (isAnswered) {
-                                                            typography.prayerPointBody.copy(textDecoration = TextDecoration.LineThrough)
-                                                        } else {
-                                                            typography.prayerPointBody
-                                                        },
-                                                        color = if (isAnswered) colors.answeredText else colors.textPrimary
-                                                    )
-                                                    if (isAnswered && !point.answeredTestimony.isNullOrBlank()) {
-                                                        Spacer(modifier = Modifier.height(PrayerSpacing.small))
+                                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        if (isLoadingPrompts && cachedGroups.isEmpty()) {
+                                                            CircularProgressIndicator(
+                                                                modifier = Modifier.size(12.dp),
+                                                                strokeWidth = 1.dp,
+                                                                color = colors.textSubtle
+                                                            )
+                                                            Spacer(modifier = Modifier.width(PrayerSpacing.small))
+                                                        }
                                                         Text(
-                                                            text = "Thanksgiving: ${point.answeredTestimony}",
-                                                            style = typography.caption,
-                                                            color = colors.textSubtle
+                                                            text = if (isJournalPromptsExpanded) "Hide" else "Show",
+                                                            style = typography.marginStatus,
+                                                            color = colors.inkMuted
                                                         )
                                                     }
                                                 }
-                                                HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
+
+                                                if (isJournalPromptsExpanded) {
+                                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                                    Spacer(modifier = Modifier.height(PrayerSpacing.small))
+
+                                                    if (isLoadingPrompts && cachedGroups.isEmpty()) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(vertical = PrayerSpacing.medium),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            CircularProgressIndicator(
+                                                                modifier = Modifier.size(16.dp),
+                                                                strokeWidth = 1.5.dp,
+                                                                color = colors.textSubtle
+                                                            )
+                                                        }
+                                                    }
+                                                    if (cachedGroups.isNotEmpty()) {
+                                                        cachedGroups.forEach { group ->
+                                                            Text(
+                                                                text = group.title,
+                                                                style = typography.categoryLedgerHeader,
+                                                                color = colors.leatherPrimary,
+                                                                modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
+                                                            )
+                                                            group.prompts.forEach { prompt ->
+                                                                Text(
+                                                                    text = "• $prompt",
+                                                                    style = typography.prayerPointBody,
+                                                                    color = colors.textPrimary,
+                                                                    modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                    }
+
+                                    val groupedPoints = remember(points) {
+                                        points.groupBy { formatJournalDate(it.createdAt) }
+                                    }
+
+                                    LazyColumn(modifier = Modifier.weight(1f)) {
+                                        groupedPoints.forEach { (dateHeader, datePoints) ->
+                                            item(key = "date_header_${entity.id}_$dateHeader") {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            start = PrayerSpacing.textInset,
+                                                            end = PrayerSpacing.narrativeRightPadding,
+                                                            top = PrayerSpacing.medium,
+                                                            bottom = PrayerSpacing.extraSmall
+                                                        )
+                                                ) {
+                                                    Text(
+                                                        text = dateHeader,
+                                                        style = typography.marginStatus,
+                                                        color = colors.inkMuted
+                                                    )
+                                                }
+                                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                            }
+
+                                            items(datePoints, key = { it.id }) { point ->
+                                                val isAnswered = point.status == PrayerStatus.ANSWERED
+                                                Surface(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .animateItem()
+                                                        .combinedClickable(
+                                                            onClick = {
+                                                                editingPoint = point
+                                                                editBody = TextFieldValue(point.description)
+                                                                editStatus = point.status
+                                                                editTestimony = point.answeredTestimony ?: ""
+                                                                showDeleteConfirm = false
+                                                                journalBackStack.push(JournalView.EDIT_PRAYER_POINT)
+                                                            },
+                                                            onLongClick = {
+                                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                pointForContextActions = point
+                                                            }
+                                                        ),
+                                                    shape = FlatSquareShape,
+                                                    color = colors.surface,
+                                                    contentColor = colors.textPrimary,
+                                                    tonalElevation = PrayerSpacing.elevationNone
+                                                ) {
+                                                    Column {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(IntrinsicSize.Min)
+                                                        ) {
+                                                            // Left Track: 56dp margin track with [ ACTIVE ] or [ ANSWERED ] pill
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .width(PrayerSpacing.marginTrackWidth)
+                                                                    .fillMaxHeight()
+                                                                    .padding(top = PrayerSpacing.medium),
+                                                                contentAlignment = Alignment.TopCenter
+                                                            ) {
+                                                                Surface(
+                                                                    onClick = {
+                                                                        val newStatus = if (isAnswered) PrayerStatus.ACTIVE else PrayerStatus.ANSWERED
+                                                                        val testimony = if (newStatus == PrayerStatus.ANSWERED) point.answeredTestimony else null
+                                                                        onUpdatePrayerPoint(point.id, point.title, point.description, newStatus, testimony)
+                                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                    },
+                                                                    shape = RoundedCornerShape(4.dp),
+                                                                    border = BorderStroke(0.5.dp, if (isAnswered) colors.inkAnswered.copy(alpha = 0.5f) else colors.inkMuted.copy(alpha = 0.5f)),
+                                                                    color = colors.surface
+                                                                ) {
+                                                                    Text(
+                                                                        text = if (isAnswered) "ANSWERED" else "ACTIVE",
+                                                                        style = typography.marginStatus,
+                                                                        color = if (isAnswered) colors.inkAnswered else colors.inkMuted,
+                                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            // 0.75dp red/sepia vertical margin guide rule
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .width(PrayerSpacing.hairlineWidth)
+                                                                    .fillMaxHeight()
+                                                                    .background(colors.paperMarginRule)
+                                                            )
+
+                                                            // Right Track: Prayer Text Canvas (starts 8dp past rule, giving 56+8=64dp textInset)
+                                                            Column(
+                                                                modifier = Modifier
+                                                                    .weight(1f)
+                                                                    .padding(
+                                                                        start = 8.dp,
+                                                                        end = PrayerSpacing.narrativeRightPadding,
+                                                                        top = PrayerSpacing.medium,
+                                                                        bottom = PrayerSpacing.medium
+                                                                    )
+                                                            ) {
+                                                                val bulletText = if (point.description.trimStart().startsWith("•")) {
+                                                                    point.description
+                                                                } else {
+                                                                    "• ${point.description}"
+                                                                }
+                                                                Text(
+                                                                    text = bulletText,
+                                                                    style = if (isAnswered) {
+                                                                        typography.answeredThanksgiving.copy(textDecoration = TextDecoration.LineThrough)
+                                                                    } else {
+                                                                        typography.prayerPointBody
+                                                                    },
+                                                                    color = if (isAnswered) colors.inkAnswered else colors.textPrimary
+                                                                )
+                                                                if (isAnswered && !point.answeredTestimony.isNullOrBlank()) {
+                                                                    Spacer(modifier = Modifier.height(PrayerSpacing.small))
+                                                                    Text(
+                                                                        text = "Thanksgiving: ${point.answeredTestimony}",
+                                                                        style = typography.caption,
+                                                                        color = colors.inkAnswered,
+                                                                        modifier = Modifier.padding(start = PrayerSpacing.large)
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                                    }
+                                                }
                                             }
                                         }
                                     }
                                 }
+
+                                // Interactive Silk Marker Ribbon Tab anchored at top margin
+                                SilkMarkerRibbon(
+                                    isPinned = entity.isPinned,
+                                    onTogglePin = {
+                                        val newPinned = !entity.isPinned
+                                        selectedEntity = entity.copy(isPinned = newPinned)
+                                        onTogglePinEntity?.invoke(entity.id, newPinned)
+                                    },
+                                    color = colors.ribbonPrimary,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(end = 16.dp)
+                                )
                             }
                         }
                     }
@@ -530,24 +733,6 @@ fun JournalScreen(
                                     .fillMaxSize()
                                     .padding(PrayerSpacing.large)
                             ) {
-                                OutlinedTextField(
-                                    value = editTitle,
-                                    onValueChange = { editTitle = it },
-                                    label = { Text("Title", style = typography.caption) },
-                                    textStyle = typography.prayerPointTitle.copy(color = colors.textPrimary),
-                                    shape = FlatSquareShape,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = colors.textPrimary,
-                                        unfocusedBorderColor = colors.border,
-                                        focusedLabelColor = colors.textPrimary,
-                                        unfocusedLabelColor = colors.textSubtle,
-                                        cursorColor = colors.textPrimary
-                                    )
-                                )
-
-                                Spacer(modifier = Modifier.height(PrayerSpacing.medium))
-
                                 LinedNotepad(
                                     text = editBody,
                                     onTextChange = { editBody = it },
@@ -648,7 +833,7 @@ fun JournalScreen(
                                 // Save Changes Action
                                 Button(
                                     onClick = {
-                                        onUpdatePrayerPoint(point.id, editTitle, editBody.text, editStatus, editTestimony)
+                                        onUpdatePrayerPoint(point.id, "", editBody.text, editStatus, editTestimony)
                                         journalBackStack.pop()
                                     },
                                     modifier = Modifier
@@ -732,113 +917,12 @@ fun JournalScreen(
                     }
 
                     JournalView.SETTINGS -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(PrayerSpacing.large)
-                        ) {
-                            Text("Text Size", style = typography.caption, color = colors.textSubtle)
-                            Spacer(modifier = Modifier.height(PrayerSpacing.small))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
-                            ) {
-                                listOf(TextScale.LARGE, TextScale.REGULAR, TextScale.COMPACT).forEach { scale ->
-                                    val isSelected = config.textScale == scale
-                                    val bg by animateColorAsState(
-                                        targetValue = if (isSelected) colors.textPrimary else colors.surface,
-                                        label = "ScaleBg"
-                                    )
-                                    val textCol by animateColorAsState(
-                                        targetValue = if (isSelected) colors.background else colors.textPrimary,
-                                        label = "ScaleText"
-                                    )
-                                    Button(
-                                        onClick = { onUpdateConfig(config.copy(textScale = scale)) },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(PrayerSpacing.minTouchTarget),
-                                        shape = FlatSquareShape,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = bg,
-                                            contentColor = textCol
-                                        ),
-                                        border = BorderStroke(if (isSelected) 1.5.dp else 0.5.dp, colors.border)
-                                    ) {
-                                        Text(scale.displayName, style = typography.button)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(PrayerSpacing.large))
-
-                            Text("Language", style = typography.caption, color = colors.textSubtle)
-                            Spacer(modifier = Modifier.height(PrayerSpacing.small))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
-                            ) {
-                                listOf(
-                                    LocaleDialect.EN_AU_UK to "AU / UK",
-                                    LocaleDialect.EN_US to "US"
-                                ).forEach { (dialect, label) ->
-                                    val isSelected = config.localeDialect == dialect
-                                    val bg by animateColorAsState(
-                                        targetValue = if (isSelected) colors.textPrimary else colors.surface,
-                                        label = "DialectBg"
-                                    )
-                                    val textCol by animateColorAsState(
-                                        targetValue = if (isSelected) colors.background else colors.textPrimary,
-                                        label = "DialectText"
-                                    )
-                                    Button(
-                                        onClick = { onUpdateConfig(config.copy(localeDialect = dialect)) },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(PrayerSpacing.minTouchTarget),
-                                        shape = FlatSquareShape,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = bg,
-                                            contentColor = textCol
-                                        ),
-                                        border = BorderStroke(if (isSelected) 1.5.dp else 0.5.dp, colors.border)
-                                    ) {
-                                        Text(label, style = typography.button)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(PrayerSpacing.large))
-
-                            Text("Historic Prayers", style = typography.caption, color = colors.textSubtle)
-                            Spacer(modifier = Modifier.height(PrayerSpacing.small))
-                            val isHistoricOn = config.blendHistoricPrayers
-                            val histBg by animateColorAsState(
-                                targetValue = if (isHistoricOn) colors.textPrimary else colors.surface,
-                                label = "HistBg"
-                            )
-                            val histText by animateColorAsState(
-                                targetValue = if (isHistoricOn) colors.background else colors.textPrimary,
-                                label = "HistText"
-                            )
-                            Button(
-                                onClick = { onUpdateConfig(config.copy(blendHistoricPrayers = !config.blendHistoricPrayers)) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(PrayerSpacing.minTouchTarget),
-                                shape = FlatSquareShape,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = histBg,
-                                    contentColor = histText
-                                ),
-                                border = BorderStroke(if (isHistoricOn) 1.5.dp else 0.5.dp, colors.border)
-                            ) {
-                                Text(
-                                    text = if (isHistoricOn) "Blend into daily prayer: ON" else "Blend into daily prayer: OFF",
-                                    style = typography.button
-                                )
-                            }
-                        }
+                        SettingsScreen(
+                            config = config,
+                            colors = colors,
+                            typography = typography,
+                            onUpdateConfig = onUpdateConfig
+                        )
                     }
                 }
             }
@@ -1117,6 +1201,196 @@ fun JournalScreen(
         )
     }
 
+    if (addingToRoot != null) {
+        AlertDialog(
+            onDismissRequest = {
+                addingToRoot = null
+                newEntityName = ""
+            },
+            title = {
+                Text(
+                    text = "Add to ${newEntityRoot.displayTitle}",
+                    style = typography.prayerPointTitle,
+                    color = colors.textPrimary
+                )
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = newEntityName,
+                        onValueChange = { newEntityName = it },
+                        label = { Text("Name", style = typography.caption) },
+                        textStyle = typography.prayerPointBody.copy(color = colors.textPrimary),
+                        shape = FlatSquareShape,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colors.textPrimary,
+                            unfocusedBorderColor = colors.border,
+                            focusedLabelColor = colors.textPrimary,
+                            unfocusedLabelColor = colors.textSubtle,
+                            cursorColor = colors.textPrimary
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(PrayerSpacing.medium))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
+                    ) {
+                        val isPeople = newEntityRoot == RootCode.PEOPLE
+                        val peopleBg by animateColorAsState(
+                            targetValue = if (isPeople) colors.textPrimary else colors.surface,
+                            label = "NewPeopleBg"
+                        )
+                        val peopleText by animateColorAsState(
+                            targetValue = if (isPeople) colors.background else colors.textPrimary,
+                            label = "NewPeopleText"
+                        )
+
+                        Button(
+                            onClick = { newEntityRoot = RootCode.PEOPLE },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = peopleBg,
+                                contentColor = peopleText
+                            ),
+                            border = BorderStroke(if (isPeople) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("People", style = typography.button)
+                        }
+
+                        val isGroups = newEntityRoot == RootCode.GROUPS
+                        val groupsBg by animateColorAsState(
+                            targetValue = if (isGroups) colors.textPrimary else colors.surface,
+                            label = "NewGroupsBg"
+                        )
+                        val groupsText by animateColorAsState(
+                            targetValue = if (isGroups) colors.background else colors.textPrimary,
+                            label = "NewGroupsText"
+                        )
+
+                        Button(
+                            onClick = { newEntityRoot = RootCode.GROUPS },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = groupsBg,
+                                contentColor = groupsText
+                            ),
+                            border = BorderStroke(if (isGroups) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("Groups", style = typography.button)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(PrayerSpacing.small))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
+                    ) {
+                        val isGeneral = newEntityRoot == RootCode.GENERAL
+                        val generalBg by animateColorAsState(
+                            targetValue = if (isGeneral) colors.textPrimary else colors.surface,
+                            label = "NewGeneralBg"
+                        )
+                        val generalText by animateColorAsState(
+                            targetValue = if (isGeneral) colors.background else colors.textPrimary,
+                            label = "NewGeneralText"
+                        )
+
+                        Button(
+                            onClick = { newEntityRoot = RootCode.GENERAL },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = generalBg,
+                                contentColor = generalText
+                            ),
+                            border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("General", style = typography.button)
+                        }
+
+                        val isMission = newEntityRoot == RootCode.MISSION_PARTNERS
+                        val missionBg by animateColorAsState(
+                            targetValue = if (isMission) colors.textPrimary else colors.surface,
+                            label = "NewMissionBg"
+                        )
+                        val missionText by animateColorAsState(
+                            targetValue = if (isMission) colors.background else colors.textPrimary,
+                            label = "NewMissionText"
+                        )
+
+                        Button(
+                            onClick = { newEntityRoot = RootCode.MISSION_PARTNERS },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = missionBg,
+                                contentColor = missionText
+                            ),
+                            border = BorderStroke(if (isMission) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("Mission Partners", style = typography.button)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newEntityName.isNotBlank() && onCreateEntity != null) {
+                            val created = onCreateEntity(newEntityRoot, newEntityName.trim())
+                            addingToRoot = null
+                            newEntityName = ""
+                            selectedEntity = created
+                            journalBackStack.push(JournalView.ENTITY_DETAIL)
+                        }
+                    },
+                    enabled = newEntityName.isNotBlank(),
+                    shape = FlatSquareShape,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.textPrimary,
+                        contentColor = colors.background,
+                        disabledContainerColor = colors.border,
+                        disabledContentColor = colors.textSubtle
+                    )
+                ) {
+                    Text("Add", style = typography.button)
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        addingToRoot = null
+                        newEntityName = ""
+                    },
+                    shape = FlatSquareShape,
+                    border = BorderStroke(0.5.dp, colors.border),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = colors.textSubtle
+                    )
+                ) {
+                    Text("Cancel", style = typography.button)
+                }
+            },
+            shape = FlatSquareShape,
+            containerColor = colors.surface,
+            tonalElevation = 0.dp
+        )
+    }
+
     if (entityToDelete != null) {
         val entity = entityToDelete!!
         AlertDialog(
@@ -1220,7 +1494,6 @@ fun JournalScreen(
                     OutlinedButton(
                         onClick = {
                             editingPoint = point
-                            editTitle = point.title
                             editBody = TextFieldValue(point.description)
                             editStatus = point.status
                             editTestimony = point.answeredTestimony ?: ""

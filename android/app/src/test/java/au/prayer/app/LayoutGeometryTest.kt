@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import au.prayer.app.data.models.TextScale
+import au.prayer.app.data.models.ThemeMode
 import au.prayer.app.ui.theme.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -20,7 +21,7 @@ class LayoutGeometryTest {
 
     @Test
     fun `test warm vintage white color tokens`() {
-        assertEquals(Color(0xFFFAF7F2), WarmVintageWhiteColors.background)
+        assertEquals(Color(0xFFFAF7F0), WarmVintageWhiteColors.background)
         assertEquals(Color(0xFFFFFDF9), WarmVintageWhiteColors.surface)
         assertEquals(Color(0xFFFFFFFF), WarmVintageWhiteColors.surfaceElevated)
         assertEquals(Color(0xFFF0ECE1), WarmVintageWhiteColors.surfaceSubtle)
@@ -118,7 +119,7 @@ class LayoutGeometryTest {
         assertEquals(Color(0xFFFFFDF9), WarmVintageWhiteColorScheme.onPrimary)
         assertEquals(Color(0xFFFFFDF9), WarmVintageWhiteColorScheme.surface)
         assertEquals(Color(0xFF1C1917), WarmVintageWhiteColorScheme.onSurface)
-        assertEquals(Color(0xFFFAF7F2), WarmVintageWhiteColorScheme.background)
+        assertEquals(Color(0xFFFAF7F0), WarmVintageWhiteColorScheme.background)
         assertEquals(Color(0xFF1C1917), WarmVintageWhiteColorScheme.onBackground)
         assertEquals(Color(0xFFE3DDD3), WarmVintageWhiteColorScheme.outline)
     }
@@ -210,5 +211,96 @@ class LayoutGeometryTest {
                 bodyRatio >= 1.3f
             )
         }
+    }
+
+    @Test
+    fun `test four chromatic tiers design tokens`() {
+        val colors = WarmVintageWhiteColors
+
+        // Tier 1: Leather Casing
+        assertEquals(Color(0xFF8C532B), colors.leatherPrimary)
+        assertEquals(Color(0xFF5E2A2B), colors.leatherCordovan)
+        assertEquals(Color(0xFF2D483A), colors.leatherForest)
+        assertEquals(Color(0xFF35322F), colors.leatherObsidian)
+
+        // Tier 2: Paper Canvas & Ruling
+        assertEquals(Color(0xFFFAF7F0), colors.paperBackground)
+        assertEquals(Color(0xFFF5EFEB), colors.paperIvory)
+        assertEquals(Color(0xFFEFE8DA), colors.paperParchment)
+        assertEquals(Color(0xFFE2DDD5).copy(alpha = 0.70f), colors.paperFeintRule)
+        assertEquals(Color(0xFFE5B4B4), colors.paperMarginRule)
+
+        // Tier 3: Archival Inks
+        assertEquals(Color(0xFF1C1A17), colors.inkPrimary)
+        assertEquals(Color(0xFF3D6B52), colors.inkAnswered)
+        assertEquals(Color(0xFF33261F), colors.inkSecondary)
+        assertEquals(Color(0xFF1B2433), colors.inkMidnight)
+        assertEquals(Color(0xFF6E675F), colors.inkMuted)
+
+        // Tier 4: Ephemera & Accents
+        assertEquals(Color(0xFF8B2635), colors.ribbonPrimary)
+        assertEquals(Color(0xFF1E4D3B), colors.ribbonEmerald)
+        assertEquals(Color(0xFFB8860B), colors.ribbonGold)
+        assertEquals(Color(0xFFF5DE88).copy(alpha = 0.45f), colors.selectionAmber)
+        assertEquals(Color(0xFF8B2635), colors.stateAlert)
+        assertEquals(Color.Black.copy(alpha = 0.15f), colors.leatherPerimeterBorder)
+    }
+
+    @Test
+    fun `test modern folio spatial layout and stationery geometry`() {
+        assertEquals(56.dp, PrayerSpacing.marginTrackWidth)
+        assertEquals(64.dp, PrayerSpacing.textInset)
+        assertEquals(24.dp, PrayerSpacing.narrativeRightPadding)
+        assertEquals(0.75.dp, PrayerSpacing.hairlineWidth)
+        assertEquals(18.dp, PrayerSpacing.ribbonWidth)
+        assertEquals(40.dp, PrayerSpacing.ribbonRestingHeight)
+        assertEquals(54.dp, PrayerSpacing.ribbonPinnedHeight)
+        assertEquals(24.dp, PrayerSpacing.spineGutterWidth)
+
+        // Invariant: textInset must equal marginTrackWidth + 8dp clearance
+        assertEquals(PrayerSpacing.marginTrackWidth + 8.dp, PrayerSpacing.textInset)
+    }
+
+    @Test
+    fun `test devotional sanctuary touch zones sum to 100 percent`() {
+        val leftZoneWeight = 0.30f
+        val centerZoneWeight = 0.40f
+        val rightZoneWeight = 0.30f
+
+        assertEquals(1.0f, leftZoneWeight + centerZoneWeight + rightZoneWeight, 0.001f)
+    }
+
+    @Test
+    fun `test semantic folio typography tokens across scale tiers`() {
+        val large = getPrayerTypography(TextScale.LARGE)
+        assertEquals(12.sp, large.frontispieceHeader.fontSize)
+        assertEquals(22.sp, large.subjectHeader.fontSize)
+        assertEquals(17.sp, large.prayerPointBullet.fontSize)
+        assertEquals(16.sp, large.answeredThanksgiving.fontSize)
+        assertEquals(15.sp, large.suggestedIntercession.fontSize)
+        assertEquals(13.sp, large.categoryLedgerHeader.fontSize)
+        assertEquals(11.sp, large.marginStatus.fontSize)
+        assertEquals(13.sp, large.historicalFootnote.fontSize)
+
+        val regular = getPrayerTypography(TextScale.REGULAR)
+        assertTrue(large.prayerPointBullet.fontSize > regular.prayerPointBullet.fontSize)
+
+        val compact = getPrayerTypography(TextScale.COMPACT)
+        assertTrue(regular.prayerPointBullet.fontSize > compact.prayerPointBullet.fontSize)
+    }
+
+    @Test
+    fun `test accessible high contrast colors contract`() {
+        val hc = AccessibleHighContrastColors
+        assertEquals(Color(0xFFFFFFFF), hc.background)
+        assertEquals(Color(0xFF0F0E0D), hc.textPrimary)
+        assertEquals(Color(0xFF9C9488), hc.paperFeintRule)
+        assertEquals(Color(0xFFA63D40), hc.paperMarginRule)
+        assertEquals(Color(0xFF5A2800), hc.leatherPrimary)
+        assertEquals(Color(0xFF0F0E0D), hc.inkPrimary)
+        assertEquals(Color(0xFF1E4D3B), hc.inkAnswered)
+
+        val resolved = getFolioColors(ThemeMode.WARM_VINTAGE_WHITE, highContrastMode = true)
+        assertEquals(AccessibleHighContrastColors, resolved)
     }
 }

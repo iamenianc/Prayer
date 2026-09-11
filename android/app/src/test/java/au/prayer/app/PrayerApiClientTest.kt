@@ -67,6 +67,52 @@ class PrayerApiClientTest {
     }
 
     @Test
+    fun `test SuggestResponse grouped deserialization for Praise God, Thank God, Ask God`() {
+        val wireJson = """
+            {
+                "praise_god": [
+                    "For His steadfast love shown in Christ",
+                    "Because God reigns sovereign over all creation"
+                ],
+                "thank_god": [
+                    "That his cancer is in remission",
+                    "For faithful preservation through trials"
+                ],
+                "ask_god": [
+                    "A new and renewed mind",
+                    "That he may walk in wisdom and truth"
+                ],
+                "suggestions": [
+                    "For His steadfast love shown in Christ",
+                    "Because God reigns sovereign over all creation",
+                    "That his cancer is in remission",
+                    "For faithful preservation through trials",
+                    "A new and renewed mind",
+                    "That he may walk in wisdom and truth"
+                ]
+            }
+        """.trimIndent()
+
+        val response = json.decodeFromString(SuggestResponse.serializer(), wireJson)
+
+        assertEquals(2, response.praiseGod.size)
+        assertEquals(2, response.thankGod.size)
+        assertEquals(2, response.askGod.size)
+        assertEquals(6, response.suggestions.size)
+
+        val groups = response.promptGroups
+        assertEquals(3, groups.size)
+        assertEquals("Praise God", groups[0].title)
+        assertEquals("Thank God", groups[1].title)
+        assertEquals("Ask God", groups[2].title)
+
+        assertEquals("For His steadfast love shown in Christ", groups[0].prompts[0])
+        assertEquals("Because God reigns sovereign over all creation", groups[0].prompts[1])
+        assertEquals("That his cancer is in remission", groups[1].prompts[0])
+        assertEquals("A new and renewed mind", groups[2].prompts[0])
+    }
+
+    @Test
     fun `test SuggestResponse ignores unknown JSON keys gracefully`() {
         val wireJsonWithExtra = """
             {

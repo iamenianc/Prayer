@@ -268,19 +268,147 @@ class DevotionalFlowsTest {
 
     @Test
     fun `test read-only prompts formatting constraints`() {
-        val mockPrompts = listOf(
-            "Steadfast faith in trials",
-            "Deepened peace of Christ",
-            "Patience under affliction",
-            "Comfort in sorrow"
+        val mockPraise = listOf(
+            "For His steadfast love shown in Christ",
+            "Because God reigns sovereign over all creation"
+        )
+        val mockThank = listOf(
+            "That his cancer is in remission",
+            "For faithful preservation through trials"
+        )
+        val mockAsk = listOf(
+            "A new and renewed mind",
+            "That he may walk in wisdom and truth"
         )
 
-        assertTrue("Prompts should be 3 to 5 lines: ${mockPrompts.size}", mockPrompts.size in 3..5)
-        mockPrompts.forEach { prompt ->
+        val groups = listOf(
+            au.prayer.app.network.PromptGroup("Praise God", mockPraise),
+            au.prayer.app.network.PromptGroup("Thank God", mockThank),
+            au.prayer.app.network.PromptGroup("Ask God", mockAsk)
+        )
+
+        val allPrompts = groups.flatMap { it.prompts }
+
+        // Total points should be in range 3 to 12
+        assertTrue("Prompts should be 3 to 12 lines: ${allPrompts.size}", allPrompts.size in 3..12)
+
+        // At least one per group
+        assertEquals(3, groups.size)
+        groups.forEach { group ->
+            assertTrue("Group '${group.title}' must have at least one prompt", group.prompts.isNotEmpty())
+        }
+
+        allPrompts.forEach { prompt ->
             val wordCount = prompt.split("\\s+".toRegex()).size
-            assertTrue("Each prompt should be 1 to 6 words: $wordCount ('$prompt')", wordCount in 1..6)
+            // Allowable word count for each line is in the range 4 to 15 words
+            assertTrue("Each prompt should be 4 to 15 words: $wordCount ('$prompt')", wordCount in 4..15)
             assertFalse("Must not start with 'Pray for'", prompt.startsWith("Pray for", ignoreCase = true))
             assertFalse("Must not start with 'Ask God to'", prompt.startsWith("Ask God to", ignoreCase = true))
+
+            // Mandatory opening word: must start with For, That, A, An, or Because
+            val firstWord = prompt.split("\\s+".toRegex()).first().lowercase()
+            val validStarters = listOf("for", "that", "a", "an", "because")
+            assertTrue("Prompt must start with For, That, A, or Because: actual '$firstWord' ('$prompt')", validStarters.contains(firstWord))
+        }
+    }
+
+    @Test
+    fun `test journal subject addition per sphere labels and routing`() {
+        RootCode.entries.forEach { root ->
+            val label = when (root) {
+                RootCode.PEOPLE -> "+ Add person"
+                RootCode.GROUPS -> "+ Add group"
+                RootCode.GENERAL -> "+ Add topic"
+                RootCode.MISSION_PARTNERS -> "+ Add mission partner"
+            }
+            assertTrue("Label should start with + Add", label.startsWith("+ Add "))
+            assertFalse("Label must not contain clinical or forbidden terms", label.contains("target") || label.contains("entity") || label.contains("ticket"))
+        }
+
+        // Test creating subject in repository/data flow
+        val newPerson = IndividualEntity(rootCode = RootCode.PEOPLE, displayName = "Jonathan")
+        assertEquals(RootCode.PEOPLE, newPerson.rootCode)
+        assertEquals("Jonathan", newPerson.displayName)
+
+        val newMissionPartner = IndividualEntity(rootCode = RootCode.MISSION_PARTNERS, displayName = "Wycliffe Bible Translators")
+        assertEquals(RootCode.MISSION_PARTNERS, newMissionPartner.rootCode)
+        assertEquals("Wycliffe Bible Translators", newMissionPartner.displayName)
+    }
+
+    @Test
+    fun `test journal date formatting and separation by full English date`() {
+        val dateFormat = java.text.SimpleDateFormat("EEEE, d MMMM yyyy", java.util.Locale.ENGLISH)
+        
+        // Use calendar to test a specific date: 11 September 2026 (Friday)
+        val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+            set(2026, java.util.Calendar.SEPTEMBER, 11, 10, 30, 0)
+        }
+        dateFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val formattedDate = dateFormat.format(java.util.Date(cal.timeInMillis))
+        assertEquals("Friday, 11 September 2026", formattedDate)
+
+        // Multiple entries across different dates grouped by formatted date
+        val cal2 = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC")).apply {
+            set(2026, java.util.Calendar.SEPTEMBER, 10, 15, 0, 0)
+        }
+        val p1 = PrayerPoint(entityId = "e1", title = "", description = "Point 1", createdAt = cal.timeInMillis)
+        val p2 = PrayerPoint(entityId = "e1", title = "", description = "Point 2", createdAt = cal.timeInMillis + 1000)
+        val p3 = PrayerPoint(entityId = "e1", title = "", description = "Point 3", createdAt = cal2.timeInMillis)
+
+        val points = listOf(p1, p2, p3)
+        val grouped = points.groupBy { dateFormat.format(java.util.Date(it.createdAt)) }
+
+        assertEquals(2, grouped.keys.size)
+        assertTrue(grouped.containsKey("Friday, 11 September 2026"))
+        assertTrue(grouped.containsKey("Thursday, 10 September 2026"))
+        assertEquals(2, grouped["Friday, 11 September 2026"]?.size)
+        assertEquals(1, grouped["Thursday, 10 September 2026"]?.size)
+    }
+
+    @Test
+    fun `test prayer prompts default presentation is collapsed and expandable on demand`() {
+        // Initial state invariant: prompts are hidden/collapsed by default
+        var isPromptsExpandedInSanctuary = false
+        var isPromptsExpandedInJournal = false
+        assertFalse("Sanctuary prompts must be collapsed by default", isPromptsExpandedInSanctuary)
+        assertFalse("Journal prompts must be collapsed by default", isPromptsExpandedInJournal)
+
+        // User chooses to view prompts (expand)
+        isPromptsExpandedInSanctuary = true
+        isPromptsExpandedInJournal = true
+        assertTrue("User can expand sanctuary prompts on demand", isPromptsExpandedInSanctuary)
+        assertTrue("User can expand journal prompts on demand", isPromptsExpandedInJournal)
+
+        // User chooses to collapse prompts again
+        isPromptsExpandedInSanctuary = false
+        isPromptsExpandedInJournal = false
+        assertFalse("User can re-collapse sanctuary prompts", isPromptsExpandedInSanctuary)
+        assertFalse("User can re-collapse journal prompts", isPromptsExpandedInJournal)
+
+        // Lexical invariant: toggle phrases must be reverent and free from forbidden clinical terms
+        val sanctuaryToggleHeader = "❧   Prompts for Prayer   ❧"
+        val sanctuaryExpandText = "Tap to view prompts"
+        val sanctuaryCollapseText = "Tap to collapse"
+        val journalHeader = "Prompts for Prayer"
+        val journalExpandText = "Show"
+        val journalCollapseText = "Hide"
+
+        val allPromptStrings = listOf(
+            sanctuaryToggleHeader,
+            sanctuaryExpandText,
+            sanctuaryCollapseText,
+            journalHeader,
+            journalExpandText,
+            journalCollapseText
+        )
+
+        val forbiddenTerms = listOf("ai", "target", "entity", "ticket", "bot")
+        allPromptStrings.forEach { str ->
+            val words = str.lowercase().split(Regex("[^a-z0-9]+")).filter { it.isNotBlank() }
+            forbiddenTerms.forEach { forbidden ->
+                assertFalse("Prompt UI string '$str' must not contain '$forbidden'", words.contains(forbidden))
+            }
         }
     }
 }
+

@@ -92,18 +92,21 @@ class DataModelsTest {
         assertEquals(ThemeMode.WARM_VINTAGE_WHITE, defaultConfig.themeMode)
         assertEquals(TextScale.LARGE, defaultConfig.textScale)
         assertFalse(defaultConfig.blendHistoricPrayers)
+        assertFalse(defaultConfig.highContrastMode)
 
         val customConfig = defaultConfig.copy(
             localeDialect = LocaleDialect.EN_US,
             themeMode = ThemeMode.WARM_VINTAGE_WHITE,
             textScale = TextScale.COMPACT,
-            blendHistoricPrayers = true
+            blendHistoricPrayers = true,
+            highContrastMode = true
         )
 
         assertEquals(LocaleDialect.EN_US, customConfig.localeDialect)
         assertEquals(ThemeMode.WARM_VINTAGE_WHITE, customConfig.themeMode)
         assertEquals(TextScale.COMPACT, customConfig.textScale)
         assertTrue(customConfig.blendHistoricPrayers)
+        assertTrue(customConfig.highContrastMode)
     }
 
     @Test
@@ -141,9 +144,26 @@ class DataModelsTest {
     @Test
     fun `test ThemeMode and TextScale display names`() {
         assertEquals("Warm Vintage White", ThemeMode.WARM_VINTAGE_WHITE.displayName)
+        assertEquals("Saddle Tan", ThemeMode.SADDLE_TAN.displayName)
+        assertEquals("Horween Cordovan", ThemeMode.HORWEEN_CORDOVAN.displayName)
+        assertEquals("Hunter Forest", ThemeMode.HUNTER_FOREST.displayName)
+        assertEquals("Obsidian Hide", ThemeMode.OBSIDIAN_HIDE.displayName)
 
         assertEquals("Large", TextScale.LARGE.displayName)
         assertEquals("Regular", TextScale.REGULAR.displayName)
         assertEquals("Compact", TextScale.COMPACT.displayName)
+    }
+
+    @Test
+    fun `test IndividualEntity isPinned field and toggle`() {
+        val entity = IndividualEntity(
+            rootCode = RootCode.PEOPLE,
+            displayName = "C.S. Lewis",
+            isPinned = false
+        )
+        assertFalse(entity.isPinned)
+
+        val pinned = entity.copy(isPinned = true)
+        assertTrue(pinned.isPinned)
     }
 }

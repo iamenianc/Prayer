@@ -147,8 +147,7 @@ fun LogPrayerScreen(
                                 val text = directText.text.trim()
                                 if (text.isNotBlank()) {
                                     if (selectedEntity != null) {
-                                        val fallbackTitle = apiClient.generateOfflineFallbackTitle(text)
-                                        onSavePrayerPoint(selectedEntity!!.id, text, fallbackTitle)
+                                        onSavePrayerPoint(selectedEntity!!.id, text, null)
                                         onSavedEntity(selectedEntity!!)
                                     } else {
                                         logBackStack.push(LogStep.SELECT_ENTITY)
@@ -222,7 +221,7 @@ fun LogPrayerScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .background(colors.surface)
+                                    .background(colors.paperBackground)
                             ) {
                                 LinedNotepad(
                                     text = directText,
@@ -256,8 +255,7 @@ fun LogPrayerScreen(
                                             val text = directText.text.trim()
                                             if (text.isNotBlank()) {
                                                 if (selectedEntity != null) {
-                                                    val fallbackTitle = apiClient.generateOfflineFallbackTitle(text)
-                                                    onSavePrayerPoint(selectedEntity!!.id, text, fallbackTitle)
+                                                    onSavePrayerPoint(selectedEntity!!.id, text, null)
                                                     onSavedEntity(selectedEntity!!)
                                                 } else {
                                                     logBackStack.push(LogStep.SELECT_ENTITY)
@@ -412,8 +410,7 @@ fun LogPrayerScreen(
                                                             if (newEntityName.isNotBlank()) {
                                                                 val created = onCreateEntity(selectedRootFilter, newEntityName.trim())
                                                                 val text = directText.text.trim()
-                                                                val fallbackTitle = apiClient.generateOfflineFallbackTitle(text)
-                                                                onSavePrayerPoint(created.id, text, fallbackTitle)
+                                                                onSavePrayerPoint(created.id, text, null)
                                                                 onSavedEntity(created)
                                                             }
                                                         },
@@ -493,8 +490,7 @@ fun LogPrayerScreen(
                                                 onClick = {
                                                     // Direct 1-tap save without confirmation
                                                     val text = directText.text.trim()
-                                                    val fallbackTitle = apiClient.generateOfflineFallbackTitle(text)
-                                                    onSavePrayerPoint(entity.id, text, fallbackTitle)
+                                                    onSavePrayerPoint(entity.id, text, null)
                                                     onSavedEntity(entity)
                                                 },
                                                 onLongClick = {

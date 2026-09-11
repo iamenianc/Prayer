@@ -21,13 +21,21 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.sp
 import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.PrayerPoint
 import au.prayer.app.data.models.PrayerStatus
 import au.prayer.app.data.models.TopicWithPoints
 import au.prayer.app.network.PrayerApiClient
+import au.prayer.app.network.PromptGroup
 import au.prayer.app.network.RecordedPoint
 import au.prayer.app.network.SuggestRequest
+import au.prayer.app.ui.components.SilkMarkerRibbon
 import au.prayer.app.ui.gestures.prayerSwipeGestures
 import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
@@ -46,11 +54,12 @@ fun SanctuaryPrayerScreen(
     onNextTopic: () -> Unit,
     onPrevTopic: () -> Unit,
     onExit: () -> Unit,
-    onToggleAnswered: ((String) -> Unit)? = null
+    onToggleAnswered: ((String) -> Unit)? = null,
+    onTogglePinEntity: ((id: String, isPinned: Boolean) -> Unit)? = null
 ) {
     val haptic = LocalHapticFeedback.current
     var actionPoint by remember { mutableStateOf<PrayerPoint?>(null) }
-    val promptsCache = remember { mutableStateMapOf<String, List<String>>() }
+    val promptsCache = remember { mutableStateMapOf<String, List<PromptGroup>>() }
     val promptsLoading = remember { mutableStateMapOf<String, Boolean>() }
 
     BackHandler(enabled = true) {
@@ -86,25 +95,32 @@ fun SanctuaryPrayerScreen(
                 onEdgeSwipeRight = onExit
             )
     ) {
-        // Accessibility tap zones (subtle touch regions):
-        // Right 75% advances; Left 25% returns
+        // Devotional Prayer Touch Zones (30% / 40% / 30% spatial zoning)
         Row(
             modifier = Modifier.fillMaxSize()
         ) {
+            // Left 30%: Previous Topic
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .weight(0.25f)
+                    .weight(0.30f)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = onPrevTopic
                     )
             )
+            // Center 40%: Reading Area & Long-Press Status Resolution
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .weight(0.75f)
+                    .weight(0.40f)
+            )
+            // Right 30%: Next Topic
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(0.30f)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
@@ -142,6 +158,7 @@ fun SanctuaryPrayerScreen(
             val entityId = pageTopic.entity.id
             val totalPointsCount = pageTopic.activePoints.size + pageTopic.answeredPoints.size
             var isAnsweredExpanded by remember(pageTopic.entity.id) { mutableStateOf(false) }
+            var isPromptsExpanded by remember(pageTopic.entity.id) { mutableStateOf(false) }
             val scrollState = rememberScrollState()
 
             LaunchedEffect(entityId) {
@@ -167,8 +184,8 @@ fun SanctuaryPrayerScreen(
                     val result = apiClient.getSuggestions(request)
                     promptsLoading[entityId] = false
                     result.onSuccess { resp ->
-                        if (resp.suggestions.isNotEmpty()) {
-                            promptsCache[entityId] = resp.suggestions
+                        if (resp.promptGroups.isNotEmpty()) {
+                            promptsCache[entityId] = resp.promptGroups
                         }
                     }.onFailure {
                         promptsLoading[entityId] = false
@@ -176,192 +193,370 @@ fun SanctuaryPrayerScreen(
                 }
             }
 
-            // Main Content Area with generous liturgical whitespace following the 8dp grid
-            Column(
+            // Main Content Area: Centered Vellum Sheet (max 720dp) with Fine Ruled Paper Canvas
+            val density = LocalDensity.current
+            val strokeWidth = with(density) { PrayerSpacing.hairlineWidth.toPx() }
+            val marginXPx = with(density) { PrayerSpacing.marginTrackWidth.toPx() }
+            val feintRuleColor = colors.paperFeintRule
+            val marginRuleColor = colors.paperMarginRule
+            val bodyCadencePx = with(density) { 28.sp.toPx() }
+            val topHeaderClearancePx = with(density) { 72.dp.toPx() }
+
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .safeDrawingPadding()
-                    .padding(
-                        horizontal = PrayerSpacing.extraLarge,
-                        vertical = PrayerSpacing.extraLarge
-                    )
+                    .background(colors.paperBackground),
+                contentAlignment = Alignment.TopCenter
             ) {
-                // Solemn Heading: Praying for [Name]
-                Text(
-                    text = "Praying for ${pageTopic.entity.displayName}",
-                    style = typography.topicTitle,
-                    color = colors.textPrimary,
-                    modifier = Modifier.padding(bottom = PrayerSpacing.extraLarge)
-                )
-
-                // Active Prayer Points: Strictly unnumbered, pure substantive titles & bodies in elevated cards
-                pageTopic.activePoints.forEach { point ->
-                    Surface(
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .widthIn(max = 720.dp)
+                        .fillMaxWidth()
+                ) {
+                    val viewportHeight = maxHeight
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = PrayerSpacing.medium)
-                            .combinedClickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = onNextTopic,
-                                onLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    actionPoint = point
+                            .defaultMinSize(minHeight = viewportHeight)
+                            .verticalScroll(scrollState)
+                            .safeDrawingPadding()
+                            .drawBehind {
+                                // Draw classic stationery red/sepia vertical margin rule at 56dp
+                                drawLine(
+                                    color = marginRuleColor,
+                                    start = Offset(marginXPx, 0f),
+                                    end = Offset(marginXPx, size.height),
+                                    strokeWidth = strokeWidth
+                                )
+
+                                // Draw baseline-locked feint horizontal rules at 28sp cadence
+                                var y = topHeaderClearancePx
+                                while (y <= size.height) {
+                                    drawLine(
+                                        color = feintRuleColor,
+                                        start = Offset(0f, y),
+                                        end = Offset(size.width, y),
+                                        strokeWidth = strokeWidth
+                                    )
+                                    y += bodyCadencePx
                                 }
-                            ),
-                        shape = FlatSquareShape,
-                        color = colors.surface,
-                        tonalElevation = PrayerSpacing.elevationSubtle,
-                        shadowElevation = PrayerSpacing.elevationSubtle,
-                        border = BorderStroke(0.5.dp, colors.borderSubtle)
+                            }
                     ) {
-                        Column(
+                        // Devotional Subject Header: Praying for [Name] (22sp / 32sp, sits on first prominent rule)
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(PrayerSpacing.large)
+                                .padding(
+                                    start = PrayerSpacing.textInset,
+                                    end = PrayerSpacing.narrativeRightPadding,
+                                    top = PrayerSpacing.large,
+                                    bottom = PrayerSpacing.large
+                                )
                         ) {
                             Text(
-                                text = point.title,
-                                style = typography.prayerPointTitle,
-                                color = colors.textPrimary,
-                                modifier = Modifier.padding(bottom = PrayerSpacing.small)
-                            )
-                            Text(
-                                text = point.description,
-                                style = typography.prayerPointBody,
-                                color = colors.textPrimary
+                                text = if (pageTopic.entity.isPreloadedHistoric) {
+                                    pageTopic.entity.displayName
+                                } else {
+                                    "Praying for ${pageTopic.entity.displayName}"
+                                },
+                                style = typography.subjectHeader,
+                                color = colors.inkPrimary
                             )
                         }
-                    }
-                }
 
-                // Read-Only AI Prompts based on past points (Strictly unlabelled in UI)
-                val cachedPrompts = promptsCache[entityId].orEmpty()
-                val isLoadingPrompts = promptsLoading[entityId] == true
-
-                if (cachedPrompts.isNotEmpty() || isLoadingPrompts) {
-                    Spacer(modifier = Modifier.height(PrayerSpacing.small))
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = PrayerSpacing.medium),
-                        shape = FlatSquareShape,
-                        color = colors.surfaceSubtle,
-                        tonalElevation = PrayerSpacing.elevationSubtle,
-                        shadowElevation = PrayerSpacing.elevationSubtle,
-                        border = BorderStroke(0.5.dp, colors.borderSubtle)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(PrayerSpacing.large)
-                        ) {
-                            if (isLoadingPrompts && cachedPrompts.isEmpty()) {
+                        // Active Prayer Points: Two-track layout (56dp status pills on left, narrative text at 64dp)
+                        pageTopic.activePoints.forEach { point ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = PrayerSpacing.large)
+                                    .combinedClickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null,
+                                        onClick = onNextTopic,
+                                        onLongClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            actionPoint = point
+                                        }
+                                    )
+                            ) {
+                                // Left 56dp track: Marginal Status Aside [ ACTIVE ] (§8.1 48dp touch target)
                                 Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
+                                    modifier = Modifier
+                                        .width(PrayerSpacing.marginTrackWidth)
+                                        .defaultMinSize(minHeight = PrayerSpacing.minTouchTarget)
+                                        .padding(top = PrayerSpacing.extraSmall),
+                                    contentAlignment = Alignment.TopCenter
                                 ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(14.dp),
-                                        strokeWidth = 1.5.dp,
-                                        color = colors.textSubtle
-                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = Color.Transparent,
+                                        border = BorderStroke(0.5.dp, colors.inkMuted.copy(alpha = 0.50f)),
+                                        modifier = Modifier
+                                            .defaultMinSize(minWidth = 48.dp, minHeight = 28.dp)
+                                            .clickable(
+                                                interactionSource = remember { MutableInteractionSource() },
+                                                indication = null,
+                                                onClick = {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                    actionPoint = point
+                                                }
+                                            )
+                                    ) {
+                                        Text(
+                                            text = "ACTIVE",
+                                            style = typography.marginStatus,
+                                            color = colors.inkMuted,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        )
+                                    }
                                 }
-                            }
-                            if (cachedPrompts.isNotEmpty()) {
-                                cachedPrompts.forEach { prompt ->
+
+                                // Right track: Narrative Petitions (starts at 64dp inset)
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(
+                                            start = PrayerSpacing.small,
+                                            end = PrayerSpacing.narrativeRightPadding
+                                        )
+                                ) {
+                                    val bulletText = if (point.description.trimStart().startsWith("•")) {
+                                        point.description
+                                    } else {
+                                        "• ${point.description}"
+                                    }
                                     Text(
-                                        text = "• $prompt",
-                                        style = typography.prayerPointBody,
-                                        color = colors.textPrimary,
-                                        modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                        text = bulletText,
+                                        style = typography.prayerPointBullet,
+                                        color = colors.inkPrimary
                                     )
                                 }
                             }
                         }
-                    }
-                }
 
-                // Expandable Answered Prayer Points for Thanksgiving
-                if (pageTopic.answeredPoints.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(PrayerSpacing.medium))
-                    HorizontalDivider(thickness = 0.5.dp, color = colors.border)
+                        // Read-Only Suggested Intercessions (grouped into Praise God, Thank God, Ask God) - Collapsed by default
+                        val cachedGroups = promptsCache[entityId].orEmpty()
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isAnsweredExpanded = !isAnsweredExpanded }
-                            .padding(vertical = PrayerSpacing.medium)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Answered",
-                                style = typography.caption,
-                                color = colors.textSubtle
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = if (isAnsweredExpanded) "−" else "+",
-                                style = typography.caption,
-                                color = colors.textSubtle
-                            )
-                        }
-                    }
+                        if (cachedGroups.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = PrayerSpacing.minTouchTarget)
+                                    .clickable { isPromptsExpanded = !isPromptsExpanded }
+                                    .padding(
+                                        start = PrayerSpacing.textInset,
+                                        end = PrayerSpacing.narrativeRightPadding,
+                                        top = PrayerSpacing.medium,
+                                        bottom = PrayerSpacing.small
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "❧   Prompts for Prayer   ❧",
+                                        style = typography.caption,
+                                        color = colors.inkSecondary
+                                    )
+                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                    Text(
+                                        text = if (isPromptsExpanded) "Tap to collapse" else "Tap to view prompts",
+                                        style = typography.marginStatus,
+                                        color = colors.inkMuted
+                                    )
+                                }
+                            }
 
-                    AnimatedVisibility(
-                        visible = isAnsweredExpanded,
-                        enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
-                        exit = shrinkVertically(animationSpec = tween(250)) + fadeOut(animationSpec = tween(200))
-                    ) {
-                        Column {
-                            pageTopic.answeredPoints.forEach { answeredPoint ->
+                            if (isPromptsExpanded) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = PrayerSpacing.small)
-                                        .combinedClickable(
-                                            interactionSource = remember { MutableInteractionSource() },
-                                            indication = null,
-                                            onClick = onNextTopic,
-                                            onLongClick = {
-                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                actionPoint = answeredPoint
-                                            }
+                                        .padding(
+                                            start = PrayerSpacing.textInset,
+                                            end = PrayerSpacing.narrativeRightPadding,
+                                            bottom = PrayerSpacing.large
                                         )
                                 ) {
-                                    Text(
-                                        text = answeredPoint.title,
-                                        style = typography.prayerPointTitle.copy(
-                                            textDecoration = TextDecoration.LineThrough
-                                        ),
-                                        color = colors.answeredText,
-                                        modifier = Modifier.padding(bottom = PrayerSpacing.extraSmall)
-                                    )
-                                    Text(
-                                        text = answeredPoint.description,
-                                        style = typography.prayerPointBody.copy(
-                                            textDecoration = TextDecoration.LineThrough
-                                        ),
-                                        color = colors.answeredText
-                                    )
-                                    if (!answeredPoint.answeredTestimony.isNullOrBlank()) {
+                                    cachedGroups.forEach { group ->
                                         Text(
-                                            text = "Thanksgiving: ${answeredPoint.answeredTestimony}",
-                                            style = typography.caption,
-                                            color = colors.textSubtle,
-                                            modifier = Modifier.padding(top = PrayerSpacing.extraSmall)
+                                            text = group.title,
+                                            style = typography.categoryLedgerHeader,
+                                            color = colors.inkSecondary,
+                                            modifier = Modifier.padding(top = PrayerSpacing.medium, bottom = PrayerSpacing.extraSmall)
                                         )
+                                        group.prompts.forEach { prompt ->
+                                            Text(
+                                                text = "• $prompt",
+                                                style = typography.suggestedIntercession,
+                                                color = colors.inkMuted.copy(alpha = 0.85f),
+                                                modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(PrayerSpacing.sanctuaryBottom))
+                        // Expandable Answered Prayer Points for Thanksgiving (feint rules suppressed inside card, 2dp Celadon rule)
+                        if (pageTopic.answeredPoints.isNotEmpty()) {
+                            // Typographic Fleuron & Section Divider (§6.3)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { isAnsweredExpanded = !isAnsweredExpanded }
+                                    .padding(
+                                        start = PrayerSpacing.textInset,
+                                        end = PrayerSpacing.narrativeRightPadding,
+                                        top = PrayerSpacing.medium,
+                                        bottom = PrayerSpacing.medium
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "❧   Answered Prayers & Thanksgiving   ❧",
+                                        style = typography.caption,
+                                        color = colors.inkAnswered
+                                    )
+                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                    Text(
+                                        text = if (isAnsweredExpanded) "Hide answered records" else "Review answered records",
+                                        style = typography.marginStatus,
+                                        color = colors.inkMuted.copy(alpha = 0.70f)
+                                    )
+                                }
+                            }
+
+                            AnimatedVisibility(
+                                visible = isAnsweredExpanded,
+                                enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                                exit = shrinkVertically(animationSpec = tween(250)) + fadeOut(animationSpec = tween(200))
+                            ) {
+                                Column {
+                                    pageTopic.answeredPoints.forEach { answeredPoint ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = PrayerSpacing.medium)
+                                                .combinedClickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication = null,
+                                                    onClick = onNextTopic,
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        actionPoint = answeredPoint
+                                                    }
+                                                )
+                                        ) {
+                                            // Left 56dp track: Marginal Status Aside [ ANSWERED ] (§8.1 48dp touch target)
+                                            Box(
+                                                modifier = Modifier
+                                                    .width(PrayerSpacing.marginTrackWidth)
+                                                    .defaultMinSize(minHeight = PrayerSpacing.minTouchTarget)
+                                                    .padding(top = PrayerSpacing.extraSmall),
+                                                contentAlignment = Alignment.TopCenter
+                                            ) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = Color.Transparent,
+                                                    border = BorderStroke(0.5.dp, colors.inkAnswered.copy(alpha = 0.60f)),
+                                                    modifier = Modifier
+                                                        .defaultMinSize(minWidth = 48.dp, minHeight = 28.dp)
+                                                        .clickable(
+                                                            interactionSource = remember { MutableInteractionSource() },
+                                                            indication = null,
+                                                            onClick = {
+                                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                actionPoint = answeredPoint
+                                                            }
+                                                        )
+                                                ) {
+                                                    Text(
+                                                        text = "ANSWERED",
+                                                        style = typography.marginStatus,
+                                                        color = colors.inkAnswered,
+                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+
+                                            // Right track: Answered thanksgiving card (unruled, 2dp vertical Celadon rule)
+                                            Surface(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .padding(
+                                                        start = PrayerSpacing.small,
+                                                        end = PrayerSpacing.narrativeRightPadding
+                                                    ),
+                                                shape = FlatSquareShape,
+                                                color = colors.surfaceSubtle,
+                                                border = null
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(PrayerSpacing.small)
+                                                ) {
+                                                    // 2dp vertical Celadon accent rule
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .width(2.dp)
+                                                            .fillMaxHeight()
+                                                            .background(colors.inkAnswered)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(PrayerSpacing.small))
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        val bulletText = if (answeredPoint.description.trimStart().startsWith("•")) {
+                                                            answeredPoint.description
+                                                        } else {
+                                                            "• ${answeredPoint.description}"
+                                                        }
+                                                        Text(
+                                                            text = bulletText,
+                                                            style = typography.answeredThanksgiving.copy(
+                                                                textDecoration = TextDecoration.LineThrough
+                                                            ),
+                                                            color = colors.inkAnswered
+                                                        )
+                                                        if (!answeredPoint.answeredTestimony.isNullOrBlank()) {
+                                                            Text(
+                                                                text = "Thanksgiving: ${answeredPoint.answeredTestimony}",
+                                                                style = typography.answeredThanksgiving,
+                                                                color = colors.inkAnswered,
+                                                                modifier = Modifier.padding(top = PrayerSpacing.extraSmall)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(PrayerSpacing.sanctuaryBottom))
+                    }
+
+                    // Interactive Silk Marker Ribbon Tab anchored at top margin (§2.3, §11.2)
+                    SilkMarkerRibbon(
+                        isPinned = pageTopic.entity.isPinned,
+                        onTogglePin = {
+                            onTogglePinEntity?.invoke(pageTopic.entity.id, !pageTopic.entity.isPinned)
+                        },
+                        color = colors.ribbonPrimary,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(end = 16.dp)
+                    )
+                }
             }
         }
     }

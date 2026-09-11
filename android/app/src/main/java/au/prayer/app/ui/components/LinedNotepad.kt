@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import au.prayer.app.ui.theme.PrayerColors
+import au.prayer.app.ui.theme.PrayerSpacing
 import au.prayer.app.ui.theme.PrayerTypography
 
 /**
@@ -91,8 +92,8 @@ fun LinedNotepad(
                 .defaultMinSize(minHeight = viewportHeight)
                 .verticalScroll(scrollState)
                 .drawBehind {
-                    val strokeWidth = 0.75.dp.toPx()
-                    val lineColor = colors.border.copy(alpha = 0.45f)
+                    val strokeWidth = PrayerSpacing.hairlineWidth.toPx()
+                    val lineColor = colors.paperFeintRule
 
                     val layout = textLayoutResult
                     val singleLineHeight = if (layout != null && layout.lineCount > 0) {
@@ -160,10 +161,10 @@ fun LinedNotepad(
                         belowY += singleLineHeight
                     }
 
-                    // Subtle authentic notebook vertical margin rule
-                    val marginX = with(density) { 36.dp.toPx() }
+                    // Classic stationery red/sepia vertical margin rule at 56dp
+                    val marginX = with(density) { PrayerSpacing.marginTrackWidth.toPx() }
                     drawLine(
-                        color = colors.borderStrong.copy(alpha = 0.28f),
+                        color = colors.paperMarginRule,
                         start = Offset(marginX, 0f),
                         end = Offset(marginX, size.height),
                         strokeWidth = strokeWidth
@@ -178,7 +179,11 @@ fun LinedNotepad(
                 onTextLayout = { textLayoutResult = it },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = topMargin, start = 44.dp, end = 16.dp),
+                    .padding(
+                        top = topMargin,
+                        start = PrayerSpacing.textInset,
+                        end = PrayerSpacing.narrativeRightPadding
+                    ),
                 decorationBox = { innerTextField ->
                     Box(modifier = Modifier.fillMaxWidth()) {
                         if (text.text.isEmpty()) {

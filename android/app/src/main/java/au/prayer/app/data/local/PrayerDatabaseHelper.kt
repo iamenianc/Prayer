@@ -11,7 +11,7 @@ class PrayerDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
 
     companion object {
         const val DATABASE_NAME = "prayer_vault.db"
-        const val DATABASE_VERSION = 1
+        const val DATABASE_VERSION = 4
 
         const val TABLE_ENTITIES = "individual_entities"
         const val COL_ENTITY_ID = "id"
@@ -22,8 +22,16 @@ class PrayerDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
         const val COL_ENTITY_INTERACTED = "interacted_count"
         const val COL_ENTITY_LAST_INTERACTED = "last_interacted_at"
         const val COL_ENTITY_CREATED = "created_at"
+        const val COL_ENTITY_PINNED = "is_pinned"
 
         const val TABLE_POINTS = "prayer_points"
+        const val TABLE_SUGGESTION_CACHE = "suggestion_cache"
+        const val COL_CACHE_ENTITY_ID = "entity_id"
+        const val COL_CACHE_PRAISE = "praise_god"
+        const val COL_CACHE_THANK = "thank_god"
+        const val COL_CACHE_ASK = "ask_god"
+        const val COL_CACHE_SUGGESTIONS = "suggestions"
+        const val COL_CACHE_TIMESTAMP = "timestamp"
         const val COL_POINT_ID = "id"
         const val COL_POINT_ENTITY_ID = "entity_id"
         const val COL_POINT_TITLE = "title"
@@ -50,7 +58,8 @@ class PrayerDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
                 $COL_ENTITY_HISTORIC INTEGER NOT NULL DEFAULT 0,
                 $COL_ENTITY_INTERACTED INTEGER NOT NULL DEFAULT 0,
                 $COL_ENTITY_LAST_INTERACTED INTEGER,
-                $COL_ENTITY_CREATED INTEGER NOT NULL
+                $COL_ENTITY_CREATED INTEGER NOT NULL,
+                $COL_ENTITY_PINNED INTEGER NOT NULL DEFAULT 0
             )
         """.trimIndent())
 
@@ -81,22 +90,32 @@ class PrayerDatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABAS
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // Migration logic for future schema changes
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE $TABLE_ENTITIES ADD COLUMN $COL_ENTITY_PINNED INTEGER NOT NULL DEFAULT 0")
+        }
+        if (oldVersion < 3) {
+            // Remove legacy single-entity historic container and reseed individual historic topics
+            db.delete(TABLE_POINTS, "$COL_POINT_ENTITY_ID = 'historic-reformed-prayers'", null)
+            db.delete(TABLE_ENTITIES, "$COL_ENTITY_ID = 'historic-reformed-prayers'", null)
+            seedHistoricContent(db)
+        }
     }
 
     private fun seedHistoricContent(db: SQLiteDatabase) {
-        val entity = PreloadedContent.getHistoricEntity()
-        val entityValues = ContentValues().apply {
-            put(COL_ENTITY_ID, entity.id)
-            put(COL_ENTITY_ROOT, entity.rootCode.name)
-            put(COL_ENTITY_NAME, entity.displayName)
-            put(COL_ENTITY_CONTEXT, entity.contextDescription)
-            put(COL_ENTITY_HISTORIC, if (entity.isPreloadedHistoric) 1 else 0)
-            put(COL_ENTITY_INTERACTED, entity.interactedCount)
-            put(COL_ENTITY_LAST_INTERACTED, entity.lastInteractedAt)
-            put(COL_ENTITY_CREATED, entity.createdAt)
+        for (entity in PreloadedContent.getHistoricEntities()) {
+            val entityValues = ContentValues().apply {
+                put(COL_ENTITY_ID, entity.id)
+                put(COL_ENTITY_ROOT, entity.rootCode.name)
+                put(COL_ENTITY_NAME, entity.displayName)
+                put(COL_ENTITY_CONTEXT, entity.contextDescription)
+                put(COL_ENTITY_HISTORIC, if (entity.isPreloadedHistoric) 1 else 0)
+                put(COL_ENTITY_INTERACTED, entity.interactedCount)
+                put(COL_ENTITY_LAST_INTERACTED, entity.lastInteractedAt)
+                put(COL_ENTITY_CREATED, entity.createdAt)
+                put(COL_ENTITY_PINNED, if (entity.isPinned) 1 else 0)
+            }
+            db.insertWithOnConflict(TABLE_ENTITIES, null, entityValues, SQLiteDatabase.CONFLICT_IGNORE)
         }
-        db.insertWithOnConflict(TABLE_ENTITIES, null, entityValues, SQLiteDatabase.CONFLICT_IGNORE)
 
         for (point in PreloadedContent.getHistoricPrayerPoints()) {
             val pointValues = ContentValues().apply {

@@ -1,7 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Warm Vintage White (Single Unified Theme) -->
-    <color name="vintage_bg">#FAF7F2</color>
+    <!-- Modern Leatherbound Folio Color Architecture -->
+    <!-- Tier 1: Leather Casing -->
+    <color name="leather_saddle_tan">#8C532B</color>
+    <color name="leather_cordovan">#5E2A2B</color>
+    <color name="leather_forest">#2D483A</color>
+    <color name="leather_obsidian">#35322F</color>
+
+    <!-- Tier 2: Paper Canvas & Feint Rules -->
+    <color name="paper_background">#FAF7F0</color>
+    <color name="paper_ivory">#F5EFEB</color>
+    <color name="paper_parchment">#EFE8DA</color>
+    <color name="paper_feint_rule">#B3E2DDD5</color>
+    <color name="paper_margin_rule">#E5B4B4</color>
+
+    <!-- Tier 3: Archival Inks -->
+    <color name="ink_primary">#1C1A17</color>
+    <color name="ink_secondary">#33261F</color>
+    <color name="ink_answered">#3D6B52</color>
+    <color name="ink_muted">#6E675F</color>
+    <color name="ink_midnight">#1B2433</color>
+
+    <!-- Tier 4: Ephemera & Accents -->
+    <color name="ribbon_garnet">#8B2635</color>
+    <color name="ribbon_emerald">#1E4D3B</color>
+    <color name="ribbon_gold">#B8860B</color>
+    <color name="selection_amber">#73F5DE88</color>
+
+    <!-- Legacy Compatibility Tokens -->
+    <color name="vintage_bg">#FAF7F0</color>
     <color name="vintage_surface">#FFFDF9</color>
     <color name="vintage_surface_subtle">#F0ECE1</color>
     <color name="vintage_text">#1C1917</color>

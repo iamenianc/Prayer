@@ -132,13 +132,25 @@ class AntiNeglectQueueTest {
 
     @Test
     fun `test historic reformed prayers zero-state seed`() {
-        val historicEntity = PreloadedContent.getHistoricEntity()
-        assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, historicEntity.id)
-        assertEquals(RootCode.GENERAL, historicEntity.rootCode)
-        assertTrue(historicEntity.isPreloadedHistoric)
+        // Each historic prayer now has its own distinct entity
+        val historicEntities = PreloadedContent.getHistoricEntities()
+        val historicEntityIds = historicEntities.map { it.id }.toSet()
+
+        // Backward-compat helper still returns the first entity
+        val firstEntity = PreloadedContent.getHistoricEntity()
+        assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, firstEntity.id)
+        assertEquals(RootCode.GENERAL, firstEntity.rootCode)
+        assertTrue(firstEntity.isPreloadedHistoric)
+
+        // All entities must be preloaded historic and in GENERAL
+        historicEntities.forEach { entity ->
+            assertTrue("Entity must be isPreloadedHistoric", entity.isPreloadedHistoric)
+            assertEquals(RootCode.GENERAL, entity.rootCode)
+        }
 
         val historicPoints = PreloadedContent.getHistoricPrayerPoints()
         assertTrue("Preloaded historic prayers should contain at least 4 classic Reformed/BCP prayers", historicPoints.size >= 4)
+        assertEquals("Each entity should have exactly one prayer point", historicEntities.size, historicPoints.size)
 
         val titles = historicPoints.map { it.title }
         assertTrue("Must include The Lord's Prayer", titles.contains("The Lord's Prayer"))
@@ -147,9 +159,9 @@ class AntiNeglectQueueTest {
         assertTrue("Must include Collect for Purity", titles.contains("Collect for Purity"))
         assertTrue("Must include The Apostles' Creed", titles.contains("The Apostles' Creed"))
 
-        // Verify all historic prayer points belong to the historic entity
+        // Each point's entityId belongs to a known distinct historic entity (not a single shared entity)
         historicPoints.forEach { point ->
-            assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, point.entityId)
+            assertTrue("Point entityId must belong to a known historic entity", historicEntityIds.contains(point.entityId))
             assertEquals(PrayerStatus.HISTORIC, point.status)
             assertTrue("Description must not be blank", point.description.isNotBlank())
         }
@@ -181,31 +193,34 @@ class AntiNeglectQueueTest {
             displayName = "Sarah",
             rootCode = RootCode.PEOPLE
         )
-        val historicEntity = PreloadedContent.getHistoricEntity()
+        val historicEntities = PreloadedContent.getHistoricEntities()
+        val expectedHistoricCount = historicEntities.size // 14 distinct historic prayers
 
-        // Scenario 1: Zero user entities -> Fallback to historic
+        // Scenario 1: Zero user entities -> Fallback to all historic prayers
         fun resolveEntities(userList: List<IndividualEntity>, blendHistoric: Boolean): List<IndividualEntity> {
             return if (userList.isEmpty() || blendHistoric) {
-                if (userList.isEmpty()) listOf(historicEntity) else userList + historicEntity
+                if (userList.isEmpty()) historicEntities else userList + historicEntities
             } else {
                 userList
             }
         }
 
         val zeroState = resolveEntities(emptyList(), blendHistoric = false)
-        assertEquals(1, zeroState.size)
-        assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, zeroState[0].id)
+        assertEquals(expectedHistoricCount, zeroState.size)
+        assertTrue(zeroState.any { it.id == PreloadedContent.HISTORIC_ENTITY_ID })
+        assertTrue(zeroState.all { it.isPreloadedHistoric })
 
         // Scenario 2: Personal prayers exist, blendHistoric = false -> User prayers only
         val personalOnly = resolveEntities(listOf(userEntity), blendHistoric = false)
         assertEquals(1, personalOnly.size)
         assertEquals("Sarah", personalOnly[0].displayName)
 
-        // Scenario 3: Personal prayers exist, blendHistoric = true -> User prayers + historic blended
+        // Scenario 3: Personal prayers exist, blendHistoric = true -> User prayers + all historic blended
         val blended = resolveEntities(listOf(userEntity), blendHistoric = true)
-        assertEquals(2, blended.size)
+        assertEquals(1 + expectedHistoricCount, blended.size)
         assertTrue(blended.any { it.id == "user-1" })
         assertTrue(blended.any { it.id == PreloadedContent.HISTORIC_ENTITY_ID })
+        assertTrue(blended.count { it.isPreloadedHistoric } == expectedHistoricCount)
     }
 
     @Test

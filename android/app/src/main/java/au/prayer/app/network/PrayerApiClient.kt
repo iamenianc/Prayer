@@ -36,15 +36,38 @@ data class SuggestRequest(
 )
 
 @Serializable
-data class SuggestResponse(
-    val suggestions: List<String> = emptyList()
+data class PromptGroup(
+    val title: String,
+    val prompts: List<String>
 )
 
+@Serializable
+data class SuggestResponse(
+    @SerialName("praise_god") val praiseGod: List<String> = emptyList(),
+    @SerialName("thank_god") val thankGod: List<String> = emptyList(),
+    @SerialName("ask_god") val askGod: List<String> = emptyList(),
+    val suggestions: List<String> = emptyList()
+) {
+    val promptGroups: List<PromptGroup>
+        get() {
+            val list = mutableListOf<PromptGroup>()
+            if (praiseGod.isNotEmpty()) list.add(PromptGroup("Praise God", praiseGod))
+            if (thankGod.isNotEmpty()) list.add(PromptGroup("Thank God", thankGod))
+            if (askGod.isNotEmpty()) list.add(PromptGroup("Ask God", askGod))
+            if (list.isEmpty() && suggestions.isNotEmpty()) {
+                list.add(PromptGroup("Ask God", suggestions))
+            }
+            return list
+        }
+}
+
+@Deprecated("Titles are no longer used for prayer journal entries")
 @Serializable
 data class TitleRequest(
     val text: String
 )
 
+@Deprecated("Titles are no longer used for prayer journal entries")
 @Serializable
 data class TitleResponse(
     val title: String
@@ -144,6 +167,7 @@ class PrayerApiClient(
         }
     }
 
+    @Deprecated("Titles are no longer used for prayer journal entries; endpoint has been decommissioned")
     suspend fun generateTitle(text: String): Result<String> = withContext(Dispatchers.IO) {
         try {
             val bodyString = json.encodeToString(TitleRequest.serializer(), TitleRequest(text))
@@ -170,6 +194,7 @@ class PrayerApiClient(
     /**
      * Offline fallback title generator: produces a clean 2–4 word title from text
      */
+    @Deprecated("Titles are no longer used for prayer journal entries")
     fun generateOfflineFallbackTitle(text: String): String {
         val clean = text.replace("•", "").trim()
         val words = clean.split("\\s+".toRegex()).filter { it.isNotBlank() }

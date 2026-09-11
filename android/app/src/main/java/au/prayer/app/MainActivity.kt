@@ -19,11 +19,15 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import au.prayer.app.data.local.PrayerDatabaseHelper
 import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.*
 import au.prayer.app.network.PrayerApiClient
+import au.prayer.app.ui.components.ClosedFolioShield
 import au.prayer.app.ui.navigation.LifoBackStack
 import au.prayer.app.ui.screens.*
 import au.prayer.app.ui.theme.*
@@ -57,6 +61,7 @@ class MainActivity : ComponentActivity() {
             var preselectedEntity by remember { mutableStateOf<IndividualEntity?>(null) }
             var journalTargetEntity by remember { mutableStateOf<IndividualEntity?>(null) }
             var journalNavKey by remember { mutableIntStateOf(0) }
+            var isInitialColdLaunch by remember { mutableStateOf(true) }
 
             // Prayer sanctuary session state
             var prayerTopics by remember { mutableStateOf<List<TopicWithPoints>>(emptyList()) }
@@ -66,9 +71,26 @@ class MainActivity : ComponentActivity() {
             val snackbarHostState = remember { SnackbarHostState() }
             val coroutineScope = rememberCoroutineScope()
 
-            // Dynamic typography and single warm vintage white theme resolution
-            val colors = WarmVintageWhiteColors
+            // Dynamic typography and active leather folio theme resolution
+            val colors = getFolioColors(appConfig.themeMode, appConfig.highContrastMode)
             val typography = getPrayerTypography(appConfig.textScale)
+
+            // Closed Folio Privacy Shield: concealed when activity is paused / backgrounded
+            var isAppBackgrounded by remember { mutableStateOf(false) }
+            val lifecycleOwner = LocalLifecycleOwner.current
+            DisposableEffect(lifecycleOwner) {
+                val observer = LifecycleEventObserver { _, event ->
+                    if (event == Lifecycle.Event.ON_PAUSE) {
+                        isAppBackgrounded = true
+                    } else if (event == Lifecycle.Event.ON_RESUME) {
+                        isAppBackgrounded = false
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                }
+            }
 
             fun refreshEntities() {
                 allEntities = repository.getAllEntities()
@@ -83,31 +105,34 @@ class MainActivity : ComponentActivity() {
                 backStack.push(ScreenState.SANCTUARY_PRAYER)
             }
 
-            PrayerTheme(themeMode = appConfig.themeMode, textScale = appConfig.textScale) {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = colors.background,
-                    contentColor = colors.textPrimary,
-                    snackbarHost = {
-                        SnackbarHost(snackbarHostState) { data ->
-                            Snackbar(
-                                snackbarData = data,
-                                shape = FlatSquareShape,
-                                containerColor = colors.textPrimary,
-                                contentColor = colors.background
-                            )
+            PrayerTheme(themeMode = appConfig.themeMode, textScale = appConfig.textScale, highContrastMode = appConfig.highContrastMode) {
+                if (isAppBackgrounded) {
+                    ClosedFolioShield(colors = colors)
+                } else {
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = colors.background,
+                        contentColor = colors.textPrimary,
+                        snackbarHost = {
+                            SnackbarHost(snackbarHostState) { data ->
+                                Snackbar(
+                                    snackbarData = data,
+                                    shape = FlatSquareShape,
+                                    containerColor = colors.textPrimary,
+                                    contentColor = colors.background
+                                )
+                            }
                         }
-                    }
-                ) { innerPadding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .background(colors.background)
-                    ) {
-                        AnimatedContent(
-                            targetState = screenState,
-                            transitionSpec = {
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                                .background(colors.background)
+                        ) {
+                            AnimatedContent(
+                                targetState = screenState,
+                                transitionSpec = {
                                 when {
                                     // Entering Sanctuary Prayer from Home: solemn fade and gentle upward settling
                                     targetState == ScreenState.SANCTUARY_PRAYER -> {
@@ -183,7 +208,9 @@ class MainActivity : ComponentActivity() {
                                         onAddPrayerPoints = {
                                             preselectedEntity = null
                                             backStack.push(ScreenState.LOG_PRAYER)
-                                        }
+                                        },
+                                        isInitialLaunch = isInitialColdLaunch,
+                                        onInitialLaunchComplete = { isInitialColdLaunch = false }
                                     )
                                 }
 
@@ -223,6 +250,11 @@ class MainActivity : ComponentActivity() {
                                                     }
                                                 }
                                             }
+                                        },
+                                        onTogglePinEntity = { id, isPinned ->
+                                            repository.toggleEntityPinned(id, isPinned)
+                                            prayerTopics = repository.getContemplativeTopics(blendHistoric = appConfig.blendHistoricPrayers)
+                                            refreshEntities()
                                         }
                                     )
                                 }
@@ -243,10 +275,10 @@ class MainActivity : ComponentActivity() {
                                             }
                                             entity
                                         },
-                                        onSavePrayerPoint = { entityId, body, initialTitle ->
+                                        onSavePrayerPoint = { entityId, body, _ ->
                                             val savedPoint = repository.savePrayerPoint(
                                                 entityId = entityId,
-                                                title = initialTitle ?: apiClient.generateOfflineFallbackTitle(body),
+                                                title = "",
                                                 description = body
                                             )
                                             val targetEntity = allEntities.find { it.id == entityId }
@@ -262,16 +294,6 @@ class MainActivity : ComponentActivity() {
                                                 if (result == SnackbarResult.ActionPerformed) {
                                                     repository.deletePrayerPoint(savedPoint.id)
                                                     refreshEntities()
-                                                }
-                                            }
-
-                                            // Asynchronous post-commit background auto-titling
-                                            lifecycleScope.launch {
-                                                val result = apiClient.generateTitle(body)
-                                                result.onSuccess { cleanTitle ->
-                                                    if (cleanTitle.isNotBlank()) {
-                                                        repository.updatePrayerPointTitle(savedPoint.id, cleanTitle)
-                                                    }
                                                 }
                                             }
                                         },
@@ -345,9 +367,21 @@ class MainActivity : ComponentActivity() {
                                                 snackbarHostState.showSnackbar("Updated")
                                             }
                                         },
+                                        onCreateEntity = { rootCode, name ->
+                                            val entity = repository.createEntity(rootCode, name)
+                                            refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar("Added to ${rootCode.displayTitle}")
+                                            }
+                                            entity
+                                        },
                                         onAddForEntity = { entity ->
                                             preselectedEntity = entity
                                             backStack.push(ScreenState.LOG_PRAYER)
+                                        },
+                                        onTogglePinEntity = { id, isPinned ->
+                                            repository.toggleEntityPinned(id, isPinned)
+                                            refreshEntities()
                                         },
                                         onBackToHome = { backStack.pop() }
                                     )
@@ -359,6 +393,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
     override fun onDestroy() {
         super.onDestroy()

@@ -12,7 +12,64 @@ data class PrayerTypography(
     val prayerPointTitle: TextStyle,
     val prayerPointBody: TextStyle,
     val caption: TextStyle,
-    val button: TextStyle
+    val button: TextStyle,
+    // Modern Folio Dual-Engine Typographic Tokens
+    val frontispieceHeader: TextStyle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 1.0.sp
+    ),
+    val subjectHeader: TextStyle = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 32.sp
+    ),
+    val prayerPointBullet: TextStyle = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 17.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.25.sp
+    ),
+    val answeredThanksgiving: TextStyle = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.15.sp
+    ),
+    val suggestedIntercession: TextStyle = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
+        lineHeight = 24.sp
+    ),
+    val categoryLedgerHeader: TextStyle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.8.sp
+    ),
+    val marginStatus: TextStyle = TextStyle(
+        fontFamily = FontFamily.SansSerif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 11.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    ),
+    val historicalFootnote: TextStyle = TextStyle(
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    )
 )
 
 fun getPrayerTypography(scale: TextScale): PrayerTypography {
@@ -50,6 +107,13 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Medium,
                 fontSize = 18.sp
+            ),
+            prayerPointBullet = TextStyle(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Normal,
+                fontSize = 17.sp,
+                lineHeight = 28.sp,
+                letterSpacing = 0.25.sp
             )
         )
         TextScale.REGULAR -> PrayerTypography(
@@ -85,6 +149,13 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.sp
+            ),
+            prayerPointBullet = TextStyle(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Normal,
+                fontSize = 15.sp,
+                lineHeight = 23.sp,
+                letterSpacing = 0.25.sp
             )
         )
         TextScale.COMPACT -> PrayerTypography(
@@ -120,6 +191,13 @@ fun getPrayerTypography(scale: TextScale): PrayerTypography {
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp
+            ),
+            prayerPointBullet = TextStyle(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Normal,
+                fontSize = 13.sp,
+                lineHeight = 19.sp,
+                letterSpacing = 0.25.sp
             )
         )
     }

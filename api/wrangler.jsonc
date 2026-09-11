@@ -7,6 +7,6 @@
     "enabled": false
   },
   "vars": {
-    "OPENROUTER_MODEL": "nvidia/nemotron-3.5-lightning"
+    "OPENROUTER_MODEL": "meta-llama/llama-3.3-70b-instruct"
   }
 }
