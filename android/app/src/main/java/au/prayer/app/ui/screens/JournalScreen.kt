@@ -703,102 +703,9 @@ fun JournalScreen(
 
                             Box(modifier = Modifier.fillMaxSize()) {
                                 Column(modifier = Modifier.fillMaxSize()) {
-                                    // Read-Only AI Prompts on past points (Grouped into Praise God, Thank God, Ask God) - Collapsed by default
+                                    // Read-Only AI Prompts on past points state
                                     val cachedGroups = journalPromptsCache[entity.id].orEmpty()
                                     val isLoadingPrompts = journalPromptsLoading[entity.id] == true
-
-                                    if (cachedGroups.isNotEmpty() || isLoadingPrompts) {
-                                        Surface(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(
-                                                    start = PrayerSpacing.large,
-                                                    end = 52.dp,
-                                                    top = PrayerSpacing.small,
-                                                    bottom = PrayerSpacing.small
-                                                )
-                                                .clickable { isJournalPromptsExpanded = !isJournalPromptsExpanded },
-                                            shape = FlatSquareShape,
-                                            color = colors.surfaceSubtle,
-                                            tonalElevation = PrayerSpacing.elevationNone,
-                                            border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
-                                        ) {
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.small)
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .heightIn(min = PrayerSpacing.minTouchTarget),
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween
-                                                ) {
-                                                    Text(
-                                                        text = "Prompts for Prayer",
-                                                        style = typography.caption.copy(fontWeight = FontWeight.SemiBold),
-                                                        color = colors.leatherPrimary
-                                                    )
-                                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                                        if (isLoadingPrompts && cachedGroups.isEmpty()) {
-                                                            CircularProgressIndicator(
-                                                                modifier = Modifier.size(12.dp),
-                                                                strokeWidth = 1.dp,
-                                                                color = colors.textSubtle
-                                                            )
-                                                            Spacer(modifier = Modifier.width(PrayerSpacing.small))
-                                                        }
-                                                        Text(
-                                                            text = if (isJournalPromptsExpanded) "Hide" else "Show",
-                                                            style = typography.marginStatus,
-                                                            color = colors.inkMuted
-                                                        )
-                                                    }
-                                                }
-
-                                                if (isJournalPromptsExpanded) {
-                                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
-                                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
-                                                    Spacer(modifier = Modifier.height(PrayerSpacing.small))
-
-                                                    if (isLoadingPrompts && cachedGroups.isEmpty()) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .fillMaxWidth()
-                                                                .padding(vertical = PrayerSpacing.medium),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            CircularProgressIndicator(
-                                                                modifier = Modifier.size(16.dp),
-                                                                strokeWidth = 1.5.dp,
-                                                                color = colors.textSubtle
-                                                            )
-                                                        }
-                                                    }
-                                                    if (cachedGroups.isNotEmpty()) {
-                                                        cachedGroups.forEach { group ->
-                                                            Text(
-                                                                text = group.title,
-                                                                style = typography.categoryLedgerHeader,
-                                                                color = colors.leatherPrimary,
-                                                                modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
-                                                            )
-                                                            group.prompts.forEach { prompt ->
-                                                                Text(
-                                                                    text = "• $prompt",
-                                                                    style = typography.prayerPointBody,
-                                                                    color = colors.textPrimary,
-                                                                    modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
-                                                                )
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
-                                    }
 
                                     val groupedPoints = remember(points) {
                                         points.groupBy { formatJournalDate(it.createdAt) }
@@ -1134,6 +1041,101 @@ fun JournalScreen(
                                                         )
                                                     ) {
                                                         Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
+                                                    }
+                                                }
+                                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                                Spacer(modifier = Modifier.height(PrayerSpacing.medium))
+                                            }
+                                        }
+
+                                        // Read-Only AI Prompts on past points (Grouped into Praise God, Thank God, Ask God) - Collapsed by default
+                                        if (!isAddingDraftPoint && !entity.isPreloadedHistoric && (cachedGroups.isNotEmpty() || isLoadingPrompts)) {
+                                            item(key = "prompts_${entity.id}") {
+                                                Surface(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            horizontal = PrayerSpacing.large,
+                                                            vertical = PrayerSpacing.small
+                                                        )
+                                                        .clickable { isJournalPromptsExpanded = !isJournalPromptsExpanded },
+                                                    shape = FlatSquareShape,
+                                                    color = colors.surfaceSubtle,
+                                                    tonalElevation = PrayerSpacing.elevationNone,
+                                                    border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
+                                                ) {
+                                                    Column(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.small)
+                                                    ) {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .heightIn(min = PrayerSpacing.minTouchTarget),
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween
+                                                        ) {
+                                                            Text(
+                                                                text = "Prompts for Prayer",
+                                                                style = typography.caption.copy(fontWeight = FontWeight.SemiBold),
+                                                                color = colors.leatherPrimary
+                                                            )
+                                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                                if (isLoadingPrompts && cachedGroups.isEmpty()) {
+                                                                    CircularProgressIndicator(
+                                                                        modifier = Modifier.size(12.dp),
+                                                                        strokeWidth = 1.dp,
+                                                                        color = colors.textSubtle
+                                                                    )
+                                                                    Spacer(modifier = Modifier.width(PrayerSpacing.small))
+                                                                }
+                                                                Text(
+                                                                    text = if (isJournalPromptsExpanded) "Hide" else "Show",
+                                                                    style = typography.marginStatus,
+                                                                    color = colors.inkMuted
+                                                                )
+                                                            }
+                                                        }
+
+                                                        if (isJournalPromptsExpanded) {
+                                                            Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                                            Spacer(modifier = Modifier.height(PrayerSpacing.small))
+
+                                                            if (isLoadingPrompts && cachedGroups.isEmpty()) {
+                                                                Box(
+                                                                    modifier = Modifier
+                                                                        .fillMaxWidth()
+                                                                        .padding(vertical = PrayerSpacing.medium),
+                                                                    contentAlignment = Alignment.Center
+                                                                ) {
+                                                                    CircularProgressIndicator(
+                                                                        modifier = Modifier.size(16.dp),
+                                                                        strokeWidth = 1.5.dp,
+                                                                        color = colors.textSubtle
+                                                                    )
+                                                                }
+                                                            }
+                                                            if (cachedGroups.isNotEmpty()) {
+                                                                cachedGroups.forEach { group ->
+                                                                    Text(
+                                                                        text = group.title,
+                                                                        style = typography.categoryLedgerHeader,
+                                                                        color = colors.leatherPrimary,
+                                                                        modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
+                                                                    )
+                                                                    group.prompts.forEach { prompt ->
+                                                                        Text(
+                                                                            text = "• $prompt",
+                                                                            style = typography.prayerPointBody,
+                                                                            color = colors.textPrimary,
+                                                                            modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                                 HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)

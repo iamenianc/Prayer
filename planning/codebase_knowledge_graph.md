@@ -3,7 +3,7 @@
 **Document:** [`planning/codebase_knowledge_graph.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/codebase_knowledge_graph.md)  
 **Status:** Living Architectural Blueprint & Dependency Graph  
 **Application Title:** *Pray Without Ceasing* (1 Thessalonians 5:17)  
-**Last Updated:** 2026-09-11  
+**Last Updated:** 2026-09-12  
 **Doctrinal Bedrock:** Classical Reformed, Historic Anglican (1662 BCP), Heidelberg Catechism Q&A 1  
 **Design Bedrock:** Modern Leatherbound Craft (The Modern Folio) defined in [`planning/android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md) (Strictly read-only)  
 **Platform Scope:** Mobile Client (Android Kotlin + Jetpack Compose) & Edge API Proxy (Cloudflare Worker)  
