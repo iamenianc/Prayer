@@ -32,7 +32,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import au.prayer.app.ui.gestures.doubleTapWordSelection
 import au.prayer.app.ui.theme.PrayerColors
@@ -116,7 +118,7 @@ fun LinedNotepad(
     val topMarginPx = with(density) { topMargin.toPx() }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val viewportHeight = maxHeight
+        val viewportHeight = if (maxHeight.isSpecified && maxHeight < Dp.Infinity && maxHeight > 0.dp) maxHeight else 400.dp
         Box(
             modifier = Modifier
                 .fillMaxWidth()

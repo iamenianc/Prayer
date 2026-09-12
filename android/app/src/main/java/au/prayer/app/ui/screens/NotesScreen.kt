@@ -593,13 +593,9 @@ fun NotesScreen(
 
                     NotesView.DETAIL -> {
                         selectedNoteEntity?.let { entity ->
-                            val scrollState = rememberScrollState()
-
                             Box(modifier = Modifier.fillMaxSize()) {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .verticalScroll(scrollState)
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
                                     // Header: Day and Date + Optional Study Topic
                                     Column(
@@ -608,8 +604,8 @@ fun NotesScreen(
                                             .padding(
                                                 start = PrayerSpacing.textInset,
                                                 end = PrayerSpacing.large + 36.dp, // Clearance for silk ribbon
-                                                top = PrayerSpacing.large,
-                                                bottom = PrayerSpacing.small
+                                                top = PrayerSpacing.medium,
+                                                bottom = PrayerSpacing.extraSmall
                                             )
                                     ) {
                                         Text(
@@ -672,14 +668,14 @@ fun NotesScreen(
                                     HorizontalDivider(
                                         thickness = PrayerSpacing.hairlineWidth,
                                         color = colors.paperFeintRule,
-                                        modifier = Modifier.padding(vertical = PrayerSpacing.small)
+                                        modifier = Modifier.padding(bottom = PrayerSpacing.extraSmall)
                                     )
 
-                                    // Lined Notepad Canvas (Standard Notepad Writing)
+                                    // Lined Notepad Canvas (Standard Notepad Writing - fills remaining space)
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .defaultMinSize(minHeight = 360.dp)
+                                            .weight(1f)
                                     ) {
                                         LinedNotepad(
                                             text = noteTextState,
@@ -692,15 +688,13 @@ fun NotesScreen(
                                         )
                                     }
 
-                                    Spacer(modifier = Modifier.height(PrayerSpacing.large))
-
-                                    // Prompts for Prayer Card (Collapsed by default)
+                                    // Prompts for Prayer Card (Collapsed by default at the bottom)
                                     Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(
                                                 horizontal = PrayerSpacing.large,
-                                                vertical = PrayerSpacing.medium
+                                                vertical = PrayerSpacing.small
                                             )
                                             .clickable {
                                                 isPromptsExpanded = !isPromptsExpanded
@@ -761,57 +755,62 @@ fun NotesScreen(
                                                 HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                                                 Spacer(modifier = Modifier.height(PrayerSpacing.small))
 
-                                                if (isLoadingPrompts && promptGroups.isEmpty()) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .padding(vertical = PrayerSpacing.medium),
-                                                        contentAlignment = Alignment.Center
-                                                    ) {
-                                                        CircularProgressIndicator(
-                                                            modifier = Modifier.size(16.dp),
-                                                            strokeWidth = 1.5.dp,
-                                                            color = colors.textSubtle
-                                                        )
-                                                    }
-                                                } else if (promptGroups.isEmpty()) {
-                                                    Text(
-                                                        text = if (noteTextState.text.isBlank()) {
-                                                            "Write your reflection or study notes above to generate prayer prompts."
-                                                        } else {
-                                                            "Tap to generate prompts grounded in your study notes."
-                                                        },
-                                                        style = activeTypography.caption,
-                                                        color = colors.inkMuted,
-                                                        modifier = Modifier
-                                                            .padding(vertical = PrayerSpacing.small)
-                                                            .clickable {
-                                                                loadPromptsForEntity(entity, noteTextState.text)
-                                                            }
-                                                    )
-                                                } else {
-                                                    promptGroups.forEach { group ->
-                                                        Text(
-                                                            text = group.title,
-                                                            style = activeTypography.categoryLedgerHeader,
-                                                            color = colors.leatherPrimary,
-                                                            modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
-                                                        )
-                                                        group.prompts.forEach { prompt ->
-                                                            Text(
-                                                                text = "• $prompt",
-                                                                style = activeTypography.prayerPointBody,
-                                                                color = colors.textPrimary,
-                                                                modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                Column(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .heightIn(max = 220.dp)
+                                                        .verticalScroll(rememberScrollState())
+                                                ) {
+                                                    if (isLoadingPrompts && promptGroups.isEmpty()) {
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .padding(vertical = PrayerSpacing.medium),
+                                                            contentAlignment = Alignment.Center
+                                                        ) {
+                                                            CircularProgressIndicator(
+                                                                modifier = Modifier.size(16.dp),
+                                                                strokeWidth = 1.5.dp,
+                                                                color = colors.textSubtle
                                                             )
+                                                        }
+                                                    } else if (promptGroups.isEmpty()) {
+                                                        Text(
+                                                            text = if (noteTextState.text.isBlank()) {
+                                                                "Write your reflection or study notes above to generate prayer prompts."
+                                                            } else {
+                                                                "Tap to generate prompts grounded in your study notes."
+                                                            },
+                                                            style = activeTypography.caption,
+                                                            color = colors.inkMuted,
+                                                            modifier = Modifier
+                                                                .padding(vertical = PrayerSpacing.small)
+                                                                .clickable {
+                                                                    loadPromptsForEntity(entity, noteTextState.text)
+                                                                }
+                                                        )
+                                                    } else {
+                                                        promptGroups.forEach { group ->
+                                                            Text(
+                                                                text = group.title,
+                                                                style = activeTypography.categoryLedgerHeader,
+                                                                color = colors.leatherPrimary,
+                                                                modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
+                                                            )
+                                                            group.prompts.forEach { prompt ->
+                                                                Text(
+                                                                    text = "• $prompt",
+                                                                    style = activeTypography.prayerPointBody,
+                                                                    color = colors.textPrimary,
+                                                                    modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                                )
+                                                            }
                                                         }
                                                     }
                                                 }
                                             }
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraLarge))
                                 }
 
                                 // Interactive Silk Marker Ribbon Tab anchored at top margin
