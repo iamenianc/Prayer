@@ -192,7 +192,7 @@ fun LinedNotepad(
                         belowY += singleLineHeight
                     }
 
-                    // Classic stationery red/sepia vertical margin rule at 56dp
+                    // Classic stationery red/sepia vertical margin rule at 37.52dp (56dp reduced by 33%)
                     val marginX = with(density) { PrayerSpacing.marginTrackWidth.toPx() }
                     drawLine(
                         color = colors.paperMarginRule,

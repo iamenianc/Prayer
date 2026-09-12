@@ -584,7 +584,7 @@ fun SanctuaryPrayerScreen(
                                                     }
                                                 )
                                         ) {
-                                            // Left 56dp track: Marginal Status Aside [ ANSWERED ] (§8.1 48dp touch target)
+                                            // Left 37.52dp track: Marginal Status Aside [ ANSWERED ] (§8.1 48dp touch target)
                                             Box(
                                                 modifier = Modifier
                                                     .width(PrayerSpacing.marginTrackWidth)
