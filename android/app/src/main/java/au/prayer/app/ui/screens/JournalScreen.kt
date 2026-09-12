@@ -837,7 +837,7 @@ fun JournalScreen(
                                                                 .fillMaxWidth()
                                                                 .height(IntrinsicSize.Min)
                                                         ) {
-                                                            // Left Track: 56dp margin track with [ ACTIVE ] or [ ANSWERED ] pill
+                                                            // Left Track: 37.52dp margin track with [ ACTIVE ] or [ ANSWERED ] pill
                                                             Box(
                                                                 modifier = Modifier
                                                                     .width(PrayerSpacing.marginTrackWidth)
@@ -889,7 +889,7 @@ fun JournalScreen(
                                                                     .background(colors.paperMarginRule)
                                                             )
 
-                                                            // Right Track: Prayer Text Canvas (starts 8dp past rule, giving 56+8=64dp textInset)
+                                                            // Right Track: Prayer Text Canvas (starts 8dp past rule, giving 37.52+8=45.52dp textInset)
                                                             Column(
                                                                 modifier = Modifier
                                                                     .weight(1f)
@@ -1123,8 +1123,9 @@ fun JournalScreen(
                     }
                 }
             }
+        }
 
-            // Floating Zoom Indicator Pill
+        // Floating Zoom Indicator Pill
             AnimatedVisibility(
                 visible = (isZooming || showZoomPill) && (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL),
                 enter = fadeIn(),

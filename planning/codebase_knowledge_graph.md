@@ -140,8 +140,8 @@ erDiagram
         string localeDialect "EN_AU_UK (default) | EN_US"
         string leatherFinish "SADDLE_TAN (default) | CORDOVAN | HUNTER_FOREST | OBSIDIAN"
         string paperStock "CREAM_VELLUM (default) | NATURAL_IVORY | AGED_PARCHMENT"
-        boolean highContrastMode "WCAG 2.1 AA accessible contrast toggle"
-        string textScale "LARGE (default) | REGULAR | COMPACT"
+        string textScale "LARGE (default) | REGULAR | COMPACT (data model compatibility)"
+        float textZoomScale "0.75f - 2.5f zoom scale persisted in TABLE_CONFIG"
         boolean blendHistoricPrayers "Interleave historic collects into rotation"
     }
 ```
@@ -486,6 +486,9 @@ graph LR
 | **[`android/app/src/main/res/values/themes.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/values/themes.xml)** | Android / Resources | Zero-flash Theme.Prayer with warm vellum windowBackground | Android OS Theme | Android Manifest |
 | **[`android/app/src/main/res/values-v31/themes.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/values-v31/themes.xml)** | Android / Resources | Android 12+ SplashScreen theme with debossed monogram icon | Android 12+ OS | Android Manifest |
 | **[`android/app/src/main/res/drawable/ic_splash_monogram.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/drawable/ic_splash_monogram.xml)** | Android / Resources | Debossed Latin cross monogram vector icon | Android Vector | themes.xml (v31) |
+| **[`android/app/src/main/res/drawable/ic_launcher_background.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/drawable/ic_launcher_background.xml)** | Android / Resources | Saddle Tan (#8C532B) leather folio cover launcher background | Android Vector | `ic_launcher.xml`, `ic_launcher_round.xml` |
+| **[`android/app/src/main/res/drawable/ic_launcher_foreground.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/drawable/ic_launcher_foreground.xml)** | Android / Resources | Garnet Silk Marker Ribbon (#8B2635) & debossed Latin cross (#4A2810) launcher foreground | Android Vector | `ic_launcher.xml`, `ic_launcher_round.xml` |
+| **[`android/app/src/main/res/drawable/ic_launcher_monochrome.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/drawable/ic_launcher_monochrome.xml)** | Android / Resources | Monochrome Latin cross & ribbon silhouette for Android 13+ Material You themed icons | Android Vector | `ic_launcher.xml`, `ic_launcher_round.xml` |
 | **[`android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt)** | Android / Database | SQLite schema definition (DB v10), entity/point tables, reading progress, suggestion_cache | Android SQLite | `PrayerRepository.kt` |
 | **[`android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt)** | Android / Repository | CRUD operations, Anti-Neglect queue query, suggestion cache persistence & retrieval | `PrayerDatabaseHelper.kt`, `Models.kt` | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/data/models/Models.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt)** | Android / Domain Models | Enums and data classes | Kotlinx Serialization | Repository, API Client, UI |

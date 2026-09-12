@@ -248,8 +248,9 @@ class LayoutGeometryTest {
 
     @Test
     fun `test modern folio spatial layout and stationery geometry`() {
-        assertEquals(56.dp, PrayerSpacing.marginTrackWidth)
-        assertEquals(64.dp, PrayerSpacing.textInset)
+        // Redline vertical margin reduced by 33% from 56dp to 37.52dp (56 * 0.67)
+        assertEquals(37.52.dp, PrayerSpacing.marginTrackWidth)
+        assertEquals(45.52.dp, PrayerSpacing.textInset)
         assertEquals(24.dp, PrayerSpacing.narrativeRightPadding)
         assertEquals(0.75.dp, PrayerSpacing.hairlineWidth)
         assertEquals(18.dp, PrayerSpacing.ribbonWidth)

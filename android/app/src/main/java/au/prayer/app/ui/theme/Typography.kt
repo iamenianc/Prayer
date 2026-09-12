@@ -3,7 +3,6 @@ package au.prayer.app.ui.theme
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.isSp
 import androidx.compose.ui.unit.sp
 import au.prayer.app.data.models.TextScale
 
@@ -230,7 +229,7 @@ fun PrayerTypography.withZoom(scale: Float): PrayerTypography {
     fun TextStyle.scale(): TextStyle {
         return this.copy(
             fontSize = (this.fontSize.value * clamped).sp,
-            lineHeight = if (this.lineHeight.isSp) (this.lineHeight.value * clamped).sp else this.lineHeight
+            lineHeight = if (this.lineHeight.value > 0f) (this.lineHeight.value * clamped).sp else this.lineHeight
         )
     }
     return PrayerTypography(

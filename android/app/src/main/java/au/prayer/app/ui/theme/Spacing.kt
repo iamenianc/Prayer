@@ -29,8 +29,8 @@ data class PrayerSpacingTokens(
     val elevationFloating: Dp = 4.dp,
     val elevationModal: Dp = 8.dp,
     // Modern Folio Spatial & Stationery Geometry
-    val marginTrackWidth: Dp = 56.dp,
-    val textInset: Dp = 64.dp,
+    val marginTrackWidth: Dp = 37.52.dp, // 56dp reduced by 33% (56 * 0.67 = 37.52dp)
+    val textInset: Dp = 45.52.dp, // marginTrackWidth + 8dp clearance
     val narrativeRightPadding: Dp = 24.dp,
     val hairlineWidth: Dp = 0.75.dp,
     val ribbonWidth: Dp = 18.dp,
@@ -63,8 +63,8 @@ object PrayerSpacing {
     val elevationCard: Dp = 2.dp
     val elevationFloating: Dp = 4.dp
     val elevationModal: Dp = 8.dp
-    val marginTrackWidth: Dp = 56.dp
-    val textInset: Dp = 64.dp
+    val marginTrackWidth: Dp = 37.52.dp
+    val textInset: Dp = 45.52.dp
     val narrativeRightPadding: Dp = 24.dp
     val hairlineWidth: Dp = 0.75.dp
     val ribbonWidth: Dp = 18.dp

@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -330,7 +331,7 @@ fun SanctuaryPrayerScreen(
                             .verticalScroll(scrollState)
                             .safeDrawingPadding()
                             .drawBehind {
-                                // Draw classic stationery red/sepia vertical margin rule at 56dp
+                                // Draw classic stationery red/sepia vertical margin rule at 37.52dp
                                 drawLine(
                                     color = marginRuleColor,
                                     start = Offset(marginXPx, 0f),
@@ -375,7 +376,7 @@ fun SanctuaryPrayerScreen(
                             )
                         }
 
-                        // Active Prayer Points: Two-track layout (56dp status pills on left, narrative text at 64dp)
+                        // Active Prayer Points: Two-track layout (37.52dp status pills on left, narrative text at 45.52dp)
                         pageTopic.activePoints.forEachIndexed { pointIndex, point ->
                             Row(
                                 modifier = Modifier
@@ -401,7 +402,7 @@ fun SanctuaryPrayerScreen(
                                         }
                                     )
                             ) {
-                                // Left 56dp track: Marginal Status Aside [ ACTIVE ] (§8.1 48dp touch target)
+                                // Left 37.52dp track: Marginal Status Aside [ ACTIVE ] (§8.1 48dp touch target)
                                 Box(
                                     modifier = Modifier
                                         .width(PrayerSpacing.marginTrackWidth)

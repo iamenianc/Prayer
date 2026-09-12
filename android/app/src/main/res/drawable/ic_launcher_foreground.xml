@@ -4,8 +4,27 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Solemn rectilinear Latin Cross -->
+    <!-- Silk Marker Ribbon Tab (Garnet Crimson with swallow-tail notch) -->
+    <!-- Ribbon drop shadow on leather -->
     <path
-        android:fillColor="#FFFFFF"
+        android:fillColor="#33000000"
+        android:pathData="M 62,14 L 73,14 L 73,41 L 67,36 L 62,41 Z" />
+    <!-- Ribbon body -->
+    <path
+        android:fillColor="#8B2635"
+        android:pathData="M 62,14 L 72,14 L 72,40 L 67,35 L 62,40 Z" />
+    <!-- Ribbon subtle lower shadow -->
+    <path
+        android:fillColor="#1A000000"
+        android:pathData="M 62,34 L 72,34 L 72,40 L 67,35 L 62,40 Z" />
+
+    <!-- Solemn rectilinear Latin Cross (Clean Vector Deboss) -->
+    <!-- Deboss warm highlight rim -->
+    <path
+        android:fillColor="#33A66B3D"
+        android:pathData="M51.5,26.5 h6 v56 h-6 z M34.5,42.5 h40 v6 h-40 z" />
+    <!-- Deboss core umber -->
+    <path
+        android:fillColor="#4A2810"
         android:pathData="M51,26 h6 v56 h-6 z M34,42 h40 v6 h-40 z" />
 </vector>

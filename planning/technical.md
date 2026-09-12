@@ -120,13 +120,15 @@ erDiagram
     - `leather_finish`: `"SADDLE_TAN"` (Default `#8C532B`) | `"CORDOVAN"` (`#5E2A2B`) | `"HUNTER_FOREST"` (`#2D483A`) | `"OBSIDIAN"` (`#35322F`).
     - `paper_stock`: `"CREAM_VELLUM"` (Default `#FAF7F0`) | `"NATURAL_IVORY"` (`#F5EFEB`) | `"AGED_PARCHMENT"` (`#EFE8DA`).
     - `high_contrast_mode`: Boolean (Default `false`). When active, meets WCAG 2.1 AA non-text contrast guidelines (`#9C9488` rules on `#FFFFFF`, `#0F0E0D` ink).
-    - `text_scale`: `"LARGE"` (Default) | `"REGULAR"` | `"COMPACT"`.
+    - `text_scale`: `"LARGE"` (Default) | `"REGULAR"` | `"COMPACT"` (Retained in data model for backwards compatibility; removed from Settings menu UI).
+    - `text_zoom_scale`: Float clamped between `0.75f` and `2.5f` (Default `1.0f`). Persisted in SQLite `TABLE_CONFIG` under `"text_zoom_scale"` for cross-session continuity.
     - `blend_historic_prayers`: Boolean (Default: `false`).
-- **Dual-Engine Typographic Configuration**:
+- **Dual-Engine Typographic Configuration & Pinch-to-Zoom Scaling**:
   - **Narrative Typographic Engine**: High-grade literary serif (*Literata*, *Newsreader*, *EB Garamond*, or *Lora*) applied to narrative petitions, prayer point descriptions, answered thanksgiving notes, and frontispiece quotes.
   - **Ledger Typographic Engine**: Understated neo-grotesque or humanist sans-serif (*Plus Jakarta Sans*, *Inter*, or *Roboto Flex*) applied to category headers, timestamps, entity tags, margin status asides, and settings chrome.
-  - **Mathematical Baseline Synchronization Law (`SanctuaryPrayerScreen`)**:
-    - Feint horizontal rules strictly match active text line height: $H_{px} = \text{lineHeightInPx}$ (`LARGE`: 28sp, `REGULAR`: 23sp, `COMPACT`: 19sp), measured via `TextMeasurer` on `typography.prayerPointBullet` configured with `PlatformTextStyle(includeFontPadding = false)` and `LineHeightStyle(alignment = Alignment.Center, trim = Trim.None)`.
+  - **Pinch-to-Zoom Dynamic Rescaling**: Multi-touch 2-finger pinch (`pinchToZoom`) scales all typographic tokens via `PrayerTypography.withZoom(scale)` proportionally across font size and line height between 75% and 250%, accompanied by an understated floating zoom indicator pill (`${percent}% • Reset`) and top bar reset action (`${percent}% ↺`).
+  - **Mathematical Baseline Synchronization Law (`SanctuaryPrayerScreen`, `VolumeReaderScreen`)**:
+    - Feint horizontal rules strictly match active text line height: $H_{px} = \text{lineHeightInPx}$ (`LARGE`: 28sp, `REGULAR`: 23sp, `COMPACT`: 19sp, dynamically scaled by `zoomScale`), measured via `TextMeasurer` on `typography.prayerPointBullet` configured with `PlatformTextStyle(includeFontPadding = false)` and `LineHeightStyle(alignment = Alignment.Center, trim = Trim.None)`.
     - Baseline anchor $Y_{anchor}$ derived from the first prayer point's sub-pixel layout baseline: feint lines are drawn via linear progression $y_k = Y_{anchor} + k \times H_{px}$, initialized at $y_{start} = Y_{anchor} \pmod{H_{px}}$ and continuing at step $H_{px}$ to the canvas bottom.
     - Inter-point gutters and header clearance are quantized to integer multiples of line cadence ($1 \times H_{px}$), guaranteeing zero baseline drift across any number of wrapped lines, prayer points, and display scales.
 

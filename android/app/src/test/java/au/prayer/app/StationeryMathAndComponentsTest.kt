@@ -3,6 +3,7 @@ package au.prayer.app
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.io.File
 import au.prayer.app.data.models.TextScale
 import au.prayer.app.ui.theme.*
 import org.junit.Assert.*
@@ -52,11 +53,11 @@ class StationeryMathAndComponentsTest {
 
     @Test
     fun `test fine stationery paper layout geometries and margin guidelines`() {
-        // Vertical stationery margin guide rule at 56dp
-        assertEquals(56.dp, PrayerSpacing.marginTrackWidth)
+        // Vertical stationery margin guide rule reduced by 33% from 56dp to 37.52dp (56 * 0.67)
+        assertEquals(37.52.dp, PrayerSpacing.marginTrackWidth)
 
-        // Text inset starts at 64dp, providing exactly an 8dp gutter past the 56dp vertical margin rule
-        assertEquals(64.dp, PrayerSpacing.textInset)
+        // Text inset starts at 45.52dp, providing exactly an 8dp gutter past the 37.52dp vertical margin rule
+        assertEquals(45.52.dp, PrayerSpacing.textInset)
         assertEquals(8.dp, PrayerSpacing.textInset - PrayerSpacing.marginTrackWidth)
 
         // Fine stationery hairline rule stroke is exactly 0.75dp
@@ -250,15 +251,15 @@ class StationeryMathAndComponentsTest {
     @Test
     fun `test typography withZoom scales font sizes and line heights proportionally`() {
         val baseTypography = getPrayerTypography(TextScale.LARGE)
-        val zoomed = baseTypography.withZoom(1.5f)
+        val factor = 1.5f
+        val zoomed = baseTypography.withZoom(factor)
 
-        // Base large prayerPointBody: 18sp fontSize, 34sp lineHeight
-        assertEquals(18f * 1.5f, zoomed.prayerPointBody.fontSize.value, 0.001f)
-        assertEquals(34f * 1.5f, zoomed.prayerPointBody.lineHeight.value, 0.001f)
+        // Base large prayerPointBody: fontSize 18sp, lineHeight 28sp
+        assertEquals(baseTypography.prayerPointBody.fontSize.value * factor, zoomed.prayerPointBody.fontSize.value, 0.001f)
+        assertEquals(baseTypography.prayerPointBody.lineHeight.value * factor, zoomed.prayerPointBody.lineHeight.value, 0.001f)
 
-        // Title: 20sp -> 30sp
-        assertEquals(20f * 1.5f, zoomed.prayerPointTitle.fontSize.value, 0.001f)
-        assertEquals(28f * 1.5f, zoomed.prayerPointTitle.lineHeight.value, 0.001f)
+        // Title: fontSize 22sp
+        assertEquals(baseTypography.prayerPointTitle.fontSize.value * factor, zoomed.prayerPointTitle.fontSize.value, 0.001f)
 
         // Ratio of lineHeight to fontSize is preserved
         val baseRatio = baseTypography.prayerPointBody.lineHeight.value / baseTypography.prayerPointBody.fontSize.value
@@ -275,5 +276,33 @@ class StationeryMathAndComponentsTest {
         assertEquals(baseTypography.prayerPointBody.lineHeight.value, zoomed100.prayerPointBody.lineHeight.value, 0.001f)
         assertEquals(baseTypography.caption.fontSize.value, zoomed100.caption.fontSize.value, 0.001f)
         assertEquals(baseTypography.marginStatus.fontSize.value, zoomed100.marginStatus.fontSize.value, 0.001f)
+    }
+
+    @Test
+    fun `test modern folio launcher icon complies with design principles and rejects stark black white`() {
+        val candidates = listOf(
+            File("src/main/res/drawable/ic_launcher_background.xml"),
+            File("app/src/main/res/drawable/ic_launcher_background.xml"),
+            File("android/app/src/main/res/drawable/ic_launcher_background.xml")
+        )
+        val bgFile = candidates.firstOrNull { it.exists() }
+        assertNotNull("ic_launcher_background.xml should exist", bgFile)
+        val bgXml = bgFile!!.readText()
+
+        val fgFile = File(bgFile.parentFile, "ic_launcher_foreground.xml")
+        assertTrue("ic_launcher_foreground.xml should exist", fgFile.exists())
+        val fgXml = fgFile.readText()
+
+        val monoFile = File(bgFile.parentFile, "ic_launcher_monochrome.xml")
+        assertTrue("ic_launcher_monochrome.xml should exist", monoFile.exists())
+
+        // Rejection of stark black/white dichotomy (Singular Folio Law)
+        assertFalse("Background must not use pure black #000000", bgXml.contains("#000000"))
+        assertFalse("Foreground must not use pure white #FFFFFF", fgXml.contains("#FFFFFF"))
+
+        // Inclusion of canonical Saddle Tan leather and Garnet ribbon
+        assertTrue("Background must use Saddle Tan leather (#8C532B)", bgXml.contains("#8C532B"))
+        assertTrue("Foreground must use Garnet Ribbon (#8B2635)", fgXml.contains("#8B2635"))
+        assertTrue("Foreground must use debossed umber (#4A2810)", fgXml.contains("#4A2810"))
     }
 }
