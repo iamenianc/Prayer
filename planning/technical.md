@@ -101,7 +101,7 @@ erDiagram
     30. To Serve You (Gelasian Sacramentary, 5th c.)
   - **Public Domain Status**: Spurgeon died 1892; original 1905 Passmore & Alabaster edition digitized on Internet Archive. 1662 BCP is public domain. Early church texts from Potts, *Prayers of the Early Church* (1953, public domain in the U.S.; CCEL transcription). Only original texts used; early church and Spurgeon entries lightly modernised (replacement of archaic vocabulary, pronouns, and verb forms; structured with tasteful devotional line breaks for meditative reading cadence).
   - **Zero-State Queue**: When no user topics exist, `getContemplativeTopics()` returns all 30 historic entities. When user topics exist, `blend_historic_prayers` boolean governs interleaving.
-  - **AI & Answered Status Suppression**: `isPreloadedHistoric = true` and `PrayerStatus.HISTORIC` suppress AI prompt generation, `JournalScreen` context AI actions, and all active/answered toggle buttons/actions across Sanctuary and Journal screens. The 56dp left track remains structurally rendered as an unadorned spacer to preserve the red margin guide line and 64dp text inset alignment.
+  - **AI & Answered Status Suppression**: `isPreloadedHistoric = true` and `PrayerStatus.HISTORIC` suppress AI prompt generation, `JournalScreen` context AI actions, and all active/answered toggle buttons/actions across Sanctuary and Journal screens. The 37.52dp left track (reduced by 33% from 56dp) remains structurally rendered as an unadorned spacer to preserve the red margin guide line and 45.52dp text inset alignment.
 
 - **Theological Library Architecture & Standalone Document Assets**:
   - **Inaugural Asset**: `android/app/src/main/res/raw/library_calvin_prayer.json` (190 KB).
@@ -282,7 +282,7 @@ graph TD
 The visual and ergonomic presentation strictly reflects the **Modern Leatherbound Folio** design bible ([`planning/android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md)):
 
 ```
-       56dp Margin Track                  Prayer Text Canvas
+       37.52dp Margin Track               Prayer Text Canvas
  ─────────────────────────────  ┼──────────────────────────────────────────
  [ ACTIVE ]                     │   • Complete recovery from surgery and
  ─────────────────────────────  ┼   renewed strength for the family...
@@ -299,10 +299,10 @@ The visual and ergonomic presentation strictly reflects the **Modern Leatherboun
 - **Folio Leather Casing Frame**: Bounds the display in the active leather base color (Saddle Tan `#8C532B`, Horween Cordovan `#5E2A2B`, Hunter Forest `#2D483A`, or Obsidian Hide `#35322F`) with a whisper-thin `1dp` perimeter stroke at 15% darker alpha.
 - **Vellum Sheet Max Measure**: Maximum `720dp` width centered horizontally on large displays for optimal character reading cadence (60–75 characters).
 - **Frontispiece Bookplate Framing**: Features a delicate double-hairline stationery border (`0.75dp` stroke in `colors.borderSubtle`) set 8dp within the vellum sheet.
-- **The 56dp Left Margin Track**:
-  - Vertical rule: `0.75dp` hairline in stationery red/sepia (`#E5B4B4`), located exactly at `X = 56dp` from the left sheet edge.
+- **The 37.52dp Left Margin Track**:
+  - Vertical rule: `0.75dp` hairline in stationery red/sepia (`#E5B4B4`), located exactly at `X = 37.52dp` from the left sheet edge (reduced by 33% from 56dp).
   - Margin Track content: Houses Active/Answered seals, category tags, and paragraph timestamps (`10:45 AM`), allowing rapid scanning without disrupting the linear flow of prayer text.
-- **Narrative Text Inset**: `56dp + 8dp = 64dp` from the left edge; `24dp` right padding from the right edge.
+- **Narrative Text Inset**: `37.52dp + 8dp = 45.52dp` from the left edge; `24dp` right padding from the right edge.
 - **Horizontal Feint Rules & The Baseline Synchronization Law**:
   - Delicate hairlines (`0.75dp` stroke weight, `#E2DDD5` at 70% alpha).
   - Ruled lines are **always dynamically anchored to the active typographic baselines** of the text engine, spaced at `28sp` intervals for body text.
@@ -364,7 +364,7 @@ The visual and ergonomic presentation strictly reflects the **Modern Leatherboun
 - Subject creation: Action item at the top of each expanded category listing (`+ Add person`, `+ Add group`, `+ Add topic`, `+ Add mission partner`) displaying an `AlertDialog` with planar 0dp styling, name input, and sphere switcher, transitioning directly to Entity Detail upon save.
 - Entity Detail view expands via Material Container Transform (`300ms`, Emphasized Decelerate), presenting past prayer points and a collapsed-by-default prompts header card (`Prompts for Prayer` with `Show/Hide` toggle).
 - **Date Grouping & Separation**: Entries are grouped and separated by date of entry with day and month written out in full English words (e.g. `EEEE, d MMMM yyyy` -> *"Friday, 11 September 2026"*) in subtle, unflashy typography (`typography.marginStatus` / `colors.inkMuted`).
-- **Margin Status Indicator**: Active prayer points display an analog line-drawn pencil icon (`Icons.Outlined.Edit`) within the 56dp margin track; answered prayers display the `[ ANSWERED ]` notation pill in Celadon green. Tapping either indicator toggles state in-place with instant optimistic Compose state (`localPoints`) and asynchronous background persistence on `Dispatchers.IO` for 0ms perceptible lag, accompanied by haptic feedback.
+- **Margin Status Indicator**: Active prayer points display an analog line-drawn pencil icon (`Icons.Outlined.Edit`) within the 37.52dp margin track; answered prayers display the `[ ANSWERED ]` notation pill in Celadon green. Tapping either indicator toggles state in-place with instant optimistic Compose state (`localPoints`) and asynchronous background persistence on `Dispatchers.IO` for 0ms perceptible lag, accompanied by haptic feedback.
 - **In-place editor (`JournalView.EDIT_PRAYER_POINT`)**: Pure-text editing on `LinedNotepad`. When starting to edit an existing prayer point, the typing cursor is instantly active with keyboard focus requested, positioned precisely at the end of the last line (`TextRange(description.length)`). Excludes redundant Active/Answered toggle buttons (canonically handled in the margin track); displays the thanksgiving note field if the point is already marked answered. Includes a bottom "Save changes" button and a TopAppBar "Save" action.
 - **Keyboard Inset Architecture (`WindowInsets.safeDrawing`)**: Root `Scaffold` in `MainActivity.kt` configures `contentWindowInsets = WindowInsets.safeDrawing` with child `consumeWindowInsets(innerPadding)`, ensuring the layout shrinks and elevates all bottom buttons, menus, and controls cleanly above the software keyboard when it appears. Dialogs feature vertically scrollable content columns to prevent keyboard occlusion.
 - Deletion: stark planar confirmation dialog before cascading purge.

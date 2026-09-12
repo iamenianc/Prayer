@@ -53,7 +53,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - **Zero Friction & Full-Screen Immersion**: When in Prayer mode, the UI is completely full screen, with strictly zero buttons, zero card tiles, and zero grid lines.
    - **The Baseline Synchronization Law**: Horizontal feint rules are dynamically locked to typographic baselines at `28sp` intervals.
    - **Heading & Inked Typographic Hierarchy**: Heading states *"Praying for [Name]"* in Semi-Bold Literary Serif (`22sp` / `32sp`) on the first prominent rule for personal intercession targets; **for preloaded historic entities, the entity's display name (e.g., *"Help from on High (C.H. Spurgeon)"* or *"Collect for Peace (1662 BCP)"*) is rendered directly without the "Praying for" prefix**, reflecting the liturgical rather than personal nature of these prayers. Prayer points render in Literary Serif (`17sp` / `28sp`) seated strictly ON feint rules.
-   - **The 56dp Left Margin Track**: Displays discreet marginal status asides (`[ ACTIVE ]`, `[ ANSWERED ]`) and timestamps (`10:45 AM`) in the 56dp left track without cluttering the narrative text canvas (`64dp` text inset, `24dp` right padding). For preloaded historic prayers, active/answered status toggles and pills are suppressed; the 56dp left track serves as a clean margin gutter maintaining the red margin rule and text alignment.
+   - **The 37.52dp Left Margin Track**: Displays discreet marginal status asides (`[ ACTIVE ]`, `[ ANSWERED ]`) and timestamps (`10:45 AM`) in the 37.52dp left track (reduced by 33% from 56dp) without cluttering the narrative text canvas (`45.52dp` text inset, `24dp` right padding). For preloaded historic prayers, active/answered status toggles and pills are suppressed; the 37.52dp left track serves as a clean margin gutter maintaining the red margin rule and text alignment.
    - **Buttonless Navigation & Ergonomic Zones**:
      - **Left 30% Width**: Tap or Swipe Right returns to previous topic.
      - **Right 30% Width**: Tap or Swipe Left advances to next topic (`Shared-Axis X`, spring stiffness `320`, damping `0.85`).
@@ -140,7 +140,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 - **Modern Leatherbound Folio Metaphor**: Clean vector leather casing frame, warm cream vellum canvas, baseline-synchronized rules, and archival ink.
 - **The Singular Folio Law**: One uncompromised tactile theme eliminating day/night inversion, plus High-Contrast Accessible Mode.
 - **The Baseline Synchronization Law**: Ruled lines dynamically anchored to active text baselines (`28sp`), never static repeating stripes.
-- **The 56dp Left Margin Track**: Two-track layout with `56dp` vertical margin guide rule (`#E5B4B4`), `64dp` narrative text inset, and `24dp` right padding.
+- **The 37.52dp Left Margin Track**: Two-track layout with `37.52dp` vertical margin guide rule (`#E5B4B4`, reduced by 33% from 56dp), `45.52dp` narrative text inset, and `24dp` right padding.
 - **Ergonomic Touch Targets**: Universal minimum `48 × 48dp` touch target envelope (silk ribbon expanded to `48 × 56dp`).
 - **Devotional Prayer Zoning**: Left 30% (previous), Right 30% (next), Center 40% (reading / long-press status resolution).
 - **The Zero Gamification Mandate**: Strictly zero streaks, badges, points, or celebration confetti.
