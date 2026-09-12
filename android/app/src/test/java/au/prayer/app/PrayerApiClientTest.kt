@@ -157,4 +157,44 @@ class PrayerApiClientTest {
         assertTrue("Fallback title should be at most 4 words", words.size <= 4)
         assertEquals("Lord give us grace", title)
     }
+
+    @Test
+    fun `test SuggestResponse promptGroups fallback to Ask God when only suggestions array is populated`() {
+        val response = SuggestResponse(
+            suggestions = listOf("Peace in testing", "Endurance in pain")
+        )
+        val groups = response.promptGroups
+        assertEquals(1, groups.size)
+        assertEquals("Ask God", groups[0].title)
+        assertEquals(2, groups[0].prompts.size)
+        assertEquals("Peace in testing", groups[0].prompts[0])
+    }
+
+    @Test
+    fun `test SuggestResponse promptGroups with partial category populations`() {
+        val response = SuggestResponse(
+            praiseGod = listOf("For God's mercy"),
+            askGod = listOf("Wisdom in difficult conversations")
+        )
+        val groups = response.promptGroups
+        assertEquals(2, groups.size)
+        assertEquals("Praise God", groups[0].title)
+        assertEquals("Ask God", groups[1].title)
+        assertEquals("For God's mercy", groups[0].prompts[0])
+        assertEquals("Wisdom in difficult conversations", groups[1].prompts[0])
+    }
+
+    @Test
+    fun `test SuggestResponse promptGroups when all categories are empty`() {
+        val emptyResponse = SuggestResponse()
+        assertTrue("Empty response must produce empty prompt groups", emptyResponse.promptGroups.isEmpty())
+    }
+
+    @Test
+    fun `test offline fallback title generator with multi-bullet and excessive whitespace`() {
+        assertEquals("Faith in Christ", apiClient.generateOfflineFallbackTitle("• • Faith in Christ"))
+        assertEquals("Devotional Peace", apiClient.generateOfflineFallbackTitle("\n\t  •  Devotional Peace  \n\t"))
+        assertEquals("Psalm 23 verse 1", apiClient.generateOfflineFallbackTitle("• Psalm 23 verse 1 - Lord is my shepherd"))
+    }
 }
+

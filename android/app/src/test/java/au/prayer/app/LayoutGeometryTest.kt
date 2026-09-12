@@ -254,7 +254,7 @@ class LayoutGeometryTest {
         assertEquals(0.75.dp, PrayerSpacing.hairlineWidth)
         assertEquals(18.dp, PrayerSpacing.ribbonWidth)
         assertEquals(40.dp, PrayerSpacing.ribbonRestingHeight)
-        assertEquals(54.dp, PrayerSpacing.ribbonPinnedHeight)
+        assertEquals(80.dp, PrayerSpacing.ribbonPinnedHeight)
         assertEquals(24.dp, PrayerSpacing.spineGutterWidth)
 
         // Invariant: textInset must equal marginTrackWidth + 8dp clearance
@@ -303,4 +303,54 @@ class LayoutGeometryTest {
         val resolved = getFolioColors(ThemeMode.WARM_VINTAGE_WHITE, highContrastMode = true)
         assertEquals(AccessibleHighContrastColors, resolved)
     }
+
+    @Test
+    fun `test library reading canvas baseline synchronization law under zoom`() {
+        val testScales = listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f, 2.5f)
+        for (scale in testScales) {
+            val scaledLineHeight = (28 * scale).sp
+            val scaledBaselineSpacing = (28.sp * scale)
+
+            // Scaled paragraph line-height must equal baseline spacing at all zoom levels
+            assertEquals(scaledLineHeight.value, scaledBaselineSpacing.value, 0.001f)
+
+            // Scaled body text must strictly fit within the baseline line height
+            val scaledBodyFontSize = (16.5f * scale).sp
+            assertTrue(scaledLineHeight.value > scaledBodyFontSize.value)
+        }
+    }
+
+    @Test
+    fun `test full leather finish matrix across standard and high-contrast modes`() {
+        // Standard modes
+        val saddle = getFolioColors(ThemeMode.SADDLE_TAN, highContrastMode = false)
+        assertEquals(Color(0xFF8C532B), saddle.leatherActive)
+        assertEquals(Color(0xFFE2DDD5).copy(alpha = 0.70f), saddle.paperFeintRule)
+        assertEquals(Color(0xFFE5B4B4), saddle.paperMarginRule)
+
+        val cordovan = getFolioColors(ThemeMode.HORWEEN_CORDOVAN, highContrastMode = false)
+        assertEquals(Color(0xFF5E2A2B), cordovan.leatherActive)
+
+        val forest = getFolioColors(ThemeMode.HUNTER_FOREST, highContrastMode = false)
+        assertEquals(Color(0xFF2D483A), forest.leatherActive)
+
+        val obsidian = getFolioColors(ThemeMode.OBSIDIAN_HIDE, highContrastMode = false)
+        assertEquals(Color(0xFF35322F), obsidian.leatherActive)
+
+        // High contrast modes
+        val saddleHc = getFolioColors(ThemeMode.SADDLE_TAN, highContrastMode = true)
+        assertEquals(Color(0xFF5A2800), saddleHc.leatherActive)
+        assertEquals(Color(0xFF9C9488), saddleHc.paperFeintRule)
+        assertEquals(Color(0xFFA63D40), saddleHc.paperMarginRule)
+
+        val cordovanHc = getFolioColors(ThemeMode.HORWEEN_CORDOVAN, highContrastMode = true)
+        assertEquals(Color(0xFF3D1A1B), cordovanHc.leatherActive)
+
+        val forestHc = getFolioColors(ThemeMode.HUNTER_FOREST, highContrastMode = true)
+        assertEquals(Color(0xFF1A2E24), forestHc.leatherActive)
+
+        val obsidianHc = getFolioColors(ThemeMode.OBSIDIAN_HIDE, highContrastMode = true)
+        assertEquals(Color(0xFF35322F), obsidianHc.leatherActive)
+    }
 }
+

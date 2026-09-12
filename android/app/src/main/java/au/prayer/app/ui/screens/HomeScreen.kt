@@ -49,11 +49,13 @@ fun HomeScreen(
     onOpenJournal: () -> Unit,
     onAddPrayerPoints: () -> Unit,
     onLogPrayerPoints: () -> Unit = onAddPrayerPoints,
+    onOpenLibrary: () -> Unit = {},
+    hasPinnedPrayers: Boolean = false,
+    onRibbonClick: () -> Unit = onStartPraying,
     isInitialLaunch: Boolean = false,
     onInitialLaunchComplete: () -> Unit = {}
 ) {
     var isVisible by remember { mutableStateOf(false) }
-    var isRibbonPinned by remember { mutableStateOf(false) }
     var startCoverFade by remember { mutableStateOf(false) }
     var isRevelationComplete by remember { mutableStateOf(!isInitialLaunch) }
 
@@ -111,6 +113,17 @@ fun HomeScreen(
         targetValue = if (isVisible) 0f else 16f,
         animationSpec = tween(durationMillis = 350, delayMillis = if (isInitialLaunch) 520 else 220, easing = FastOutSlowInEasing),
         label = "Action3TranslationY"
+    )
+
+    val action4Alpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 350, delayMillis = if (isInitialLaunch) 580 else 280, easing = FastOutSlowInEasing),
+        label = "Action4Alpha"
+    )
+    val action4TranslationY by animateFloatAsState(
+        targetValue = if (isVisible) 0f else 16f,
+        animationSpec = tween(durationMillis = 350, delayMillis = if (isInitialLaunch) 580 else 280, easing = FastOutSlowInEasing),
+        label = "Action4TranslationY"
     )
 
     val coverAlpha by animateFloatAsState(
@@ -392,6 +405,55 @@ fun HomeScreen(
                             }
                         }
 
+                        // Pathway 4: Library (Theological Treatises & Historic Devotionals - Stationery Plate)
+                        Surface(
+                            onClick = onOpenLibrary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .graphicsLayer {
+                                    alpha = action4Alpha
+                                    translationY = action4TranslationY
+                                },
+                            shape = FlatSquareShape,
+                            color = colors.surface,
+                            contentColor = colors.textPrimary,
+                            tonalElevation = PrayerSpacing.elevationSubtle,
+                            shadowElevation = PrayerSpacing.elevationSubtle,
+                            border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = PrayerSpacing.large),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.medium)
+                                ) {
+                                    Text(
+                                        text = "❧",
+                                        fontFamily = FontFamily.Serif,
+                                        fontSize = 16.sp,
+                                        color = colors.leatherActive.copy(alpha = 0.75f)
+                                    )
+                                    Text(
+                                        text = "Library",
+                                        style = typography.homeAction,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                                Text(
+                                    text = "›",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 18.sp,
+                                    color = colors.inkMuted.copy(alpha = 0.50f)
+                                )
+                            }
+                        }
+
                         Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
 
                         // Discrete Marginal Navigation Hint
@@ -407,8 +469,8 @@ fun HomeScreen(
 
             // Interactive Silk Marker Ribbon Tab anchored at top right (§2.3, §11.2)
             SilkMarkerRibbon(
-                isPinned = isRibbonPinned,
-                onTogglePin = { isRibbonPinned = !isRibbonPinned },
+                isPinned = hasPinnedPrayers,
+                onTogglePin = onRibbonClick,
                 color = colors.ribbonPrimary,
                 modifier = Modifier
                     .align(Alignment.TopEnd)

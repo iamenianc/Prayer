@@ -136,4 +136,31 @@ class LifoBackStackTest {
         assertEquals(ScreenState.HOME, mainStack.current)
         assertFalse(mainStack.canPop)
     }
+
+    @Test
+    fun `test library and volume reader back stack navigation flow`() {
+        val stack = LifoBackStack(ScreenState.HOME)
+        assertEquals(ScreenState.HOME, stack.current)
+
+        // Navigate Home -> Library
+        stack.push(ScreenState.LIBRARY)
+        assertEquals(ScreenState.LIBRARY, stack.current)
+        assertEquals(2, stack.size)
+
+        // Select Calvin Volume: Library -> Volume Reader
+        stack.push(ScreenState.VOLUME_READER)
+        assertEquals(ScreenState.VOLUME_READER, stack.current)
+        assertEquals(3, stack.size)
+
+        // Exit Volume Reader: returns to Library
+        assertTrue(stack.pop())
+        assertEquals(ScreenState.LIBRARY, stack.current)
+        assertEquals(2, stack.size)
+
+        // Exit Library: returns to Home
+        assertTrue(stack.pop())
+        assertEquals(ScreenState.HOME, stack.current)
+        assertEquals(1, stack.size)
+        assertFalse(stack.canPop)
+    }
 }

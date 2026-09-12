@@ -11,6 +11,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +30,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import au.prayer.app.data.local.PrayerRepository
@@ -35,8 +39,11 @@ import au.prayer.app.network.PrayerApiClient
 import au.prayer.app.network.PromptGroup
 import au.prayer.app.network.RecordedPoint
 import au.prayer.app.network.SuggestRequest
+import au.prayer.app.ui.gestures.calculateZoomScale
 import au.prayer.app.ui.gestures.edgeSwipeRight
+import au.prayer.app.ui.gestures.pinchToZoom
 import au.prayer.app.ui.navigation.LifoBackStack
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.font.FontWeight
 import au.prayer.app.ui.components.LinedNotepad
@@ -48,6 +55,9 @@ import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
 import au.prayer.app.ui.theme.PrayerSpacing
 import au.prayer.app.ui.theme.PrayerTypography
+import au.prayer.app.ui.theme.withZoom
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 private enum class JournalView {
     OVERVIEW,
@@ -97,11 +107,13 @@ fun JournalScreen(
         mutableStateMapOf<RootCode, Boolean>(
             RootCode.PEOPLE to true,
             RootCode.GROUPS to true,
+            RootCode.MISSION_PARTNERS to true,
             RootCode.GENERAL to true,
-            RootCode.MISSION_PARTNERS to true
+            RootCode.HISTORIC to true
         )
     }
     var selectedEntity by remember { mutableStateOf<IndividualEntity?>(initialEntity) }
+    var isPinnedFocusExpanded by remember { mutableStateOf(true) }
 
     LaunchedEffect(navigationKey) {
         if (initialEntity != null) {
@@ -111,9 +123,18 @@ fun JournalScreen(
             }
         }
     }
+
+    var localPoints by remember(selectedEntity?.id, navigationKey) {
+        mutableStateOf(selectedEntity?.let { getPointsForEntity(it.id) } ?: emptyList())
+    }
     var editingPoint by remember { mutableStateOf<PrayerPoint?>(null) }
-    val journalPromptsCache = remember { mutableStateMapOf<String, List<PromptGroup>>() }
+    val journalPromptsCache = remember {
+        mutableStateMapOf<String, List<PromptGroup>>().apply {
+            repository?.getAllCachedSuggestions()?.let { putAll(it) }
+        }
+    }
     val journalPromptsLoading = remember { mutableStateMapOf<String, Boolean>() }
+    val refreshedJournalEntities = remember { mutableSetOf<String>() }
 
     // Long-press context action states for entities (people/groups)
     var entityForContextActions by remember { mutableStateOf<IndividualEntity?>(null) }
@@ -145,9 +166,26 @@ fun JournalScreen(
 
     // Editor fields
     var editBody by remember { mutableStateOf(TextFieldValue("")) }
-    var editStatus by remember { mutableStateOf(PrayerStatus.ACTIVE) }
     var editTestimony by remember { mutableStateOf("") }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    val initialZoom = remember { repository?.getTextZoomScale() ?: 1.0f }
+    var zoomScale by remember { mutableFloatStateOf(initialZoom) }
+    var isZooming by remember { mutableStateOf(false) }
+    var showZoomPill by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isZooming) {
+        if (isZooming) {
+            showZoomPill = true
+        } else if (showZoomPill) {
+            delay(1500)
+            showZoomPill = false
+        }
+    }
+
+    val typography = remember(typography, zoomScale) {
+        typography.withZoom(zoomScale)
+    }
 
     Scaffold(
         containerColor = colors.background,
@@ -178,6 +216,25 @@ fun JournalScreen(
                     }
                 },
                 actions = {
+                    if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                        if (zoomScale != 1.0f) {
+                            Text(
+                                text = "${(zoomScale * 100).roundToInt()}% ↺",
+                                style = typography.marginStatus.copy(
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.leatherActive,
+                                modifier = Modifier
+                                    .clickable {
+                                        zoomScale = 1.0f
+                                        repository?.saveTextZoomScale(1.0f)
+                                        showZoomPill = true
+                                    }
+                                    .padding(horizontal = PrayerSpacing.small, vertical = PrayerSpacing.extraSmall)
+                            )
+                        }
+                    }
                     if (currentView == JournalView.OVERVIEW) {
                         IconButton(onClick = { journalBackStack.push(JournalView.SETTINGS) }) {
                             Icon(
@@ -191,6 +248,42 @@ fun JournalScreen(
                                 imageVector = Icons.Default.Home,
                                 contentDescription = "Home",
                                 tint = colors.textSubtle
+                            )
+                        }
+                    } else if (currentView == JournalView.EDIT_PRAYER_POINT) {
+                        TextButton(
+                            onClick = {
+                                editingPoint?.let { point ->
+                                    val updatedTestimony = if (point.status == PrayerStatus.ANSWERED) editTestimony else null
+                                    localPoints = localPoints.map {
+                                        if (it.id == point.id) it.copy(description = editBody.text, answeredTestimony = updatedTestimony) else it
+                                    }
+                                    onUpdatePrayerPoint(
+                                        point.id,
+                                        point.title,
+                                        editBody.text,
+                                        point.status,
+                                        updatedTestimony
+                                    )
+                                    journalBackStack.pop()
+                                }
+                            },
+                            shape = FlatSquareShape
+                        ) {
+                            Text(
+                                text = "Save",
+                                style = typography.button,
+                                color = colors.textPrimary
+                            )
+                        }
+                        TextButton(
+                            onClick = onBackToHome,
+                            shape = FlatSquareShape
+                        ) {
+                            Text(
+                                text = "Home",
+                                style = typography.button,
+                                color = colors.textSubtle
                             )
                         }
                     } else {
@@ -213,12 +306,34 @@ fun JournalScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .edgeSwipeRight { handleJournalBack() }
+                .pinchToZoom(
+                    onZoomChange = { factor ->
+                        if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                            isZooming = true
+                            zoomScale = calculateZoomScale(zoomScale, factor)
+                        }
+                    },
+                    onZoomStart = {
+                        if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                            isZooming = true
+                        }
+                    },
+                    onZoomEnd = {
+                        if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                            isZooming = false
+                            repository?.saveTextZoomScale(zoomScale)
+                        }
+                    }
+                )
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
             HorizontalDivider(thickness = 0.5.dp, color = colors.border)
 
             // Sub-view Router with directional slide and fade animation
@@ -254,6 +369,104 @@ fun JournalScreen(
                 when (view) {
                     JournalView.OVERVIEW -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            val pinnedEntities = entities.filter { it.isPinned }
+                            if (pinnedEntities.isNotEmpty()) {
+                                item(key = "header_pinned_focus") {
+                                    Surface(
+                                        onClick = {
+                                            isPinnedFocusExpanded = !isPinnedFocusExpanded
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(min = PrayerSpacing.primaryActionHeight),
+                                        shape = FlatSquareShape,
+                                        color = colors.surfaceSubtle,
+                                        contentColor = colors.textPrimary,
+                                        tonalElevation = PrayerSpacing.elevationNone,
+                                        border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(
+                                                    horizontal = PrayerSpacing.large,
+                                                    vertical = PrayerSpacing.medium
+                                                ),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "PINNED FOCUS (${pinnedEntities.size})",
+                                                style = typography.categoryLedgerHeader,
+                                                color = colors.ribbonPrimary
+                                            )
+                                            Icon(
+                                                imageVector = if (isPinnedFocusExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                                contentDescription = if (isPinnedFocusExpanded) "Collapse Pinned Focus" else "Expand Pinned Focus",
+                                                tint = colors.ribbonPrimary
+                                            )
+                                        }
+                                    }
+                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                }
+
+                                if (isPinnedFocusExpanded) {
+                                    items(pinnedEntities, key = { "pinned_${it.id}" }) { entity ->
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .animateItem()
+                                                .combinedClickable(
+                                                    onClick = {
+                                                        selectedEntity = entity
+                                                        journalBackStack.push(JournalView.ENTITY_DETAIL)
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        entityForContextActions = entity
+                                                    }
+                                                ),
+                                            shape = FlatSquareShape,
+                                            color = colors.surface,
+                                            contentColor = colors.textPrimary,
+                                            tonalElevation = PrayerSpacing.elevationNone
+                                        ) {
+                                            Column {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            horizontal = PrayerSpacing.large + PrayerSpacing.small,
+                                                            vertical = PrayerSpacing.medium
+                                                        ),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = entity.displayName,
+                                                            style = typography.prayerPointBody,
+                                                            color = colors.textPrimary
+                                                        )
+                                                        Text(
+                                                            text = entity.rootCode.displayTitle,
+                                                            style = typography.caption.copy(fontSize = 11.sp),
+                                                            color = colors.inkMuted
+                                                        )
+                                                    }
+                                                    Text(
+                                                        text = "• PINNED",
+                                                        style = typography.marginStatus,
+                                                        color = colors.ribbonPrimary
+                                                    )
+                                                }
+                                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
                             RootCode.values().forEach { root ->
                                 item(key = "header_${root.name}") {
                                     val isExpanded = expandedRoots[root] ?: true
@@ -297,46 +510,52 @@ fun JournalScreen(
 
                                 val isExpanded = expandedRoots[root] ?: true
                                 if (isExpanded) {
-                                    val groupEntities = entities.filter { it.rootCode == root }
+                                    val groupEntities = entities.filter { it.rootCode == root }.sortedWith(
+                                        compareByDescending<IndividualEntity> { it.isPinned }
+                                            .thenBy { it.displayName.lowercase() }
+                                    )
 
-                                    // Option to add at the top of each listing under each group
-                                    item(key = "add_${root.name}") {
-                                        Surface(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .heightIn(min = PrayerSpacing.primaryActionHeight)
-                                                .clickable {
-                                                    addingToRoot = root
-                                                    newEntityRoot = root
-                                                    newEntityName = ""
-                                                },
-                                            shape = FlatSquareShape,
-                                            color = colors.surface,
-                                            contentColor = colors.textPrimary,
-                                            tonalElevation = PrayerSpacing.elevationNone
-                                        ) {
-                                            Row(
+                                    // Option to add at the top of each listing under each group (except Historic)
+                                    if (root != RootCode.HISTORIC) {
+                                        item(key = "add_${root.name}") {
+                                            Surface(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
-                                                    .padding(
-                                                        horizontal = PrayerSpacing.large + PrayerSpacing.small,
-                                                        vertical = PrayerSpacing.medium
-                                                    ),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = when (root) {
-                                                        RootCode.PEOPLE -> "+ Add person"
-                                                        RootCode.GROUPS -> "+ Add group"
-                                                        RootCode.GENERAL -> "+ Add topic"
-                                                        RootCode.MISSION_PARTNERS -> "+ Add mission partner"
+                                                    .heightIn(min = PrayerSpacing.primaryActionHeight)
+                                                    .clickable {
+                                                        addingToRoot = root
+                                                        newEntityRoot = root
+                                                        newEntityName = ""
                                                     },
-                                                    style = typography.button,
-                                                    color = colors.leatherActive
-                                                )
+                                                shape = FlatSquareShape,
+                                                color = colors.surface,
+                                                contentColor = colors.textPrimary,
+                                                tonalElevation = PrayerSpacing.elevationNone
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(
+                                                            horizontal = PrayerSpacing.large + PrayerSpacing.small,
+                                                            vertical = PrayerSpacing.medium
+                                                        ),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = when (root) {
+                                                            RootCode.PEOPLE -> "+ Add person"
+                                                            RootCode.GROUPS -> "+ Add group"
+                                                            RootCode.MISSION_PARTNERS -> "+ Add mission partner"
+                                                            RootCode.GENERAL -> "+ Add topic"
+                                                            RootCode.HISTORIC -> ""
+                                                        },
+                                                        style = typography.button,
+                                                        color = colors.leatherActive
+                                                    )
+                                                }
                                             }
+                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                                         }
-                                        HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                                     }
 
                                     if (groupEntities.isEmpty()) {
@@ -416,11 +635,22 @@ fun JournalScreen(
                     JournalView.ENTITY_DETAIL -> {
                         selectedEntity?.let { rawEntity ->
                             val entity = entities.find { it.id == rawEntity.id } ?: rawEntity
-                            val points = getPointsForEntity(entity.id)
+                            val points = localPoints
                             var isJournalPromptsExpanded by remember(entity.id) { mutableStateOf(false) }
 
                             LaunchedEffect(entity.id) {
-                                if (apiClient != null && points.isNotEmpty() && !journalPromptsCache.containsKey(entity.id) && !entity.isPreloadedHistoric) {
+                                // Ensure cached prompts from last time are immediately in memory
+                                if (!journalPromptsCache.containsKey(entity.id)) {
+                                    repository?.getCachedSuggestions(entity.id)?.let { cached ->
+                                        if (cached.isNotEmpty()) {
+                                            journalPromptsCache[entity.id] = cached
+                                        }
+                                    }
+                                }
+
+                                // Refresh in background while showing the last list of prompts
+                                if (apiClient != null && points.isNotEmpty() && !entity.isPreloadedHistoric && !refreshedJournalEntities.contains(entity.id)) {
+                                    refreshedJournalEntities.add(entity.id)
                                     journalPromptsLoading[entity.id] = true
                                     val contextData = repository?.getTargetContext(entity.id)
                                     val recorded = (contextData?.activePoints.orEmpty() + contextData?.answeredPoints.orEmpty()).ifEmpty {
@@ -442,6 +672,7 @@ fun JournalScreen(
                                     journalPromptsLoading[entity.id] = false
                                     result.onSuccess { resp ->
                                         if (resp.promptGroups.isNotEmpty()) {
+                                            repository?.saveCachedSuggestions(entity.id, resp)
                                             journalPromptsCache[entity.id] = resp.promptGroups
                                         }
                                     }.onFailure {
@@ -452,31 +683,6 @@ fun JournalScreen(
 
                             Box(modifier = Modifier.fillMaxSize()) {
                                 Column(modifier = Modifier.fillMaxSize()) {
-                                    // Quick Action: Add prayer point for this person/group
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(PrayerSpacing.primaryActionHeight),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        OutlinedButton(
-                                            onClick = { onAddForEntity(entity) },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .fillMaxHeight(),
-                                            shape = FlatSquareShape,
-                                            border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border),
-                                            colors = ButtonDefaults.outlinedButtonColors(
-                                                containerColor = colors.surface,
-                                                contentColor = colors.textPrimary
-                                            )
-                                        ) {
-                                            Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
-                                        }
-                                    }
-
-                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
-
                                     // Read-Only AI Prompts on past points (Grouped into Praise God, Thank God, Ask God) - Collapsed by default
                                     val cachedGroups = journalPromptsCache[entity.id].orEmpty()
                                     val isLoadingPrompts = journalPromptsLoading[entity.id] == true
@@ -486,8 +692,10 @@ fun JournalScreen(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(
-                                                    horizontal = PrayerSpacing.large,
-                                                    vertical = PrayerSpacing.small
+                                                    start = PrayerSpacing.large,
+                                                    end = 52.dp,
+                                                    top = PrayerSpacing.small,
+                                                    bottom = PrayerSpacing.small
                                                 )
                                                 .clickable { isJournalPromptsExpanded = !isJournalPromptsExpanded },
                                             shape = FlatSquareShape,
@@ -584,7 +792,7 @@ fun JournalScreen(
                                                         .fillMaxWidth()
                                                         .padding(
                                                             start = PrayerSpacing.textInset,
-                                                            end = PrayerSpacing.narrativeRightPadding,
+                                                            end = 36.dp,
                                                             top = PrayerSpacing.medium,
                                                             bottom = PrayerSpacing.extraSmall
                                                         )
@@ -600,6 +808,7 @@ fun JournalScreen(
 
                                             items(datePoints, key = { it.id }) { point ->
                                                 val isAnswered = point.status == PrayerStatus.ANSWERED
+                                                val isPreloaded = entity.isPreloadedHistoric || point.status == PrayerStatus.HISTORIC
                                                 Surface(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
@@ -607,8 +816,7 @@ fun JournalScreen(
                                                         .combinedClickable(
                                                             onClick = {
                                                                 editingPoint = point
-                                                                editBody = TextFieldValue(point.description)
-                                                                editStatus = point.status
+                                                                editBody = TextFieldValue(point.description, selection = TextRange(point.description.length))
                                                                 editTestimony = point.answeredTestimony ?: ""
                                                                 showDeleteConfirm = false
                                                                 journalBackStack.push(JournalView.EDIT_PRAYER_POINT)
@@ -637,23 +845,39 @@ fun JournalScreen(
                                                                     .padding(top = PrayerSpacing.medium),
                                                                 contentAlignment = Alignment.TopCenter
                                                             ) {
-                                                                Surface(
-                                                                    onClick = {
-                                                                        val newStatus = if (isAnswered) PrayerStatus.ACTIVE else PrayerStatus.ANSWERED
-                                                                        val testimony = if (newStatus == PrayerStatus.ANSWERED) point.answeredTestimony else null
-                                                                        onUpdatePrayerPoint(point.id, point.title, point.description, newStatus, testimony)
-                                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                    },
-                                                                    shape = RoundedCornerShape(4.dp),
-                                                                    border = BorderStroke(0.5.dp, if (isAnswered) colors.inkAnswered.copy(alpha = 0.5f) else colors.inkMuted.copy(alpha = 0.5f)),
-                                                                    color = colors.surface
-                                                                ) {
-                                                                    Text(
-                                                                        text = if (isAnswered) "ANSWERED" else "ACTIVE",
-                                                                        style = typography.marginStatus,
-                                                                        color = if (isAnswered) colors.inkAnswered else colors.inkMuted,
-                                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                                                    )
+                                                                if (!isPreloaded) {
+                                                                    Surface(
+                                                                        onClick = {
+                                                                            val newStatus = if (isAnswered) PrayerStatus.ACTIVE else PrayerStatus.ANSWERED
+                                                                            val testimony = if (newStatus == PrayerStatus.ANSWERED) point.answeredTestimony else null
+                                                                            localPoints = localPoints.map {
+                                                                                if (it.id == point.id) it.copy(status = newStatus, answeredTestimony = testimony) else it
+                                                                            }
+                                                                            onUpdatePrayerPoint(point.id, point.title, point.description, newStatus, testimony)
+                                                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                        },
+                                                                        shape = RoundedCornerShape(4.dp),
+                                                                        border = BorderStroke(0.5.dp, if (isAnswered) colors.inkAnswered.copy(alpha = 0.5f) else colors.inkMuted.copy(alpha = 0.5f)),
+                                                                        color = colors.surface
+                                                                    ) {
+                                                                        if (isAnswered) {
+                                                                            Text(
+                                                                                text = "ANSWERED",
+                                                                                style = typography.marginStatus,
+                                                                                color = colors.inkAnswered,
+                                                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                            )
+                                                                        } else {
+                                                                            Icon(
+                                                                                imageVector = Icons.Outlined.Edit,
+                                                                                contentDescription = "Active prayer",
+                                                                                tint = colors.inkMuted,
+                                                                                modifier = Modifier
+                                                                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                                                    .size(12.dp)
+                                                                            )
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
 
@@ -671,7 +895,7 @@ fun JournalScreen(
                                                                     .weight(1f)
                                                                     .padding(
                                                                         start = 8.dp,
-                                                                        end = PrayerSpacing.narrativeRightPadding,
+                                                                        end = 36.dp,
                                                                         top = PrayerSpacing.medium,
                                                                         bottom = PrayerSpacing.medium
                                                                     )
@@ -706,6 +930,33 @@ fun JournalScreen(
                                                 }
                                             }
                                         }
+
+                                        // Quick Action: Add prayer point for this person/group at the bottom of the list of points
+                                        item(key = "add_point_${entity.id}") {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(PrayerSpacing.primaryActionHeight),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                OutlinedButton(
+                                                    onClick = { onAddForEntity(entity) },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .fillMaxHeight(),
+                                                    shape = FlatSquareShape,
+                                                    border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border),
+                                                    colors = ButtonDefaults.outlinedButtonColors(
+                                                        containerColor = colors.surface,
+                                                        contentColor = colors.textPrimary
+                                                    )
+                                                ) {
+                                                    Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
+                                                }
+                                            }
+                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                            Spacer(modifier = Modifier.height(PrayerSpacing.large))
+                                        }
                                     }
                                 }
 
@@ -718,9 +969,7 @@ fun JournalScreen(
                                         onTogglePinEntity?.invoke(entity.id, newPinned)
                                     },
                                     color = colors.ribbonPrimary,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(end = 16.dp)
+                                    modifier = Modifier.align(Alignment.TopEnd)
                                 )
                             }
                         }
@@ -742,90 +991,27 @@ fun JournalScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .weight(1f),
-                                    textStyle = typography.prayerPointBody
+                                    textStyle = typography.prayerPointBody,
+                                    autoFocus = true
                                 )
 
-                                Spacer(modifier = Modifier.height(PrayerSpacing.medium))
-
-                                // Status Toggle: Active vs Answered with smooth color animation
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
-                                ) {
-                                    val isActive = editStatus == PrayerStatus.ACTIVE
-                                    val activeBg by animateColorAsState(
-                                        targetValue = if (isActive) colors.textPrimary else colors.surface,
-                                        label = "ActiveBg"
-                                    )
-                                    val activeText by animateColorAsState(
-                                        targetValue = if (isActive) colors.background else colors.textPrimary,
-                                        label = "ActiveText"
-                                    )
-
-                                    Button(
-                                        onClick = { editStatus = PrayerStatus.ACTIVE },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(PrayerSpacing.minTouchTarget),
+                                if (point.status == PrayerStatus.ANSWERED) {
+                                    Spacer(modifier = Modifier.height(PrayerSpacing.medium))
+                                    OutlinedTextField(
+                                        value = editTestimony,
+                                        onValueChange = { editTestimony = it },
+                                        label = { Text("Thanksgiving note", style = typography.caption) },
+                                        textStyle = typography.prayerPointBody.copy(color = colors.textPrimary),
                                         shape = FlatSquareShape,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = activeBg,
-                                            contentColor = activeText
-                                        ),
-                                        border = BorderStroke(if (isActive) 1.5.dp else 0.5.dp, colors.border)
-                                    ) {
-                                        Text("Active", style = typography.button)
-                                    }
-
-                                    val isAnswered = editStatus == PrayerStatus.ANSWERED
-                                    val answeredBg by animateColorAsState(
-                                        targetValue = if (isAnswered) colors.textPrimary else colors.surface,
-                                        label = "AnsweredBg"
-                                    )
-                                    val answeredText by animateColorAsState(
-                                        targetValue = if (isAnswered) colors.background else colors.textPrimary,
-                                        label = "AnsweredText"
-                                    )
-
-                                    Button(
-                                        onClick = { editStatus = PrayerStatus.ANSWERED },
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .height(PrayerSpacing.minTouchTarget),
-                                        shape = FlatSquareShape,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = answeredBg,
-                                            contentColor = answeredText
-                                        ),
-                                        border = BorderStroke(if (isAnswered) 1.5.dp else 0.5.dp, colors.border)
-                                    ) {
-                                        Text("Answered", style = typography.button)
-                                    }
-                                }
-
-                                AnimatedVisibility(
-                                    visible = editStatus == PrayerStatus.ANSWERED,
-                                    enter = expandVertically(tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(250)),
-                                    exit = shrinkVertically(tween(250, easing = FastOutSlowInEasing)) + fadeOut(tween(150))
-                                ) {
-                                    Column {
-                                        Spacer(modifier = Modifier.height(PrayerSpacing.medium))
-                                        OutlinedTextField(
-                                            value = editTestimony,
-                                            onValueChange = { editTestimony = it },
-                                            label = { Text("Thanksgiving note", style = typography.caption) },
-                                            textStyle = typography.prayerPointBody.copy(color = colors.textPrimary),
-                                            shape = FlatSquareShape,
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedBorderColor = colors.textPrimary,
-                                                unfocusedBorderColor = colors.border,
-                                                focusedLabelColor = colors.textPrimary,
-                                                unfocusedLabelColor = colors.textSubtle,
-                                                cursorColor = colors.textPrimary
-                                            )
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = colors.textPrimary,
+                                            unfocusedBorderColor = colors.border,
+                                            focusedLabelColor = colors.textPrimary,
+                                            unfocusedLabelColor = colors.textSubtle,
+                                            cursorColor = colors.textPrimary
                                         )
-                                    }
+                                    )
                                 }
 
                                 Spacer(modifier = Modifier.height(PrayerSpacing.large))
@@ -833,7 +1019,17 @@ fun JournalScreen(
                                 // Save Changes Action
                                 Button(
                                     onClick = {
-                                        onUpdatePrayerPoint(point.id, "", editBody.text, editStatus, editTestimony)
+                                        val updatedTestimony = if (point.status == PrayerStatus.ANSWERED) editTestimony else null
+                                        localPoints = localPoints.map {
+                                            if (it.id == point.id) it.copy(description = editBody.text, answeredTestimony = updatedTestimony) else it
+                                        }
+                                        onUpdatePrayerPoint(
+                                            point.id,
+                                            point.title,
+                                            editBody.text,
+                                            point.status,
+                                            updatedTestimony
+                                        )
                                         journalBackStack.pop()
                                     },
                                     modifier = Modifier
@@ -883,6 +1079,7 @@ fun JournalScreen(
                                             Button(
                                                 onClick = {
                                                     showDeleteConfirm = false
+                                                    localPoints = localPoints.filter { it.id != point.id }
                                                     onDeletePrayerPoint(point.id)
                                                     journalBackStack.pop()
                                                 },
@@ -926,6 +1123,55 @@ fun JournalScreen(
                     }
                 }
             }
+
+            // Floating Zoom Indicator Pill
+            AnimatedVisibility(
+                visible = (isZooming || showZoomPill) && (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL),
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 28.dp)
+            ) {
+                Surface(
+                    onClick = {
+                        zoomScale = 1.0f
+                        repository?.saveTextZoomScale(1.0f)
+                        showZoomPill = true
+                    },
+                    shape = FlatSquareShape,
+                    color = colors.leatherActive.copy(alpha = 0.92f),
+                    contentColor = colors.background,
+                    tonalElevation = PrayerSpacing.elevationCard,
+                    shadowElevation = PrayerSpacing.elevationCard,
+                    border = BorderStroke(1.dp, colors.borderSubtle)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "${(zoomScale * 100).roundToInt()}%",
+                            style = typography.caption.copy(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = colors.background
+                        )
+                        if (zoomScale != 1.0f) {
+                            Text(
+                                text = "• Reset",
+                                style = typography.caption.copy(
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.background.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -933,7 +1179,7 @@ fun JournalScreen(
 
     if (entityForContextActions != null) {
         val entity = entityForContextActions!!
-        val isHistoric = entity.isPreloadedHistoric
+        val isHistoric = entity.isPreloadedHistoric && entity.rootCode == RootCode.HISTORIC
         AlertDialog(
             onDismissRequest = { entityForContextActions = null },
             title = {
@@ -1035,7 +1281,11 @@ fun JournalScreen(
                 )
             },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     OutlinedTextField(
                         value = editEntityName,
                         onValueChange = { editEntityName = it },
@@ -1108,31 +1358,6 @@ fun JournalScreen(
                             Text("Groups", style = typography.button)
                         }
 
-                        val isGeneral = editEntityRoot == RootCode.GENERAL
-                        val generalBg by animateColorAsState(
-                            targetValue = if (isGeneral) colors.textPrimary else colors.surface,
-                            label = "EditGeneralBg"
-                        )
-                        val generalText by animateColorAsState(
-                            targetValue = if (isGeneral) colors.background else colors.textPrimary,
-                            label = "EditGeneralText"
-                        )
-
-                        Button(
-                            onClick = { editEntityRoot = RootCode.GENERAL },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(PrayerSpacing.minTouchTarget),
-                            shape = FlatSquareShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = generalBg,
-                                contentColor = generalText
-                            ),
-                            border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
-                        ) {
-                            Text("General", style = typography.button)
-                        }
-
                         val isMission = editEntityRoot == RootCode.MISSION_PARTNERS
                         val missionBg by animateColorAsState(
                             targetValue = if (isMission) colors.textPrimary else colors.surface,
@@ -1156,6 +1381,31 @@ fun JournalScreen(
                             border = BorderStroke(if (isMission) 1.5.dp else 0.5.dp, colors.border)
                         ) {
                             Text("Mission Partners", style = typography.button)
+                        }
+
+                        val isGeneral = editEntityRoot == RootCode.GENERAL
+                        val generalBg by animateColorAsState(
+                            targetValue = if (isGeneral) colors.textPrimary else colors.surface,
+                            label = "EditGeneralBg"
+                        )
+                        val generalText by animateColorAsState(
+                            targetValue = if (isGeneral) colors.background else colors.textPrimary,
+                            label = "EditGeneralText"
+                        )
+
+                        Button(
+                            onClick = { editEntityRoot = RootCode.GENERAL },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = generalBg,
+                                contentColor = generalText
+                            ),
+                            border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("General", style = typography.button)
                         }
                     }
                 }
@@ -1215,7 +1465,11 @@ fun JournalScreen(
                 )
             },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     OutlinedTextField(
                         value = newEntityName,
                         onValueChange = { newEntityName = it },
@@ -1295,31 +1549,6 @@ fun JournalScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
                     ) {
-                        val isGeneral = newEntityRoot == RootCode.GENERAL
-                        val generalBg by animateColorAsState(
-                            targetValue = if (isGeneral) colors.textPrimary else colors.surface,
-                            label = "NewGeneralBg"
-                        )
-                        val generalText by animateColorAsState(
-                            targetValue = if (isGeneral) colors.background else colors.textPrimary,
-                            label = "NewGeneralText"
-                        )
-
-                        Button(
-                            onClick = { newEntityRoot = RootCode.GENERAL },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(PrayerSpacing.minTouchTarget),
-                            shape = FlatSquareShape,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = generalBg,
-                                contentColor = generalText
-                            ),
-                            border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
-                        ) {
-                            Text("General", style = typography.button)
-                        }
-
                         val isMission = newEntityRoot == RootCode.MISSION_PARTNERS
                         val missionBg by animateColorAsState(
                             targetValue = if (isMission) colors.textPrimary else colors.surface,
@@ -1343,6 +1572,31 @@ fun JournalScreen(
                             border = BorderStroke(if (isMission) 1.5.dp else 0.5.dp, colors.border)
                         ) {
                             Text("Mission Partners", style = typography.button)
+                        }
+
+                        val isGeneral = newEntityRoot == RootCode.GENERAL
+                        val generalBg by animateColorAsState(
+                            targetValue = if (isGeneral) colors.textPrimary else colors.surface,
+                            label = "NewGeneralBg"
+                        )
+                        val generalText by animateColorAsState(
+                            targetValue = if (isGeneral) colors.background else colors.textPrimary,
+                            label = "NewGeneralText"
+                        )
+
+                        Button(
+                            onClick = { newEntityRoot = RootCode.GENERAL },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(PrayerSpacing.minTouchTarget),
+                            shape = FlatSquareShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = generalBg,
+                                contentColor = generalText
+                            ),
+                            border = BorderStroke(if (isGeneral) 1.5.dp else 0.5.dp, colors.border)
+                        ) {
+                            Text("General", style = typography.button)
                         }
                     }
                 }
@@ -1454,6 +1708,8 @@ fun JournalScreen(
     if (pointForContextActions != null) {
         val point = pointForContextActions!!
         val isAnswered = point.status == PrayerStatus.ANSWERED
+        val currentEntity = selectedEntity ?: entities.find { it.id == point.entityId }
+        val isPreloaded = currentEntity?.isPreloadedHistoric == true || point.status == PrayerStatus.HISTORIC
         AlertDialog(
             onDismissRequest = { pointForContextActions = null },
             title = {
@@ -1468,34 +1724,38 @@ fun JournalScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
                 ) {
-                    OutlinedButton(
-                        onClick = {
-                            val newStatus = if (isAnswered) PrayerStatus.ACTIVE else PrayerStatus.ANSWERED
-                            val testimony = if (newStatus == PrayerStatus.ANSWERED) point.answeredTestimony else null
-                            onUpdatePrayerPoint(point.id, point.title, point.description, newStatus, testimony)
-                            pointForContextActions = null
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(PrayerSpacing.primaryActionHeight),
-                        shape = FlatSquareShape,
-                        border = BorderStroke(0.5.dp, colors.border),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = colors.surface,
-                            contentColor = colors.textPrimary
-                        )
-                    ) {
-                        Text(
-                            text = if (isAnswered) "Mark as Active" else "Mark as Answered",
-                            style = typography.button
-                        )
+                    if (!isPreloaded) {
+                        OutlinedButton(
+                            onClick = {
+                                val newStatus = if (isAnswered) PrayerStatus.ACTIVE else PrayerStatus.ANSWERED
+                                val testimony = if (newStatus == PrayerStatus.ANSWERED) point.answeredTestimony else null
+                                localPoints = localPoints.map {
+                                    if (it.id == point.id) it.copy(status = newStatus, answeredTestimony = testimony) else it
+                                }
+                                onUpdatePrayerPoint(point.id, point.title, point.description, newStatus, testimony)
+                                pointForContextActions = null
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(PrayerSpacing.primaryActionHeight),
+                            shape = FlatSquareShape,
+                            border = BorderStroke(0.5.dp, colors.border),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = colors.surface,
+                                contentColor = colors.textPrimary
+                            )
+                        ) {
+                            Text(
+                                text = if (isAnswered) "Mark as Active" else "Mark as Answered",
+                                style = typography.button
+                            )
+                        }
                     }
 
                     OutlinedButton(
                         onClick = {
                             editingPoint = point
-                            editBody = TextFieldValue(point.description)
-                            editStatus = point.status
+                            editBody = TextFieldValue(point.description, selection = TextRange(point.description.length))
                             editTestimony = point.answeredTestimony ?: ""
                             showDeleteConfirm = false
                             pointForContextActions = null
@@ -1571,6 +1831,7 @@ fun JournalScreen(
                     onClick = {
                         val id = point.id
                         pointToDelete = null
+                        localPoints = localPoints.filter { it.id != id }
                         onDeletePrayerPoint(id)
                     },
                     shape = FlatSquareShape,

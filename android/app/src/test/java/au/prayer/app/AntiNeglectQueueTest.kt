@@ -16,8 +16,11 @@ class AntiNeglectQueueTest {
     }
 
     // Mirroring the exact SQL ORDER BY contract from PrayerRepository:
-    // e.last_interacted_at IS NOT NULL ASC, e.last_interacted_at ASC, e.interacted_count ASC
+    // e.is_pinned DESC, e.last_interacted_at IS NOT NULL ASC, e.last_interacted_at ASC, e.interacted_count ASC
     private val antiNeglectComparator = Comparator<IndividualEntity> { a, b ->
+        if (a.isPinned && !b.isPinned) return@Comparator -1
+        if (!a.isPinned && b.isPinned) return@Comparator 1
+
         val aNull = a.lastInteractedAt == null
         val bNull = b.lastInteractedAt == null
 
@@ -148,13 +151,13 @@ class AntiNeglectQueueTest {
         // Backward-compat helper still returns the first entity
         val firstEntity = PreloadedContent.getHistoricEntity()
         assertEquals(PreloadedContent.HISTORIC_ENTITY_ID, firstEntity.id)
-        assertEquals(RootCode.GENERAL, firstEntity.rootCode)
+        assertEquals(RootCode.HISTORIC, firstEntity.rootCode)
         assertTrue(firstEntity.isPreloadedHistoric)
 
-        // All entities must be preloaded historic and in GENERAL
+        // All entities must be preloaded historic and in HISTORIC
         historicEntities.forEach { entity ->
             assertTrue("Entity must be isPreloadedHistoric", entity.isPreloadedHistoric)
-            assertEquals(RootCode.GENERAL, entity.rootCode)
+            assertEquals(RootCode.HISTORIC, entity.rootCode)
         }
 
         val historicPoints = PreloadedContent.getHistoricPrayerPoints()
@@ -255,5 +258,31 @@ class AntiNeglectQueueTest {
 
         assertEquals(1, queue.size)
         assertEquals("Active Burden", queue[0].entity.displayName)
+    }
+
+    @Test
+    fun `test pinned entities take precedence ahead of all other entities in anti-neglect queue`() {
+        val now = System.currentTimeMillis()
+
+        val neverPrayed = IndividualEntity(
+            displayName = "Never Prayed",
+            rootCode = RootCode.PEOPLE,
+            isPinned = false,
+            interactedCount = 0,
+            lastInteractedAt = null
+        )
+        val pinnedEntityPrayedRecently = IndividualEntity(
+            displayName = "Pinned Urgent Intercession",
+            rootCode = RootCode.PEOPLE,
+            isPinned = true,
+            interactedCount = 50,
+            lastInteractedAt = now
+        )
+
+        val list = listOf(neverPrayed, pinnedEntityPrayedRecently)
+        val sorted = list.sortedWith(antiNeglectComparator)
+
+        assertEquals("Pinned entity must always sort first", pinnedEntityPrayedRecently, sorted[0])
+        assertEquals(neverPrayed, sorted[1])
     }
 }

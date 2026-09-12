@@ -6,7 +6,7 @@
       "sortOrder": 1,
       "entity": {
         "id": "historic-lords-prayer",
-        "rootCode": "GENERAL",
+        "rootCode": "HISTORIC",
         "displayName": "The Lord's Prayer",
         "contextDescription": "The model prayer taught by our Lord Jesus Christ (Matthew 6:9–13)",
         "createdAt": 1700000001000
@@ -14,14 +14,14 @@
       "prayerPoint": {
         "id": "point-historic-lords-prayer",
         "title": "The Lord's Prayer",
-        "description": "Our Father, which art in heaven, Hallowed be thy Name. Thy kingdom come. Thy will be done in earth, As it is in heaven. Give us this day our daily bread. And forgive us our trespasses, As we forgive them that trespass against us. And lead us not into temptation; But deliver us from evil: For thine is the kingdom, The power, and the glory, For ever and ever. Amen."
+        "description": "Our Father, who is in heaven,\nMay your Name be honoured. May your kingdom come. May your will be done on earth, as it is in heaven.\n\nGive us today our daily bread. And forgive us our trespasses, as we forgive those who trespass against us. And lead us not into temptation, but deliver us from evil:\n\nFor yours is the kingdom, the power, and the glory, for ever and ever. Amen."
       }
     },
     {
       "sortOrder": 2,
       "entity": {
         "id": "historic-collect-peace",
-        "rootCode": "GENERAL",
+        "rootCode": "HISTORIC",
         "displayName": "Collect for Peace (1662 BCP)",
         "contextDescription": "Historic Anglican collect from the 1662 Book of Common Prayer (Morning Prayer)",
         "createdAt": 1700000002000
@@ -29,14 +29,14 @@
       "prayerPoint": {
         "id": "point-historic-collect-peace",
         "title": "Collect for Peace",
-        "description": "O God, who art the author of peace and lover of concord, in knowledge of whom standeth our eternal life, whose service is perfect freedom; Defend us thy humble servants in all assaults of our enemies; that we, surely trusting in thy defence, may not fear the power of any adversaries, through the might of Jesus Christ our Lord. Amen."
+        "description": "O God, author of peace and lover of concord, to know you is our eternal life, and to serve you is perfect freedom;\n\nDefend us, your humble servants, from all assaults of our enemies; that we, surely trusting in your defence, may not fear the power of any adversaries, through the might of Jesus Christ our Lord. Amen."
       }
     },
     {
       "sortOrder": 3,
       "entity": {
         "id": "historic-collect-grace",
-        "rootCode": "GENERAL",
+        "rootCode": "HISTORIC",
         "displayName": "Collect for Grace (1662 BCP)",
         "contextDescription": "Historic Anglican collect from the 1662 Book of Common Prayer (Morning Prayer)",
         "createdAt": 1700000003000
@@ -44,14 +44,14 @@
       "prayerPoint": {
         "id": "point-historic-collect-grace",
         "title": "Collect for Grace",
-        "description": "O Lord, our heavenly Father, Almighty and everlasting God, who hast safely brought us to the beginning of this day; Defend us in the same with thy mighty power; and grant that this day we fall into no sin, neither run into any kind of danger; but that all our doings may be ordered by thy governance, to do always that is righteous in thy sight; through Jesus Christ our Lord. Amen."
+        "description": "O Lord, our heavenly Father, Almighty and everlasting God, who have safely brought us to the beginning of this day;\n\nDefend us today with your mighty power; and grant that today we fall into no sin, neither run into any kind of danger; but that all we do may be ordered by your governance, to always do what is righteous in your sight; through Jesus Christ our Lord. Amen."
       }
     },
     {
       "sortOrder": 4,
       "entity": {
         "id": "historic-collect-purity",
-        "rootCode": "GENERAL",
+        "rootCode": "HISTORIC",
         "displayName": "Collect for Purity (1662 BCP)",
         "contextDescription": "Historic Anglican collect from the 1662 Book of Common Prayer (Holy Communion)",
         "createdAt": 1700000004000
@@ -59,14 +59,14 @@
       "prayerPoint": {
         "id": "point-historic-collect-purity",
         "title": "Collect for Purity",
-        "description": "Almighty God, unto whom all hearts be open, all desires known, and from whom no secrets are hid; Cleanse the thoughts of our hearts by the inspiration of thy Holy Spirit, that we may perfectly love thee, and worthily magnify thy holy Name; through Christ our Lord. Amen."
+        "description": "Almighty God, to whom all hearts are open, all desires known, and from whom no secrets are hidden;\n\nCleanse the thoughts of our hearts by the inspiration of your Holy Spirit, that we may love you perfectly, and worthily magnify your holy Name; through Christ our Lord. Amen."
       }
     },
     {
       "sortOrder": 5,
       "entity": {
         "id": "historic-general-thanksgiving",
-        "rootCode": "GENERAL",
+        "rootCode": "HISTORIC",
         "displayName": "A General Thanksgiving (1662 BCP)",
         "contextDescription": "Composed by Bishop Edward Reynolds for the 1662 Book of Common Prayer",
         "createdAt": 1700000005000
@@ -74,14 +74,14 @@
       "prayerPoint": {
         "id": "point-historic-general-thanksgiving",
         "title": "A General Thanksgiving",
-        "description": "Almighty God, Father of all mercies, we thine unworthy servants do give thee most humble and hearty thanks for all thy goodness and loving-kindness to us, and to all men. We bless thee for our creation, preservation, and all the blessings of this life; but above all, for thine inestimable love in the redemption of the world by our Lord Jesus Christ; for the means of grace, and for the hope of glory. And, we beseech thee, give us that due sense of all thy mercies, that our hearts may be unfeignedly thankful, and that we shew forth thy praise, not only with our lips, but in our lives; by giving up our selves to thy service, and by walking before thee in holiness and righteousness all our days; through Jesus Christ our Lord, to whom with thee and the Holy Ghost be all honour and glory, world without end. Amen."
+        "description": "Almighty God, Father of all mercies, we your unworthy servants give you most humble and hearty thanks for all your goodness and loving-kindness to us, and to all people.\n\nWe bless you for our creation, preservation, and all the blessings of this life; but above all, for your inestimable love in the redemption of the world by our Lord Jesus Christ; for the means of grace, and for the hope of glory.\n\nAnd, we ask you, give us a due sense of all your mercies, that our hearts may be truly thankful, and that we show your praise, not only with our lips, but in our lives; by giving ourselves to your service, and by walking before you in holiness and righteousness all our days; through Jesus Christ our Lord, to whom with you and the Holy Spirit be all honour and glory, world without end. Amen."
       }
     },
     {
       "sortOrder": 6,
       "entity": {
         "id": "historic-apostles-creed",
-        "rootCode": "GENERAL",
+        "rootCode": "HISTORIC",
         "displayName": "The Apostles' Creed",
         "contextDescription": "Historic ecumenical confession of the Christian faith (Thirty-Nine Articles, Art. VIII)",
         "createdAt": 1700000006000
@@ -89,127 +89,367 @@
       "prayerPoint": {
         "id": "point-historic-apostles-creed",
         "title": "The Apostles' Creed",
-        "description": "I believe in God the Father Almighty, Maker of heaven and earth: And in Jesus Christ his only Son our Lord, Who was conceived by the Holy Ghost, Born of the Virgin Mary, Suffered under Pontius Pilate, Was crucified, dead, and buried: He descended into hell; The third day he rose again from the dead; He ascended into heaven, And sitteth on the right hand of God the Father Almighty; From thence he shall come to judge the quick and the dead. I believe in the Holy Ghost; The holy Catholick Church; The Communion of Saints; The Forgiveness of sins; The Resurrection of the body, And the life everlasting. Amen."
+        "description": "I believe in God the Father Almighty, Maker of heaven and earth:\n\nAnd in Jesus Christ his only Son our Lord, who was conceived by the Holy Spirit, born of the Virgin Mary, suffered under Pontius Pilate, was crucified, dead, and buried: he descended into hell; the third day he rose again from the dead; he ascended into heaven, and sits at the right hand of God the Father Almighty; from there he will come to judge the living and the dead.\n\nI believe in the Holy Spirit; the holy Catholic Church; the communion of saints; the forgiveness of sins; the resurrection of the body, and the life everlasting. Amen."
       }
     },
     {
       "sortOrder": 7,
       "entity": {
         "id": "historic-spurgeon-help-from-on-high",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: Help from on High",
+        "rootCode": "HISTORIC",
+        "displayName": "Help from on High (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer I)",
         "createdAt": 1700000007000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-help-from-on-high",
         "title": "Help from on High",
-        "description": "O Thou who art King of kings and Lord of lords, we worship Thee. We can truly say that we delight in God. Our longing is to feel Thy presence, and it is the heaven of heavens that Thou art there. Come near, our Father, come very near to Thy children. Some of us are very weak in body and faint in heart. Lay Thy right hand upon us and say unto us, 'Fear not.' Lord Jesus, take from us now everything that would hinder the closest communion with God. Our very highest prayer is for perfect holiness, complete consecration, entire cleansing from every evil. Take our heart, our head, our hands, our feet, and use us all for Thee. We ask in the name of Jesus Christ Thy Son. Amen."
+        "description": "You who are King of kings and Lord of lords,\nwe worship you.\nWe can truly say that we delight in God;\nour longing is to feel your presence,\nand where you are is heaven itself.\n\nCome near, our Father,\ncome very near to your children.\nSome of us are very weak in body and faint in heart;\nlay your right hand upon us, and say to us, 'Do not fear.'\n\nLord Jesus, take away from us now\neverything that would hinder close communion with God.\nOur highest prayer is for perfect holiness,\ncomplete consecration,\nand entire cleansing from every evil.\n\nTake our hearts, our minds, our hands, and our feet,\nand use all of us for yourself.\nWe ask in the name of Jesus Christ your Son. Amen."
       }
     },
     {
       "sortOrder": 8,
       "entity": {
         "id": "historic-spurgeon-prayer-for-holiness",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: A Prayer for Holiness",
+        "rootCode": "HISTORIC",
+        "displayName": "A Prayer for Holiness (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer VIII)",
         "createdAt": 1700000008000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-prayer-for-holiness",
         "title": "A Prayer for Holiness",
-        "description": "Our Father, we worship and love Thee; and it is one point of our worship that Thou art holy. Make us in love with goodness, purity, justice, and true holiness. O God, let us not live in vain. Cleanse us from secret faults, keep back Thy servants also from presumptuous sins; let them not have dominion over us. Work in us to will and to do of Thy good pleasure. May the life of Christ be copied in our lives, that men may take knowledge of us that we have been with Jesus, and have learned of Him. We ask all through Jesus Christ our Lord. Amen."
+        "description": "Our Father, we worship and love you;\nand a central part of our worship is that you are holy.\nTeach us to love goodness, purity, justice,\nand true holiness.\n\nO God, do not let us live in vain.\nCleanse us from secret faults,\nand keep your servants from willful sins;\nlet them not rule over us.\nWork in us to will and to do what pleases you.\n\nMay the life of Christ shine in our lives,\nso that others may see we have been with Jesus,\nand have learned from him.\nWe ask all through Jesus Christ our Lord. Amen."
       }
     },
     {
       "sortOrder": 9,
       "entity": {
-        "id": "historic-spurgeon-thanks-be-unto-god",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: Thanks Be Unto God",
+        "id": "historic-spurgeon-thanks-be-to-god",
+        "rootCode": "HISTORIC",
+        "displayName": "Thanks Be To God (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer II)",
         "createdAt": 1700000009000
       },
       "prayerPoint": {
-        "id": "point-historic-spurgeon-thanks-be-unto-god",
-        "title": "Thanks Be Unto God",
-        "description": "O Lord God, help us now really to worship Thee. Wilt Thou shut the door upon the world for us? Help us to forget our cares. Enable us to rise clean out of this world. May we get rid of all its down-dragging tendencies. O Thou precious Lord Jesus Christ, we do adore Thee with all our hearts. Thou hast paid Thy life for Thy people; Thou hast ransomed Thy folk with Thy heart's blood. Be Thou, therefore, for ever beloved and adored. Unite our hearts with Thine own, and be Thou heart and soul and life and everything to us. Reign, Immanuel, reign; sit on the high throne, and let Christ alone reign. Amen."
+        "id": "point-historic-spurgeon-thanks-be-to-god",
+        "title": "Thanks Be To God",
+        "description": "O Lord God,\nhelp us now to truly worship you.\nShut the door on the world for us;\nhelp us to forget our cares.\nLift us completely above this world,\nand take away all its downward pull.\n\nO precious Lord Jesus Christ,\nwe adore you with all our hearts.\nYou gave your life for your people;\nyou ransomed us with your lifeblood.\nBe forever beloved and adored.\n\nUnite our hearts with yours,\nand be our heart and soul,\nour life and everything to us.\n\nReign, Immanuel, reign;\nsit upon your high throne,\nand let Christ alone reign. Amen."
       }
     },
     {
       "sortOrder": 10,
       "entity": {
         "id": "historic-spurgeon-love-without-measure",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: Love Without Measure",
+        "rootCode": "HISTORIC",
+        "displayName": "Love Without Measure (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer III)",
         "createdAt": 1700000010000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-love-without-measure",
         "title": "The Love Without Measure",
-        "description": "Lord, we would come to Thee, but do Thou come to us. Draw us and we will run after Thee. Blessed Spirit, help our infirmities, for we know not what we should pray for as we ought. We thank Thee, Lord, for the love without beginning which chose us or ever the earth was; for the love without measure which entered into covenant for our redemption; for the love without failure which in due time appeared in the person of Christ and wrought out our redemption; for that love which has never changed, though we have wandered. Perfect Thy work within our hearts. Grant that we may abide in Christ and live near to God, through Jesus Christ our Lord. Amen."
+        "description": "Lord, we long to come to you,\nbut come to us.\nDraw us, and we will run after you.\nBlessed Spirit, help our weakness,\nfor we do not know how to pray as we ought.\n\nWe thank you, Lord,\nfor the everlasting love that chose us before the earth was made;\nfor the boundless love that entered into covenant for our redemption;\nfor the unfailing love that appeared in the person of Christ and accomplished our salvation;\nand for that love which has never changed, though we have wandered.\n\nComplete your work within our hearts.\nGrant that we may abide in Christ and live close to God,\nthrough Jesus Christ our Lord. Amen."
       }
     },
     {
       "sortOrder": 11,
       "entity": {
         "id": "historic-spurgeon-all-prevailing-plea",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: The All-Prevailing Plea",
+        "rootCode": "HISTORIC",
+        "displayName": "The All-Prevailing Plea (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer IV)",
         "createdAt": 1700000011000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-all-prevailing-plea",
         "title": "The All-Prevailing Plea",
-        "description": "O Lord God, the Fountain of all Fulness, we, who are nothing but emptiness, come unto Thee for all supplies, nor shall we come in vain, since we bear with us a plea which is all prevalent. We come commanded by Thy Word, encouraged by Thy promise, and preceded by Christ Jesus, our great High Priest. Unto Thee be glory, and honour, and power, and majesty, and dominion, and might, for ever and ever! Refresh every corner of the vineyard, and on every branch of the vine let the dew of heaven rest. Bless Thy church throughout the world, and come quickly, Lord Jesus. Amen."
+        "description": "O Lord God, the fountain of all fullness,\nwe, who are nothing but emptiness,\ncome to you for every need;\nand we will not come in vain,\nsince we bring with us a plea that always prevails.\n\nWe come at the command of your Word,\nencouraged by your promise,\nand led by Christ Jesus, our great High Priest.\n\nTo you be glory and honour,\npower and majesty,\ndominion and might,\nforever and ever!\n\nRefresh every corner of your vineyard,\nand let the dew of heaven rest on every branch of the vine.\nBless your church throughout the world,\nand come quickly, Lord Jesus. Amen."
       }
     },
     {
       "sortOrder": 12,
       "entity": {
         "id": "historic-spurgeon-under-the-blood",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: Under the Blood",
+        "rootCode": "HISTORIC",
+        "displayName": "Under the Blood (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer XI)",
         "createdAt": 1700000012000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-under-the-blood",
         "title": "Under the Blood",
-        "description": "Jehovah our God, we thank Thee for leaving on record the story of Thy covenant faithfulness. Thou keepest Thy promises and Thy Word never faileth. We bless Thee that our sins are blotted out by the atoning sacrifice of Jesus. For all our wanderings, for all our shortcomings, for all our unfaithfulness, forgive us, O Lord, and wash us anew in the precious blood of the Lamb. Grant us grace to walk worthy of our high calling in Christ Jesus, keeping our garments unspotted from the world. In the name of our Saviour, Jesus Christ. Amen."
+        "description": "Lord our God,\nwe thank you that the record of your covenant faithfulness remains.\nYou keep your promises, and your Word never fails.\nWe bless you that our sins are blotted out\nby the atoning sacrifice of Jesus.\n\nFor all our wanderings,\nfor all our shortcomings,\nfor all our unfaithfulness,\nforgive us, O Lord,\nand wash us clean in the precious blood of the Lamb.\n\nGrant us grace to walk worthily of our high calling in Christ Jesus,\nkeeping ourselves unstained by the world.\nIn the name of our Saviour, Jesus Christ. Amen."
       }
     },
     {
       "sortOrder": 13,
       "entity": {
         "id": "historic-spurgeon-peace-of-god",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: The Peace of God",
+        "rootCode": "HISTORIC",
+        "displayName": "The Peace of God (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer XV)",
         "createdAt": 1700000013000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-peace-of-god",
         "title": "The Peace of God",
-        "description": "Our God, we stand not afar off as Israel did at Sinai, nor does a veil hang dark between Thy face and ours; but the veil is rent by the death of our Divine Lord and Mediator, Jesus Christ, and in His name we come up to the mercy seat, and here we present our prayers and our praises accepted in Him. Grant us that peace of God which passeth all understanding. Quiet our hearts in Thine own love; let no worldly care disturb the deep calm of our spirits in Christ Jesus. Unto Him who loved us and washed us from our sins in His own blood, be glory for ever. Amen."
+        "description": "Our God,\nwe do not stand far off as Israel did at Sinai,\nand no dark veil hangs between your face and ours;\nfor the veil was torn by the death of our divine Lord and Mediator, Jesus Christ.\nIn his name we come to the mercy seat,\nand here we present our prayers and our praises,\naccepted in him.\n\nGrant us the peace of God, which surpasses all understanding.\nQuiet our hearts in your own love;\nlet no worldly care disturb the deep calm of our spirits in Christ Jesus.\n\nTo him who loved us\nand washed us from our sins in his own blood,\nbe glory forever. Amen."
       }
     },
     {
       "sortOrder": 14,
       "entity": {
         "id": "historic-spurgeon-the-great-sacrifice",
-        "rootCode": "GENERAL",
-        "displayName": "C.H. Spurgeon: The Great Sacrifice",
+        "rootCode": "HISTORIC",
+        "displayName": "The Great Sacrifice (C.H. Spurgeon)",
         "contextDescription": "Pulpit prayer at the Metropolitan Tabernacle (Passmore & Alabaster, 1905, Prayer XX)",
         "createdAt": 1700000014000
       },
       "prayerPoint": {
         "id": "point-historic-spurgeon-the-great-sacrifice",
         "title": "The Great Sacrifice",
-        "description": "O God our Father, blessed be Thy name for ever, Thou didst deliver us. We come again now to the cross whereon the Saviour bled; we give another look of faith to Him. Lord God, we see in Thy crucified Son a sacrifice for sin; we see how Thou hast made Him to be sin for us that we might be made the righteousness of God in Him. We are not our own; we are bought with a price. Lord Jesus, renew Thy grasp of us; take us over again, for we surrender ourselves to Thee. Set in us anew the marks and tokens of Thy possession, that we may live for Thee henceforth and for ever. Amen."
+        "description": "O God our Father,\nblessed be your name forever, for you have delivered us.\nWe come again now to the cross where the Saviour bled;\nwe look again in faith to him.\n\nLord God, we see in your crucified Son a sacrifice for sin;\nwe see how you made him to be sin for us,\nso that in him we might become the righteousness of God.\nWe are not our own;\nwe were bought with a price.\n\nLord Jesus, renew your grasp of us;\nwe surrender ourselves to you.\nMark us anew as your own possession,\nthat we may live for you now and forever. Amen."
+      }
+    },
+    {
+      "sortOrder": 15,
+      "entity": {
+        "id": "historic-clementine-morning",
+        "rootCode": "HISTORIC",
+        "displayName": "A Morning Prayer (Syrian Clementine Liturgy, 1st c.)",
+        "contextDescription": "Syrian Clementine Liturgy, first century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000015000
+      },
+      "prayerPoint": {
+        "id": "point-historic-clementine-morning",
+        "title": "A Morning Prayer",
+        "description": "O God, unsearchable depth of peace, boundless sea of love, fountain of blessing and giver of kindness, who sends peace to those who receive it;\n\nOpen to us today the sea of your love, and water us with the full streams of your grace. Make us children of quietness, and heirs of peace.\n\nKindle in us the fire of your love; plant in us reverence for you; strengthen our weakness by your power; bind us closely to you and to each other in one firm bond of unity; for the sake of Jesus Christ. Amen."
+      }
+    },
+    {
+      "sortOrder": 16,
+      "entity": {
+        "id": "historic-clement-rome-rulers",
+        "rootCode": "HISTORIC",
+        "displayName": "For Rulers (Clement of Rome, 1st c.)",
+        "contextDescription": "Clement of Rome, first century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000016000
+      },
+      "prayerPoint": {
+        "id": "point-historic-clement-rome-rulers",
+        "title": "For Rulers and Governors",
+        "description": "To our rulers and governors on earth, to them you, Lord, gave the power of the kingdom by your glorious and unspeakable might, so that we may know the glory and honour given to them by you, and be subject to them, in nothing resisting your will.\n\nTo them, Lord, give health, peace, concord and stability, so that they may exercise the authority given to them without offence. For you, O heavenly Lord and eternal King, give to us all glory and honour and power over the things on earth; Lord, direct their counsel toward what is good and pleasing in your sight, so that, in peace and gentleness, exercising with reverence the power given by you, they may find you favourable.\n\nYou alone can do these things and still greater good for us; we praise you through the High Priest and Guardian of our souls, Jesus Christ, through whom be glory and majesty to you, both now and from generation to generation, for evermore. Amen."
+      }
+    },
+    {
+      "sortOrder": 17,
+      "entity": {
+        "id": "historic-clementine-pure-heart",
+        "rootCode": "HISTORIC",
+        "displayName": "A Pure Heart (Clementine Liturgy, 1st c.)",
+        "contextDescription": "The Clementine Liturgy, first century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000017000
+      },
+      "prayerPoint": {
+        "id": "point-historic-clementine-pure-heart",
+        "title": "A Pure Heart",
+        "description": "O God Almighty, Father of our Lord Jesus Christ, your only begotten Son, give me a blameless body, a pure heart, a watchful mind and a right understanding, and the presence of your Holy Spirit, so that I may gain and always hold firmly to an unshaken faith in your truth, through Jesus Christ, your Son, our Lord; through whom be glory to you in the Holy Spirit, for ever and ever. Amen."
+      }
+    },
+    {
+      "sortOrder": 18,
+      "entity": {
+        "id": "historic-polycarp-intercession",
+        "rootCode": "HISTORIC",
+        "displayName": "Intercession (Polycarp, 2nd c.)",
+        "contextDescription": "Polycarp, second century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000018000
+      },
+      "prayerPoint": {
+        "id": "point-historic-polycarp-intercession",
+        "title": "Intercession",
+        "description": "May God the Father, and the eternal High Priest Jesus Christ, build us up in faith and truth and love, and grant us our portion among the saints, with all those who believe in our Lord Jesus Christ.\n\nWe pray for all believers, for kings and rulers, for the enemies of the cross of Christ, and for ourselves we pray that our fruit may abound, and that we may be made perfect in Christ Jesus our Lord. Amen."
+      }
+    },
+    {
+      "sortOrder": 19,
+      "entity": {
+        "id": "historic-polycarp-dying-prayer",
+        "rootCode": "HISTORIC",
+        "displayName": "A Dying Prayer (Polycarp, 2nd c.)",
+        "contextDescription": "The Martyrdom of Polycarp, second century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000019000
+      },
+      "prayerPoint": {
+        "id": "point-historic-polycarp-dying-prayer",
+        "title": "A Dying Prayer",
+        "description": "O Father of your well-beloved and blessed Son Jesus Christ, through whom we have known you; O God of the angels and powers and of every living creature, and of all the righteous who live in your presence,\n\nI thank you that you have graciously brought me to this day and this hour, to receive a portion among the number of martyrs, among the people of Christ, to the resurrection of everlasting life, both of body and soul, in the incorruption of the Holy Spirit. Receive me today in your sight as a fruitful and acceptable sacrifice, as you before prepared, often revealed and now fulfilled, most faithful God who cannot lie.\n\nTherefore for all things I praise you, I bless you, I glorify you, through the everlasting High Priest, Jesus Christ, your well-beloved Son, to whom with you and the Holy Spirit be all glory, world without end. Amen."
+      }
+    },
+    {
+      "sortOrder": 20,
+      "entity": {
+        "id": "historic-james-pure-heart",
+        "rootCode": "HISTORIC",
+        "displayName": "For a Pure Heart (Liturgy of St James, 2nd c.)",
+        "contextDescription": "Liturgy of St James, second century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000020000
+      },
+      "prayerPoint": {
+        "id": "point-historic-james-pure-heart",
+        "title": "For a Pure Heart",
+        "description": "O God, Father of our Saviour Jesus Christ, whose name is great, whose nature is full of blessing, whose goodness never runs dry, God and Ruler of all things, blessed for ever; before whom stand thousands upon thousands, the hosts of holy angels and archangels;\n\nSanctify, O Lord, our souls and bodies and spirits, search our consciences, and cast out from us every evil thought, every base desire, all envy and pride, all anger and wrath, and all that is contrary to your holy will.\n\nAnd grant us, O Lord, lover of all people, with a pure heart and a humble spirit, to call upon you, our holy God and Father in heaven. Amen."
+      }
+    },
+    {
+      "sortOrder": 21,
+      "entity": {
+        "id": "historic-basil-right-blessings",
+        "rootCode": "HISTORIC",
+        "displayName": "For Right Blessings (Basil the Great, 4th c.)",
+        "contextDescription": "Basil the Great, fourth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000021000
+      },
+      "prayerPoint": {
+        "id": "point-historic-basil-right-blessings",
+        "title": "For Right Blessings",
+        "description": "O Lord our God, teach us, we pray, to ask you rightly for the right blessings. Steer the vessel of our life toward yourself, you calm harbour of all storm-tossed souls. Show us the course we should take.\n\nRenew a willing spirit within us. Let your Spirit restrain our wandering senses, and guide us and enable us toward what is truly good, to keep your laws, and in all our work always to rejoice in your glorious and gladdening presence.\n\nFor yours is the glory and praise from all your saints, for ever and ever. Amen."
+      }
+    },
+    {
+      "sortOrder": 22,
+      "entity": {
+        "id": "historic-chrysostom-two-or-three",
+        "rootCode": "HISTORIC",
+        "displayName": "For Two or Three (John Chrysostom, 4th c.)",
+        "contextDescription": "John Chrysostom, fourth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000022000
+      },
+      "prayerPoint": {
+        "id": "point-historic-chrysostom-two-or-three",
+        "title": "For Two or Three",
+        "description": "Almighty God, who have given us grace at this time to make our common prayers to you; and promise that when two or three are gathered together in your name you will grant their requests:\n\nFulfil now, O Lord, the desires and petitions of your servants, as may be best for them, granting us in this world knowledge of your truth, and in the world to come, life everlasting. Amen."
+      }
+    },
+    {
+      "sortOrder": 23,
+      "entity": {
+        "id": "historic-ambrose-pardon",
+        "rootCode": "HISTORIC",
+        "displayName": "For Pardon (Ambrose of Milan, 4th c.)",
+        "contextDescription": "Ambrose of Milan, fourth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000023000
+      },
+      "prayerPoint": {
+        "id": "point-historic-ambrose-pardon",
+        "title": "For Pardon",
+        "description": "O Lord, who has mercy on all, take away my sins from me, and kindly kindle in me the fire of your Holy Spirit.\n\nTake away from me the heart of stone, and give me a heart of flesh, a heart to love and adore you, a heart to delight in you, to follow and to enjoy you, for Christ's sake. Amen."
+      }
+    },
+    {
+      "sortOrder": 24,
+      "entity": {
+        "id": "historic-nerses-protection",
+        "rootCode": "HISTORIC",
+        "displayName": "For Protection (Nerses of Clajes, 4th c.)",
+        "contextDescription": "Nerses of Clajes, fourth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000024000
+      },
+      "prayerPoint": {
+        "id": "point-historic-nerses-protection",
+        "title": "For Protection",
+        "description": "Lord Jesus Christ, keeper and preserver of all things, let your right hand guard us by day and by night, when we sit at home and when we walk abroad, when we lie down and when we rise up, so that we may be kept from all evil.\n\nHave mercy on us sinners. Amen."
+      }
+    },
+    {
+      "sortOrder": 25,
+      "entity": {
+        "id": "historic-augustine-steadfastness",
+        "rootCode": "HISTORIC",
+        "displayName": "For Steadfastness (Augustine of Hippo, 4th–5th c.)",
+        "contextDescription": "Augustine of Hippo (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000025000
+      },
+      "prayerPoint": {
+        "id": "point-historic-augustine-steadfastness",
+        "title": "For Steadfastness",
+        "description": "O God, the light of every heart that sees you, the life of every soul that loves you, the strength of every mind that seeks you, grant me always to remain steadfast in your holy love.\n\nBe the joy of my heart; take it wholly to yourself, and dwell there.\n\nThe house of my soul, I confess, is too narrow for you; enlarge it, so that you may enter in. It is broken down, but repair it. There is much within it that must offend your eyes; I confess and know it.\n\nBut whose help shall I ask in cleansing it, but yours alone? To you, therefore, I cry urgently, asking that you would cleanse me from my secret faults, and keep your servant from presumptuous sins, so that they never rule over me. Amen."
+      }
+    },
+    {
+      "sortOrder": 26,
+      "entity": {
+        "id": "historic-augustine-evening",
+        "rootCode": "HISTORIC",
+        "displayName": "Evening Prayer (Augustine of Hippo, 4th–5th c.)",
+        "contextDescription": "Attributed to Augustine of Hippo (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000026000
+      },
+      "prayerPoint": {
+        "id": "point-historic-augustine-evening",
+        "title": "Evening Prayer",
+        "description": "Watch, dear Lord, with those who wake, or watch, or weep tonight, and give your angels charge over those who sleep.\nTend your sick ones, O Lord Christ. Rest your weary ones. Bless your dying ones.\nSoothe your suffering ones. Pity your afflicted ones. Shield your joyous ones.\n\nAnd all, for your love's sake. Amen."
+      }
+    },
+    {
+      "sortOrder": 27,
+      "entity": {
+        "id": "historic-augustine-praise",
+        "rootCode": "HISTORIC",
+        "displayName": "Praise (Augustine of Hippo, 4th–5th c.)",
+        "contextDescription": "Augustine of Hippo (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000027000
+      },
+      "prayerPoint": {
+        "id": "point-historic-augustine-praise",
+        "title": "Praise",
+        "description": "Great are you, O Lord, and greatly to be praised; great is your power, and your wisdom has no end. We long to praise you without ceasing. You call us to delight in your praise, for you have made us for yourself, and our hearts find no rest until they rest in you; to whom with the Father and the Holy Spirit be all glory, praise and honour, both now and for evermore. Amen."
+      }
+    },
+    {
+      "sortOrder": 28,
+      "entity": {
+        "id": "historic-leonine-right-living",
+        "rootCode": "HISTORIC",
+        "displayName": "For Right Living (Leonine Sacramentary, 5th c.)",
+        "contextDescription": "Leonine Sacramentary, fifth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000028000
+      },
+      "prayerPoint": {
+        "id": "point-historic-leonine-right-living",
+        "title": "For Right Living",
+        "description": "Grant to us, Lord, we pray, the spirit to think and do always what is right; so that we, who cannot do anything good without you, may be enabled by you to live according to your will; through Jesus Christ our Lord. Amen."
+      }
+    },
+    {
+      "sortOrder": 29,
+      "entity": {
+        "id": "historic-gelasian-love-of-god",
+        "rootCode": "HISTORIC",
+        "displayName": "For Love of God (Gelasian Sacramentary, 5th c.)",
+        "contextDescription": "Gelasian Sacramentary, fifth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000029000
+      },
+      "prayerPoint": {
+        "id": "point-historic-gelasian-love-of-god",
+        "title": "For Love of God",
+        "description": "O God, who have prepared for those who love you such good things as pass our understanding; pour into our hearts such love toward you, that we, loving you above all things, may obtain your promises, which exceed all that we can desire; through Jesus Christ our Lord. Amen."
+      }
+    },
+    {
+      "sortOrder": 30,
+      "entity": {
+        "id": "historic-gelasian-to-serve-you",
+        "rootCode": "HISTORIC",
+        "displayName": "To Serve You (Gelasian Sacramentary, 5th c.)",
+        "contextDescription": "Gelasian Sacramentary, fifth century (Potts, Prayers of the Early Church)",
+        "createdAt": 1700000030000
+      },
+      "prayerPoint": {
+        "id": "point-historic-gelasian-to-serve-you",
+        "title": "To Serve You",
+        "description": "O God, the light of the minds that know you, the life of the souls that love you, the strength of the thoughts that seek you, help us to know you so that we may truly love you, and to love you so that we may fully serve you, whose service is perfect freedom; through Jesus Christ our Lord. Amen."
       }
     }
   ]

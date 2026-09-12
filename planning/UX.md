@@ -19,9 +19,9 @@ The core design philosophy is **Modern Leatherbound Craft (The Modern Folio)**:
 
 ---
 
-## 2. Core Information Architecture & The Three Primary Pathways
+## 2. Core Information Architecture & The Four Primary Pathways
 
-The application is strictly organized around three primary functional pathways radiating from the Frontispiece Home Screen:
+The application is strictly organized around four primary functional pathways radiating from the Frontispiece Home Screen:
 
 ```
                           ┌──────────────────────────┐
@@ -29,23 +29,24 @@ The application is strictly organized around three primary functional pathways r
                           │   (PRAY WITHOUT CEASING) │
                           └─────────────┬────────────┘
                                         │
-           ┌────────────────────────────┼────────────────────────────┐
-           ▼                            ▼                            ▼
-  [ Start praying ]            [ Open Journal ]             [ Add prayer points ]
-         │                              │                            │
-         ▼                              ▼                            ▼
-┌──────────────────┐           ┌──────────────────┐         ┌──────────────────┐
-│  DEVOTIONAL      │           │  JOURNAL         │         │  PRAYER POINT    │
-│  SANCTUARY       │◄─────────►│  DIRECTORY       │◄───────►│  CAPTURE         │
-│  (Anti-Neglect   │ (Swipe L) │  (People, Groups,│ (Add to │  (Lined Notepad  │
-│   Queue, 30/40/30│           │   General, Miss.)│  Entity)│   Direct Entry)  │
-│   Zoning)        │           └────────┬─────────┘         └────────┬─────────┘
-└──────────────────┘                    │                            │
-                                        ▼                            ▼
-                               ┌──────────────────┐         ┌──────────────────┐
-                               │  ENTITY DETAIL & │         │  COMMITTAL &     │
-                               │  POINT EDITOR    │         │  ASYNC TITLING   │
-                               └──────────────────┘         └──────────────────┘
+           ┌────────────────────────────┼────────────────────────────┬────────────────────────────┐
+           ▼                            ▼                            ▼                            ▼
+  [ Start praying ]            [ Open Journal ]             [ Add prayer points ]        [ Library ]
+         │                              │                            │                            │
+         ▼                              ▼                            ▼                            ▼
+┌──────────────────┐           ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+│  DEVOTIONAL      │           │  JOURNAL         │         │  PRAYER POINT    │         │  THEOLOGICAL     │
+│  SANCTUARY       │◄─────────►│  DIRECTORY       │◄───────►│  CAPTURE         │         │  LIBRARY         │
+│  (Anti-Neglect   │ (Swipe L) │  (People, Groups,│ (Add to │  (Lined Notepad  │         │  (Bookshelf &    │
+│   Queue, 30/40/30│           │   General, Miss.)│  Entity)│   Direct Entry)  │         │   Catalog)       │
+│   Zoning)        │           └────────┬─────────┘         └────────┬─────────┘         └────────┬─────────┘
+└──────────────────┘                    │                            │                            │
+                                        ▼                            ▼                            ▼
+                               ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+                               │  ENTITY DETAIL & │         │  COMMITTAL &     │         │  VOLUME READER   │
+                               │  POINT EDITOR    │         │  ASYNC TITLING   │         │  (Calvin 52 Sec, │
+                               └──────────────────┘         └──────────────────┘         │   TOC, Feint R.) │
+                                                                                         └──────────────────┘
 ```
 
 ### 2.0 Frontispiece Home Screen & Launch Experience (`HomeScreen`)
@@ -57,6 +58,7 @@ The application is strictly organized around three primary functional pathways r
   - **"Start praying"** (Devotional Gateway): Elevated sanctuary plate with 2dp elevation, warm ivory stock (`#FFFDF9`), 1.5dp `leatherActive` accent border, and dignified literary typography.
   - **"Open Journal"** (Spiritual Records Directory): Refined stationery card with 0.75dp hairline border (`colors.border`) and ledger navigation glyph `›`.
   - **"Add prayer points"** (Direct Lined Notepad Capture): Matching stationery card with 0.75dp hairline border and bullet/pen prompt.
+  - **"Library"** (Theological Vault): Matching stationery card with 0.75dp hairline border, printer's fleuron `❧`, and subtitle `"Classical treatises & historic devotionals"`.
   - Standardized 56dp–62dp heights and 12dp gutters for effortless thumb reach on Samsung Galaxy Flip and standard handhelds.
 
 ### 2.1 Pathway 1: Devotional Prayer (`SanctuaryPrayerScreen`)
@@ -68,32 +70,56 @@ The application is strictly organized around three primary functional pathways r
   - **Center 40%**: Reading canvas and long-press for in-place status resolution (Active ↔ Answered).
   - **Right 30%**: Tap or swipe left to advance to next topic.
   - **Swipe Down Anywhere**: Slide downward (`250ms`, Emphasized Accelerate) to exit back to Home.
-- **Silk Marker Ribbon**: Anchored at the top margin to flag active intercession or pinned focus.
+- **Silk Marker Ribbon**: Anchored at the top margin to flag active intercession or pinned focus. Pinned entities immediately take priority in the Sanctuary prayer queue and are collected under the dedicated Pinned Focus directory header.
 - **Subject Header Rendering (Personal vs. Historic)**:
   - **Personal intercession targets** (People, Groups, Mission Partners, user-created General topics): rendered as *"Praying for [Name]"* in Semi-Bold Literary Serif (`22sp` / `32sp`), honoring the relational, pastoral idiom of personal intercession.
-  - **Preloaded historic entities** (1662 BCP Collects, Apostles' Creed, Spurgeon pulpit prayers): the entity's `displayName` is rendered directly (e.g., *"C.H. Spurgeon: Help from on High"* or *"Collect for Peace (1662 BCP)"*) without the "Praying for" prefix, reflecting their liturgical rather than personal character.
-  - **AI Prompt Suppression**: The read-only prompt section (`❧ Prompts for Prayer ❧`) is hidden entirely for preloaded historic entities — their texts are the prayers of the saints; AI augmentation is neither appropriate nor offered.
-- **Silent Background Prompts (Collapsed by Default)**: Read-only suggested lines load silently beneath points without digital loading spinners or chat chrome. In fidelity to the principle of quiet contemplation, prompts are **hidden or collapsed by default** behind a reverent fleuron divider (`❧   Prompts for Prayer   ❧` with `Tap to view prompts`). Prompts only expand when explicitly tapped by the user. When expanded, prompts are organized into three reverent devotional groups—**Praise God**, **Thank God**, and **Ask God**—with group titles set in understated ledger headers (`typography.categoryLedgerHeader`, `colors.inkSecondary`). Each bullet (4–15 words, 3–12 points total across groups, starting with *For*, *That*, *A*, or *Because*, phrased warmly without clinical terseness or verbatim parroting, and strictly avoiding wishy-washy general platitudes) is set in literary italic (`typography.suggestedIntercession`) on condensed `24sp` feint rules, with zero AI labels or badges.
+  - **Preloaded historic entities** (1662 BCP Collects, Apostles' Creed, Spurgeon pulpit prayers, early church prayers): the entity's `displayName` is rendered directly with Title first, then author/source (e.g., *"Help from on High (C.H. Spurgeon)"* or *"Collect for Peace (1662 BCP)"*) without the "Praying for" prefix, reflecting their liturgical rather than personal character.
+  - **AI & Answered Status Suppression**: The read-only prompt section (`❧ Prompts for Prayer ❧`) and active/answered toggle controls are suppressed entirely for preloaded historic entities — their texts are the prayers of the saints; AI augmentation and temporal active/answered toggle notations are neither appropriate nor offered. In both Sanctuary and Journal views, the 56dp margin track is preserved as an unadorned structural spacer to maintain the red margin guide line and 64dp narrative text inset alignment.
+- **Silent Background Prompts (Persistent Cache & Background Refresh, Collapsed by Default)**: Read-only suggested lines load silently beneath points without digital loading spinners or chat chrome. The last list of prompts returned by the API is cached persistently in local SQLite (`suggestion_cache`). When the user views an entity, the UI immediately presents the last list of prompts returned the last time the app was used, while an asynchronous background refresh queries for fresh prompts, seamlessly updating the display and cache in place upon completion. In fidelity to the principle of quiet contemplation, prompts are **hidden or collapsed by default** behind a reverent fleuron divider (`❧   Prompts for Prayer   ❧` with `Tap to view prompts`). Prompts only expand when explicitly tapped by the user. When expanded, prompts are organized into three reverent devotional groups—**Praise God**, **Thank God**, and **Ask God**—with group titles set in understated ledger headers (`typography.categoryLedgerHeader`, `colors.inkSecondary`). Each bullet (4–15 words, 3–12 points total across groups, starting with *For*, *That*, *A*, or *Because*, phrased warmly without clinical terseness or verbatim parroting, and strictly avoiding wishy-washy general platitudes) is set in literary italic (`typography.suggestedIntercession`) on condensed `24sp` feint rules, with zero AI labels or badges.
+- **Dynamic Ruled Lines & Mathematical Baseline Synchronization**: Feint horizontal ruled lines are dynamically locked to the active text line spacing ($H_{px} = \text{lineHeight}$) across all typography scale tiers (`LARGE`: 28sp, `REGULAR`: 23sp, `COMPACT`: 19sp). Lines are drawn via linear progression $y_k = Y_{anchor} + k \times H_{px}$ anchored to the first text baseline ($y_{start} = Y_{anchor} \pmod{H_{px}}$). All inter-point vertical spacing, headers, and status boxes are quantized to exact integer multiples of $H_{px}$ ($1 \times H_{px}$ blank line between points), ensuring every line of text sits directly ON a feint rule with zero baseline drift across any number of points or wrapped lines.
 
 
 
 ### 2.2 Pathway 2: Journal Management (`JournalScreen`)
 - **Entry**: Tapping **"Open Journal"** or swiping left on Home (`280ms`, Shared-Axis X).
-- **Four Classical Spheres**: Categorized into expandable/collapsible categories:
+- **Five Classical Spheres**: Categorized into expandable/collapsible categories:
   1. *People* (Family, friends, individual discipleship)
   2. *Groups* (Small groups, Bible studies, committees)
-  3. *General* (World burdens, nation, government, church universal)
-  4. *Mission Partners* (Missionaries, church plants, global gospel workers)
-- **Adding Subjects to Spheres**: An option at the top of each listing under each group (`+ Add person`, `+ Add group`, `+ Add topic`, `+ Add mission partner`) opens an in-place creation dialog that saves the new person or topic and immediately opens their Entity Detail view.
-- **Entity Detail Spread**: View active and answered prayer points separated and grouped by date of entry with day and month written in full English words (e.g. *"Friday, 11 September 2026"*) in subtle unflashy typography (`typography.marginStatus` / `colors.inkMuted`), add points directly to an entity, pin with the Silk Marker Ribbon, and access an understated, **collapsed-by-default** prompts card (*"Prompts for Prayer"* with *Show/Hide* toggle) that expands on demand to display contemplative prompts grouped under **Praise God**, **Thank God**, and **Ask God** (`typography.categoryLedgerHeader`, `colors.leatherPrimary`).
-- **In-Place Editor**: Modify body, status, and thanksgiving notes (titles are omitted).
+  3. *Mission Partners* (Missionaries, church plants, global gospel workers)
+  4. *General* (World burdens, nation, government, church universal)
+  5. *Historic* (Classic collects, confessions, and historic prayers of the saints; Title-first display)
+- **Adding Subjects to Spheres**: An option at the top of each personal listing under each group (`+ Add person`, `+ Add group`, `+ Add mission partner`, `+ Add topic`) opens an in-place creation dialog that saves the new person or topic and immediately opens their Entity Detail view. Historic prayers are preloaded devotional content and do not include an add action.
+- **Entity Detail Spread**: View active and answered prayer points separated and grouped by date of entry with day and month written in full English words (e.g. *"Friday, 11 September 2026"*) in subtle unflashy typography (`typography.marginStatus` / `colors.inkMuted`), add points directly to an entity via the `+ Add prayer point` button positioned at the bottom of the list of points rather than at the top of the page, pin with the Silk Marker Ribbon, and access an understated, **collapsed-by-default** prompts card (*"Prompts for Prayer"* with *Show/Hide* toggle) that expands on demand to display contemplative prompts grouped under **Praise God**, **Thank God**, and **Ask God** (`typography.categoryLedgerHeader`, `colors.leatherPrimary`).
+- **Marginal Status Notation (Active & Answered)**: Within the 56dp margin track, active personal prayer points display an analog line-drawn pencil icon (`Icons.Outlined.Edit`) rather than the word "ACTIVE"; answered records display the classic `[ ANSWERED ]` notation pill in Celadon green (`#3D6B52`). Tapping either indicator immediately and optimistically toggles the petition's state with 0ms perceptible lag, instant local UI reflow, background SQLite persistence, and haptic confirmation. For preloaded historic prayers, this marginal indicator is suppressed; the 56dp margin track serves as a clean spacer to preserve the red margin rule and text alignment.
+- **In-Place Editor (`JournalView.EDIT_PRAYER_POINT`)**: Pure-text editing on `LinedNotepad`. Upon opening, the typing cursor is instantly active with keyboard focus requested at the end of the last line of the prayer point text. Status toggling is excluded here because it is canonically handled in the margin track; if the prayer point is already marked answered, the thanksgiving testimony field is presented. Includes a primary "Save changes" button, a "Delete prayer point" action, and an immediate "Save" button in the TopAppBar.
+- **Keyboard Inset Guarantee**: All bottom action buttons, toolbars, and menus lift dynamically above the software keyboard upon input focus via `WindowInsets.safeDrawing`, preventing keyboard occlusion across phone, foldable, and tablet form factors. Dialogs provide internal vertical scroll so action buttons remain reachable.
 - **Settings (`SettingsScreen`)**: Secluded preference controls for Leather Finish (tactile color swatches for Saddle Tan, Horween Cordovan, Hunter Forest, Obsidian Hide), Text Size tiers with live literary serif preview samples (*"Pray without ceasing"*), English dialect (`EN_AU_UK` 1662 BCP vs `EN_US`), Historic Reformed Prayers rotation toggle, High-Contrast Accessible Mode, and bottom colophon seal (`─── ❧ ───`) on a scrollable vellum canvas with 0dp planar geometry.
 
 ### 2.3 Pathway 3: Prayer Point Capture (`LogPrayerScreen`)
 - **Entry**: Tapping **"Add prayer points"** on Home or "+ Add prayer point" in Entity Detail.
-- **Step 1 (Direct Writing Pad)**: Lands directly on the ruled lined notepad canvas (`LinedNotepad`). Auto-bullet formatting on enter, zero distraction, zero AI autocompletion during writing, zero title field.
+- **Step 1 (Direct Writing Pad)**: Lands directly on the ruled lined notepad canvas (`LinedNotepad`). Auto-bullet formatting on every new line, zero distraction, zero AI autocompletion during writing, zero title field. Upon entering the screen to add prayer points, the typing cursor is instantly active and focused at the end of the last line (immediately after the initial bullet and space `• `), ready for immediate input without tapping.
 - **Step 2 (Sphere & Entity Selection)**: Tapping "Next" allows selecting an existing person/group or creating a new entity inline.
-- **Committal & Instant Save**: One-tap save with an instant **Undo** snackbar, saving directly to the chosen entity without artificial title generation.
+- **Multi-Record Committal & Independent Tracking**: Every dotpoint is separated out into its own distinct `PrayerPoint` record upon save. Each dotpoint sits on its own feint rule with an independent marginal indicator (line-drawn pencil for active, `[ ANSWERED ]` pill for answered) in the Journal and individual long-press resolution in Sanctuary prayer.
+- **Batch Undo Feedback**: Immediate confirmation toast (*"Saved N prayer points to [Name]"* / *"Saved to [Name]"*) with an **Undo** action that deletes all records created in that batch.
+
+### 2.4 Pathway 4: Theological Library & Reading Experience (`LibraryScreen`, `VolumeReaderScreen`)
+- **Entry**: Tapping **"Library"** on Home.
+- **Folio Bookshelf (`LibraryScreen`)**:
+  - Frontispiece header *"THEOLOGICAL LIBRARY"* flanked by printer's fleuron `❧`.
+  - Archival volume card for *Volume 1: John Calvin — Of Prayer: A Perpetual Exercise of Faith* (1845 Henry Beveridge translation; 8 Divisions, 52 Sections).
+  - Displays reading progress ribbon and last read section aside.
+- **Immersive Folio Reader (`VolumeReaderScreen`)**:
+  - Continuous cream vellum reading canvas with dynamic feint rules anchored to `28sp` baselines.
+  - Body prose in Literary Serif (`17sp` / `28sp`), Roman numeral section headers (`20sp`), and italic outline arguments (`15sp`).
+  - Table of Contents bottom sheet / quick-jump drawer displaying all 8 Principal Divisions and 52 section outlines for immediate access.
+  - Silk Marker Ribbon bookmarking to save and restore the reader's active section.
+  - Buttonless reading gestures: Swipe left/right to navigate between sections; swipe down from top to return to bookshelf.
+  - **Pinch-to-Zoom & Baseline Synchronization**:
+    - Natural multi-touch 2-finger pinch dynamically rescales text between 75% and 250% (`0.75f` to `2.5f`).
+    - Flowing prose reflows naturally within page margins with zero horizontal overflow; feint horizontal rules dynamically scale in exact lockstep ($1:1$ parity with paragraph line-height) upholding the **Baseline Synchronization Law**.
+    - Subtle floating zoom pill (e.g., `125% • Reset`) appears during gestures and auto-dismisses after 1.5s; tap immediately resets to 100%.
+    - Top ledger bar displays a discreet reset trigger (`125% ↺`) whenever viewing at a non-default zoom level.
+    - Zoom scale is persisted across sections and reading sessions in local configuration.
 
 ---
 
@@ -142,7 +168,7 @@ Ruled lines must **always** be dynamically anchored to the active typographic ba
 
 ### 4.1 Touch Targets & Spatial Bounds
 - **Universal Minimum Touch Boundary**: All interactive elements maintain an invisible touch envelope of at least **`48 × 48dp`** (e.g. status pills `[ ACTIVE ]` / `[ ANSWERED ]`, action triggers, and icon buttons).
-- **Silk Marker Ribbon**: Slender visual width (`18dp`), projecting an expanded invisible touch target of **`48dp` horizontal × `56dp` vertical**.
+- **Silk Marker Ribbon**: Slender visual width (`18dp`), projecting an expanded invisible touch target of **`48dp` horizontal × `80dp` vertical** (dynamic with ribbon extension). Anchored flush to the top-end margin (`Alignment.TopEnd` with `4dp` breathing margin, visual envelope `4dp` to `22dp`) with `36dp` narrative text clearance and `52dp` prompt card clearance, guaranteeing the ribbon never obscures devotional text or menu text (e.g. *Show/Hide* toggles).
 - **Margin Track Clearance**: Left `56dp` metadata track for timestamps and status seals; narrative text insets at `64dp` (`56dp + 8dp` clearance) to eliminate glyph collisions.
 - **Inter-Affordance Gutters**: Minimum `8dp` clear gutter between adjacent touch targets (`12dp` to `16dp` between primary triggers).
 
@@ -157,7 +183,7 @@ Ruled lines must **always** be dynamically anchored to the active typographic ba
 
 - **Spatial Continuity**: Directional Shared-Axis X slides (`280–320ms`) between Home and Journal.
 - **Devotional Traversal**: Horizontal spring slide (`stiffness: 320, damping: 0.85`) when advancing topics; vertical slide down (`250ms`, Emphasized Accelerate) on exit.
-- **Textile Marker Ribbon**: Realistic spring extension (`stiffness: 220, damping: 0.70`) from `40dp` resting to `54dp` pinned state with a crisp haptic impulse.
+- **Textile Marker Ribbon**: Realistic spring extension (`stiffness: 220, damping: 0.70`) from `40dp` resting to `80dp` pinned state with a crisp haptic impulse.
 - **LIFO Navigation Guarantee**: System back and edge-swipe right (`X ≤ 25dp, ΔX ≥ 50dp`) navigate backward in strict Last-In, First-Out order.
 - **Privacy Shield**: When the app is backgrounded or viewed in Recent Apps, the active prayer screen is instantly masked behind a flat vector Closed Leather Folio Cover with an embossed monogram insignia (`P · W · C`).
 
@@ -171,3 +197,12 @@ The application strictly excludes:
 - Mechanical ordinal counters (*"Point 1 of 5"*, *"Item 1 of N"*).
 
 Prayer is reverent, unhurried communion with God—never a gamified task list.
+
+---
+
+## 7. Multi-Session Design Cohesion & Integrity
+
+When multiple autonomous agents contribute UI/UX changes simultaneously:
+- **Design Token Purity**: All components must uniformly consume existing design tokens (`PrayerSpacing`, `PrayerColors`, `FlatSquareShape`).
+- **Target Line Verification**: Agents modifying shared composable layouts (such as [`JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt) or [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)) must re-read active code immediately before applying edits to ensure newly added actions (e.g. margin indicators, bottom buttons) are never discarded or duplicated.
+

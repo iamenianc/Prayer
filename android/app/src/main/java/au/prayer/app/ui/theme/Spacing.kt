@@ -35,7 +35,7 @@ data class PrayerSpacingTokens(
     val hairlineWidth: Dp = 0.75.dp,
     val ribbonWidth: Dp = 18.dp,
     val ribbonRestingHeight: Dp = 40.dp,
-    val ribbonPinnedHeight: Dp = 54.dp,
+    val ribbonPinnedHeight: Dp = 80.dp,
     val spineGutterWidth: Dp = 24.dp
 )
 
@@ -69,6 +69,6 @@ object PrayerSpacing {
     val hairlineWidth: Dp = 0.75.dp
     val ribbonWidth: Dp = 18.dp
     val ribbonRestingHeight: Dp = 40.dp
-    val ribbonPinnedHeight: Dp = 54.dp
+    val ribbonPinnedHeight: Dp = 80.dp
     val spineGutterWidth: Dp = 24.dp
 }

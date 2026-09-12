@@ -3,6 +3,7 @@ package au.prayer.app.ui.theme
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.isSp
 import androidx.compose.ui.unit.sp
 import au.prayer.app.data.models.TextScale
 
@@ -222,3 +223,32 @@ fun getMaterialTypography(prayerTypography: PrayerTypography): androidx.compose.
         labelSmall = prayerTypography.caption
     )
 }
+
+fun PrayerTypography.withZoom(scale: Float): PrayerTypography {
+    if (scale == 1.0f) return this
+    val clamped = scale.coerceIn(0.75f, 2.5f)
+    fun TextStyle.scale(): TextStyle {
+        return this.copy(
+            fontSize = (this.fontSize.value * clamped).sp,
+            lineHeight = if (this.lineHeight.isSp) (this.lineHeight.value * clamped).sp else this.lineHeight
+        )
+    }
+    return PrayerTypography(
+        homeAction = homeAction.scale(),
+        topicTitle = topicTitle.scale(),
+        prayerPointTitle = prayerPointTitle.scale(),
+        prayerPointBody = prayerPointBody.scale(),
+        caption = caption.scale(),
+        button = button.scale(),
+        frontispieceHeader = frontispieceHeader.scale(),
+        subjectHeader = subjectHeader.scale(),
+        prayerPointBullet = prayerPointBullet.scale(),
+        answeredThanksgiving = answeredThanksgiving.scale(),
+        suggestedIntercession = suggestedIntercession.scale(),
+        categoryLedgerHeader = categoryLedgerHeader.scale(),
+        marginStatus = marginStatus.scale(),
+        historicalFootnote = historicalFootnote.scale()
+    )
+}
+
+

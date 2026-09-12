@@ -6,6 +6,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,10 +25,10 @@ import au.prayer.app.ui.theme.PrayerSpacing
  * The Silk Marker Ribbon (Interactive Bookmark Tab).
  * Modeled on an authentic textile bookmark in a fine leatherbound journal.
  * - Width: 18dp
- * - Resting Height: 40dp, extending to 54dp when active/pinned
+ * - Resting Height: 40dp, extending to 80dp when active/pinned
  * - Spring: stiffness 220, damping 0.70
  * - Swallow-Tail Notch: 6dp triangular inset centered at X = 9dp
- * - Touch Envelope: Expanded to 48dp horizontal x 56dp vertical
+ * - Touch Envelope: Expanded to 48dp horizontal x 80dp vertical (dynamic with ribbon extension)
  */
 @Composable
 fun SilkMarkerRibbon(
@@ -36,7 +37,8 @@ fun SilkMarkerRibbon(
     modifier: Modifier = Modifier,
     color: Color = Color(0xFF8B2635), // Garnet Crimson (ribbon.primary)
     touchWidth: Dp = PrayerSpacing.minTouchTarget,
-    touchHeight: Dp = 56.dp
+    touchHeight: Dp = 56.dp,
+    ribbonPaddingEnd: Dp = 4.dp
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -46,9 +48,11 @@ fun SilkMarkerRibbon(
         label = "RibbonHeightAnimation"
     )
 
+    val effectiveTouchHeight = maxOf(touchHeight, ribbonHeight)
+
     Box(
         modifier = modifier
-            .size(width = touchWidth, height = touchHeight)
+            .size(width = touchWidth, height = effectiveTouchHeight)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
@@ -57,9 +61,13 @@ fun SilkMarkerRibbon(
                     onTogglePin()
                 }
             ),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopEnd
     ) {
-        Canvas(modifier = Modifier.size(width = PrayerSpacing.ribbonWidth, height = ribbonHeight)) {
+        Canvas(
+            modifier = Modifier
+                .padding(end = ribbonPaddingEnd)
+                .size(width = PrayerSpacing.ribbonWidth, height = ribbonHeight)
+        ) {
             val w = size.width
             val h = size.height
             val notchDepth = 6.dp.toPx()

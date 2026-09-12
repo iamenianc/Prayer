@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,6 +45,19 @@ private enum class LogStep {
     SELECT_ENTITY
 }
 
+fun splitIntoDotpoints(text: String): List<String> {
+    return text.lines()
+        .map { it.trim() }
+        .filter { line ->
+            val clean = line.replace("•", "").trim()
+            clean.isNotBlank()
+        }
+        .map { line ->
+            val clean = line.removePrefix("•").trim()
+            "• $clean"
+        }
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun LogPrayerScreen(
@@ -53,7 +68,8 @@ fun LogPrayerScreen(
     apiClient: PrayerApiClient,
     repository: PrayerRepository? = null,
     onCreateEntity: (RootCode, String) -> IndividualEntity,
-    onSavePrayerPoint: (entityId: String, text: String, title: String?) -> Unit,
+    onSavePrayerPoints: (entityId: String, points: List<String>) -> Unit = { _, _ -> },
+    onSavePrayerPoint: ((entityId: String, text: String, title: String?) -> Unit)? = null,
     onUpdateEntity: (id: String, displayName: String, rootCode: RootCode) -> Unit = { _, _, _ -> },
     onDeleteEntity: (String) -> Unit = {},
     onSavedEntity: (IndividualEntity) -> Unit = { _ -> },
@@ -74,7 +90,16 @@ fun LogPrayerScreen(
     var newEntityName by remember { mutableStateOf("") }
     var isCreatingNewEntity by remember { mutableStateOf(false) }
 
-    var directText by remember { mutableStateOf(TextFieldValue("• ")) }
+    var directText by remember { mutableStateOf(TextFieldValue("• ", selection = TextRange(2))) }
+
+    fun commitPoints(entity: IndividualEntity) {
+        val parsed = splitIntoDotpoints(directText.text)
+        if (parsed.isNotEmpty()) {
+            onSavePrayerPoints(entity.id, parsed)
+            onSavePrayerPoint?.invoke(entity.id, parsed.joinToString("\n"), null)
+            onSavedEntity(entity)
+        }
+    }
 
     // Context dialogs for entities
     var entityForContextActions by remember { mutableStateOf<IndividualEntity?>(null) }
@@ -87,14 +112,69 @@ fun LogPrayerScreen(
         val oldStr = directText.text
         val newStr = newVal.text
 
-        if (newStr.length > oldStr.length && newStr.endsWith("\n")) {
-            val updated = newStr + "• "
-            directText = TextFieldValue(updated, TextRange(updated.length))
-        } else if (newStr.isEmpty()) {
-            directText = TextFieldValue("• ", TextRange(2))
-        } else {
+        // Case 1: Empty text
+        if (newStr.isEmpty()) {
             directText = newVal
+            return
         }
+
+        // Case 2: User started typing on empty notepad without leading bullet
+        if (oldStr.isEmpty() && !newStr.startsWith("•")) {
+            val updated = "• $newStr"
+            directText = TextFieldValue(updated, TextRange(updated.length))
+            return
+        }
+
+        // Case 3: Text was inserted
+        if (newStr.length > oldStr.length) {
+            val diff = newStr.length - oldStr.length
+            val insertEnd = newVal.selection.end.coerceIn(0, newStr.length)
+            val insertStart = (insertEnd - diff).coerceIn(0, newStr.length)
+            val inserted = newStr.substring(insertStart, insertEnd)
+
+            if (inserted == "\n") {
+                // User pressed Enter on a line
+                val prefix = newStr.substring(0, insertStart)
+                var suffix = newStr.substring(insertEnd)
+                if (suffix.startsWith(" ")) {
+                    suffix = suffix.substring(1)
+                }
+                val updated = "$prefix\n• $suffix"
+                val newCursor = insertStart + 3
+                directText = TextFieldValue(updated, TextRange(newCursor))
+                return
+            } else if (inserted.length > 1 && inserted.contains("\n")) {
+                // Pasted multi-line text
+                val prefix = newStr.substring(0, insertStart)
+                val suffix = newStr.substring(insertEnd)
+                val formattedInserted = inserted.lines().mapIndexed { _, line ->
+                    val trimmed = line.trim()
+                    if (trimmed.isEmpty()) "" else if (trimmed.startsWith("•")) trimmed else "• $trimmed"
+                }.filter { it.isNotEmpty() }.joinToString("\n")
+
+                val updated = prefix + formattedInserted + suffix
+                val newCursor = insertStart + formattedInserted.length
+                directText = TextFieldValue(updated, TextRange(newCursor))
+                return
+            }
+        }
+
+        // Case 4: Backspacing a lone bullet on an empty line
+        if (newStr.length < oldStr.length) {
+            val cursor = newVal.selection.start
+            if (cursor in 1..newStr.length && newStr[cursor - 1] == '•') {
+                val isAtLineStart = cursor == 1 || newStr[cursor - 2] == '\n'
+                val isAtLineEndOrSpace = cursor == newStr.length || newStr[cursor] == '\n'
+                if (isAtLineStart && isAtLineEndOrSpace) {
+                    val updated = newStr.removeRange(cursor - 1, cursor)
+                    val newCursor = (cursor - 1).coerceAtLeast(0)
+                    directText = TextFieldValue(updated, TextRange(newCursor))
+                    return
+                }
+            }
+        }
+
+        directText = newVal
     }
 
     fun handleLogPrayerBack(): Boolean {
@@ -140,18 +220,14 @@ fun LogPrayerScreen(
                     }
                 },
                 actions = {
-                    val hasDraftText = directText.text.replace("•", "").trim().isNotBlank()
+                    val hasDraftText = splitIntoDotpoints(directText.text).isNotEmpty()
                     if (currentStep == LogStep.DRAFT_PRAYER_POINTS && hasDraftText) {
                         TextButton(
                             onClick = {
-                                val text = directText.text.trim()
-                                if (text.isNotBlank()) {
-                                    if (selectedEntity != null) {
-                                        onSavePrayerPoint(selectedEntity!!.id, text, null)
-                                        onSavedEntity(selectedEntity!!)
-                                    } else {
-                                        logBackStack.push(LogStep.SELECT_ENTITY)
-                                    }
+                                if (selectedEntity != null) {
+                                    commitPoints(selectedEntity!!)
+                                } else {
+                                    logBackStack.push(LogStep.SELECT_ENTITY)
                                 }
                             }
                         ) {
@@ -209,12 +285,10 @@ fun LogPrayerScreen(
             ) { step ->
                 when (step) {
                     LogStep.DRAFT_PRAYER_POINTS -> {
-                        val hasDraftText = directText.text.replace("•", "").trim().isNotBlank()
+                        val hasDraftText = splitIntoDotpoints(directText.text).isNotEmpty()
 
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .imePadding()
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             // Section 1: Lined Notepad Canvas
                             Box(
@@ -228,7 +302,8 @@ fun LogPrayerScreen(
                                     onTextChange = { handleDirectTextChange(it) },
                                     colors = colors,
                                     typography = typography,
-                                    placeholder = "Write prayer points..."
+                                    placeholder = "Write prayer points...",
+                                    autoFocus = true
                                 )
                             }
 
@@ -252,14 +327,10 @@ fun LogPrayerScreen(
                                 ) {
                                     Button(
                                         onClick = {
-                                            val text = directText.text.trim()
-                                            if (text.isNotBlank()) {
-                                                if (selectedEntity != null) {
-                                                    onSavePrayerPoint(selectedEntity!!.id, text, null)
-                                                    onSavedEntity(selectedEntity!!)
-                                                } else {
-                                                    logBackStack.push(LogStep.SELECT_ENTITY)
-                                                }
+                                            if (selectedEntity != null) {
+                                                commitPoints(selectedEntity!!)
+                                            } else {
+                                                logBackStack.push(LogStep.SELECT_ENTITY)
                                             }
                                         },
                                         modifier = Modifier
@@ -327,7 +398,7 @@ fun LogPrayerScreen(
                                         onDismissRequest = { isRootDropdownExpanded = false },
                                         modifier = Modifier.background(colors.surfaceElevated)
                                     ) {
-                                        RootCode.entries.forEach { root ->
+                                        RootCode.entries.filter { it != RootCode.HISTORIC }.forEach { root ->
                                             DropdownMenuItem(
                                                 text = {
                                                     Text(
@@ -409,9 +480,7 @@ fun LogPrayerScreen(
                                                         onClick = {
                                                             if (newEntityName.isNotBlank()) {
                                                                 val created = onCreateEntity(selectedRootFilter, newEntityName.trim())
-                                                                val text = directText.text.trim()
-                                                                onSavePrayerPoint(created.id, text, null)
-                                                                onSavedEntity(created)
+                                                                commitPoints(created)
                                                             }
                                                         },
                                                         enabled = newEntityName.isNotBlank(),
@@ -489,9 +558,7 @@ fun LogPrayerScreen(
                                             .combinedClickable(
                                                 onClick = {
                                                     // Direct 1-tap save without confirmation
-                                                    val text = directText.text.trim()
-                                                    onSavePrayerPoint(entity.id, text, null)
-                                                    onSavedEntity(entity)
+                                                    commitPoints(entity)
                                                 },
                                                 onLongClick = {
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -535,7 +602,7 @@ fun LogPrayerScreen(
 
     if (entityForContextActions != null) {
         val entity = entityForContextActions!!
-        val isHistoric = entity.isPreloadedHistoric
+        val isHistoric = entity.isPreloadedHistoric && entity.rootCode == RootCode.HISTORIC
         AlertDialog(
             onDismissRequest = { entityForContextActions = null },
             title = {
@@ -618,7 +685,11 @@ fun LogPrayerScreen(
                 )
             },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     OutlinedTextField(
                         value = editEntityName,
                         onValueChange = { editEntityName = it },
@@ -641,7 +712,7 @@ fun LogPrayerScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
                     ) {
-                        RootCode.entries.forEach { root ->
+                        RootCode.entries.filter { it != RootCode.HISTORIC }.forEach { root ->
                             val isSelected = editEntityRoot == root
                             Button(
                                 onClick = { editEntityRoot = root },

@@ -4,6 +4,10 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import au.prayer.app.data.models.*
+import au.prayer.app.network.PromptGroup
+import au.prayer.app.network.SuggestResponse
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
 
@@ -127,6 +131,11 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             arrayOf(id)
         )
         db.delete(
+            PrayerDatabaseHelper.TABLE_SUGGESTION_CACHE,
+            "${PrayerDatabaseHelper.COL_CACHE_ENTITY_ID} = ?",
+            arrayOf(id)
+        )
+        db.delete(
             PrayerDatabaseHelper.TABLE_ENTITIES,
             "${PrayerDatabaseHelper.COL_ENTITY_ID} = ?",
             arrayOf(id)
@@ -161,6 +170,37 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         }
         db.insert(PrayerDatabaseHelper.TABLE_POINTS, null, values)
         return point
+    }
+
+    fun savePrayerPoints(
+        entityId: String,
+        points: List<String>,
+        status: PrayerStatus = PrayerStatus.ACTIVE
+    ): List<PrayerPoint> {
+        val baseTime = System.currentTimeMillis()
+        return points.mapIndexed { index, desc ->
+            val point = PrayerPoint(
+                entityId = entityId,
+                title = "",
+                description = desc.trim(),
+                status = status,
+                createdAt = baseTime + index
+            )
+            val values = ContentValues().apply {
+                put(PrayerDatabaseHelper.COL_POINT_ID, point.id)
+                put(PrayerDatabaseHelper.COL_POINT_ENTITY_ID, point.entityId)
+                put(PrayerDatabaseHelper.COL_POINT_TITLE, point.title)
+                put(PrayerDatabaseHelper.COL_POINT_DESC, point.description)
+                put(PrayerDatabaseHelper.COL_POINT_STATUS, point.status.name)
+                put(PrayerDatabaseHelper.COL_POINT_INTERACTED, point.interactedCount)
+                put(PrayerDatabaseHelper.COL_POINT_CREATED, point.createdAt)
+                put(PrayerDatabaseHelper.COL_POINT_LAST_INTERACTED, null as Long?)
+                put(PrayerDatabaseHelper.COL_POINT_ANSWERED, null as Long?)
+                put(PrayerDatabaseHelper.COL_POINT_TESTIMONY, null as String?)
+            }
+            db.insert(PrayerDatabaseHelper.TABLE_POINTS, null, values)
+            point
+        }
     }
 
     fun updatePrayerPoint(
@@ -276,6 +316,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
                 AND p.${PrayerDatabaseHelper.COL_POINT_STATUS} IN ('ACTIVE', 'HISTORIC')
             )
             ORDER BY 
+                e.${PrayerDatabaseHelper.COL_ENTITY_PINNED} DESC,
                 e.${PrayerDatabaseHelper.COL_ENTITY_LAST_INTERACTED} IS NOT NULL ASC,
                 e.${PrayerDatabaseHelper.COL_ENTITY_LAST_INTERACTED} ASC,
                 e.${PrayerDatabaseHelper.COL_ENTITY_INTERACTED} ASC,
@@ -296,7 +337,9 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             if (userEntities.isEmpty()) {
                 historicEntities
             } else {
-                userEntities + historicEntities
+                (userEntities + historicEntities).sortedWith(
+                    compareByDescending<IndividualEntity> { it.isPinned }
+                )
             }
         } else {
             userEntities
@@ -371,6 +414,185 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             put(PrayerDatabaseHelper.COL_CONFIG_VAL, value)
         }
         db.insertWithOnConflict(PrayerDatabaseHelper.TABLE_CONFIG, null, values, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun getLibraryZoomScale(): Float {
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_CONFIG,
+            arrayOf(PrayerDatabaseHelper.COL_CONFIG_VAL),
+            "${PrayerDatabaseHelper.COL_CONFIG_KEY} = ?",
+            arrayOf("library_zoom_scale"),
+            null,
+            null,
+            null
+        )
+        cursor.use {
+            if (it.moveToNext()) {
+                val v = it.getString(0)
+                return v.toFloatOrNull()?.coerceIn(0.75f, 2.5f) ?: 1.0f
+            }
+        }
+        return 1.0f
+    }
+
+    fun saveLibraryZoomScale(scale: Float) {
+        val clamped = scale.coerceIn(0.75f, 2.5f)
+        saveConfigValue("library_zoom_scale", clamped.toString())
+    }
+
+    fun getTextZoomScale(): Float {
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_CONFIG,
+            arrayOf(PrayerDatabaseHelper.COL_CONFIG_VAL),
+            "${PrayerDatabaseHelper.COL_CONFIG_KEY} = ?",
+            arrayOf("text_zoom_scale"),
+            null,
+            null,
+            null
+        )
+        cursor.use {
+            if (it.moveToNext()) {
+                val v = it.getString(0)
+                return v.toFloatOrNull()?.coerceIn(0.75f, 2.5f) ?: 1.0f
+            }
+        }
+        return 1.0f
+    }
+
+    fun saveTextZoomScale(scale: Float) {
+        val clamped = scale.coerceIn(0.75f, 2.5f)
+        saveConfigValue("text_zoom_scale", clamped.toString())
+    }
+
+    // --- Library Reading Progress Operations ---
+
+    fun getReadingProgress(volumeId: String): ReadingProgress? {
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_LIBRARY_PROGRESS,
+            null,
+            "${PrayerDatabaseHelper.COL_PROGRESS_VOLUME_ID} = ?",
+            arrayOf(volumeId),
+            null,
+            null,
+            null
+        )
+        return cursor.use {
+            if (it.moveToNext()) {
+                ReadingProgress(
+                    volumeId = it.getString(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_VOLUME_ID)),
+                    lastSectionNumber = it.getInt(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_LAST_SECTION)),
+                    lastScrollOffset = it.getInt(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_LAST_OFFSET)),
+                    updatedAt = it.getLong(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_UPDATED))
+                )
+            } else {
+                null
+            }
+        }
+    }
+
+    fun saveReadingProgress(progress: ReadingProgress) {
+        val values = ContentValues().apply {
+            put(PrayerDatabaseHelper.COL_PROGRESS_VOLUME_ID, progress.volumeId)
+            put(PrayerDatabaseHelper.COL_PROGRESS_LAST_SECTION, progress.lastSectionNumber)
+            put(PrayerDatabaseHelper.COL_PROGRESS_LAST_OFFSET, progress.lastScrollOffset)
+            put(PrayerDatabaseHelper.COL_PROGRESS_UPDATED, progress.updatedAt)
+        }
+        db.insertWithOnConflict(
+            PrayerDatabaseHelper.TABLE_LIBRARY_PROGRESS,
+            null,
+            values,
+            SQLiteDatabase.CONFLICT_REPLACE
+        )
+    }
+
+    // --- Suggestion Cache Operations ---
+
+    private val json = Json { ignoreUnknownKeys = true }
+
+    fun saveCachedSuggestions(entityId: String, response: SuggestResponse) {
+        val values = ContentValues().apply {
+            put(PrayerDatabaseHelper.COL_CACHE_ENTITY_ID, entityId)
+            put(PrayerDatabaseHelper.COL_CACHE_PRAISE, json.encodeToString(response.praiseGod))
+            put(PrayerDatabaseHelper.COL_CACHE_THANK, json.encodeToString(response.thankGod))
+            put(PrayerDatabaseHelper.COL_CACHE_ASK, json.encodeToString(response.askGod))
+            put(PrayerDatabaseHelper.COL_CACHE_SUGGESTIONS, json.encodeToString(response.suggestions))
+            put(PrayerDatabaseHelper.COL_CACHE_TIMESTAMP, System.currentTimeMillis())
+        }
+        db.insertWithOnConflict(
+            PrayerDatabaseHelper.TABLE_SUGGESTION_CACHE,
+            null,
+            values,
+            SQLiteDatabase.CONFLICT_REPLACE
+        )
+    }
+
+    fun getCachedSuggestions(entityId: String): List<PromptGroup>? {
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_SUGGESTION_CACHE,
+            null,
+            "${PrayerDatabaseHelper.COL_CACHE_ENTITY_ID} = ?",
+            arrayOf(entityId),
+            null,
+            null,
+            null
+        )
+        return cursor.use {
+            if (it.moveToNext()) {
+                cursorToPromptGroups(it)
+            } else {
+                null
+            }
+        }
+    }
+
+    fun getAllCachedSuggestions(): Map<String, List<PromptGroup>> {
+        val map = mutableMapOf<String, List<PromptGroup>>()
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_SUGGESTION_CACHE,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                val entityId = it.getString(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_CACHE_ENTITY_ID))
+                val groups = cursorToPromptGroups(it)
+                if (groups.isNotEmpty()) {
+                    map[entityId] = groups
+                }
+            }
+        }
+        return map
+    }
+
+    fun clearCachedSuggestions(entityId: String) {
+        db.delete(
+            PrayerDatabaseHelper.TABLE_SUGGESTION_CACHE,
+            "${PrayerDatabaseHelper.COL_CACHE_ENTITY_ID} = ?",
+            arrayOf(entityId)
+        )
+    }
+
+    private fun cursorToPromptGroups(c: Cursor): List<PromptGroup> {
+        val praiseJson = c.getString(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_CACHE_PRAISE))
+        val thankJson = c.getString(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_CACHE_THANK))
+        val askJson = c.getString(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_CACHE_ASK))
+        val suggestionsJson = c.getString(c.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_CACHE_SUGGESTIONS))
+
+        val praise = try { json.decodeFromString<List<String>>(praiseJson) } catch (e: Exception) { emptyList() }
+        val thank = try { json.decodeFromString<List<String>>(thankJson) } catch (e: Exception) { emptyList() }
+        val ask = try { json.decodeFromString<List<String>>(askJson) } catch (e: Exception) { emptyList() }
+        val suggestions = try { json.decodeFromString<List<String>>(suggestionsJson) } catch (e: Exception) { emptyList() }
+
+        return SuggestResponse(
+            praiseGod = praise,
+            thankGod = thank,
+            askGod = ask,
+            suggestions = suggestions
+        ).promptGroups
     }
 
     // --- Cursor Mappers ---

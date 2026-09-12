@@ -41,15 +41,15 @@ graph TD
 
     subgraph Android_Client ["3. Native Android Client (android/)"]
         MAIN["MainActivity.kt<br/>(Lifecycle, Privacy Shield & Routing)"]
-        UI_SCREENS["ui/screens/<br/>(Home, Sanctuary, Log, Journal, Settings)"]
+        UI_SCREENS["ui/screens/<br/>(Home, Sanctuary, Log, Journal, Settings, Library, VolumeReader)"]
         UI_COMPONENTS["ui/components/<br/>(LinedNotepad, SilkMarkerRibbon, ClosedFolioShield)"]
 
         UI_GESTURES["ui/gestures/<br/>(TouchGestureModifier, LIFO)"]
         DATA_LOCAL["data/local/<br/>(PrayerDatabaseHelper, Repository)"]
-        DATA_MODELS["data/models/<br/>(Models.kt, PreloadedContent.kt JSON loader)"]
-        RAW_HISTORIC["res/raw/historic_prayers.json<br/>(Standalone 14-prayer catalog)"]
+        DATA_MODELS["data/models/<br/>(Models.kt, PreloadedContent.kt, LibraryModels.kt, LibraryContent.kt)"]
+        RAW_ASSETS["res/raw/<br/>(historic_prayers.json, library_calvin_prayer.json)"]
         NETWORK["network/<br/>(PrayerApiClient.kt)"]
-        JVM_TESTS["android/src/test/java/<br/>(75 Replicated JVM Tests)"]
+        JVM_TESTS["android/src/test/java/<br/>(138 Replicated JVM Tests)"]
     end
 
     BELIEFS -.->|"Doctrinal Constraints"| COMPILED_PROMPT
@@ -86,24 +86,34 @@ The application architecture enforces strict theological, ontological, and lexic
 erDiagram
     ROOT_CATEGORY ||--o{ INDIVIDUAL_ENTITY : "classifies"
     INDIVIDUAL_ENTITY ||--o{ PRAYER_POINT : "anchors"
+    INDIVIDUAL_ENTITY ||--o| SUGGESTION_CACHE : "caches"
     PRAYER_POINT ||--o{ JOURNAL_UPDATE : "chronicles"
     APP_CONFIG ||--|| CLIENT_ENVIRONMENT : "configures"
 
     ROOT_CATEGORY {
-        string code PK "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS"
-        string displayTitle "People | Groups | General | Mission Partners"
-        int sortOrder "1 | 2 | 3 | 4"
+        string code PK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC"
+        string displayTitle "People | Groups | Mission Partners | General | Historic"
+        int sortOrder "1 | 2 | 3 | 4 | 5"
     }
 
     INDIVIDUAL_ENTITY {
         string id PK "UUID"
-        string rootCode FK "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS"
+        string rootCode FK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC"
         string displayName "Individual name or collective title"
         string contextDescription "Relational / vocational background"
         boolean isPreloadedHistoric "Flag for preloaded collects/creeds"
         int interactedCount "Cumulative contemplative reviews"
         int64 lastInteractedAt "Epoch ms of last prayer engagement"
         int64 createdAt "Epoch ms of entity creation"
+    }
+
+    SUGGESTION_CACHE {
+        string entityId PK "References INDIVIDUAL_ENTITY.id"
+        string praiseGod "JSON array of Praise God prompts"
+        string thankGod "JSON array of Thank God prompts"
+        string askGod "JSON array of Ask God prompts"
+        string suggestions "JSON array of flattened suggestions"
+        int64 timestamp "Epoch ms when cached"
     }
 
     PRAYER_POINT {
@@ -151,13 +161,16 @@ erDiagram
 | **The Singular Folio Law** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md) | Single glare-free tactile theme (cream vellum + iron-gall ink) comfortable in daylight and bedside lamplight, eliminating day/night color inversion. |
 | **The Baseline Synchronization Law** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`LinedNotepad.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/components/LinedNotepad.kt) | Ruled lines dynamically anchored to active typographic baselines (`28sp`); never static repeating background stripes. |
 | **The 56dp Left Margin Track** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md) | Disciplined two-track layout: 56dp vertical margin rule for status notation pills and timestamps; 64dp narrative text inset. |
-| **Universal 48dp Touch Target** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md) | Minimum `48 × 48dp` touch bounding box on all interactive elements (silk ribbon expanded to `48 × 56dp`). |
+| **Universal 48dp Touch Target** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md) | Minimum `48 × 48dp` touch bounding box on all interactive elements (silk ribbon expanded to `48 × 80dp` dynamic, anchored flush to top-end with `36dp` narrative text clearance and `52dp` prompt card clearance to prevent obscuring text or menu text). |
 | **Devotional Prayer Touch Zoning** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt) | Left 30% (previous), Right 30% (next), Center 40% (reading & in-place status resolution). |
 | **Prohibition of Ordinal / Sequential Badges** | [`planning/UX.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/UX.md), [`LexiconContractTest.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/test/java/au/prayer/app/LexiconContractTest.kt) | Never code or display generic ordinal labels (*Point 1*, *Point 2*, *Item 1 of N*); prayer points are sacred burdens. |
 | **Minimal Contextual Data Exposure** | [`planning/BRD.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/BRD.md), [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt) | Internal progression counters, queue tallies, and root tags are suppressed from devotional presentation. |
 | **Collapsed-by-Default Prayer Prompts** | [`beliefs.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/beliefs.md), [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt), [`JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt) | AI prayer prompts are hidden and collapsed by default across sanctuary prayer and journal detail views, expanding only upon explicit user request. |
+| **Persistent Prompt Cache & Background Refresh** | [`beliefs.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/beliefs.md), [`technical.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/technical.md), [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt), [`JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt), [`PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt), [`PrayerDatabaseHelper.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt) | The last list of prompts returned by the API is cached persistently in SQLite (`suggestion_cache`, DB v10); viewing an entity immediately renders the last list of prompts returned the last time the app was used, while an asynchronous background refresh queries for fresh prompts, seamlessly updating the display and cache upon completion without user interruption. |
 | **Closed Folio Privacy Shield** | [`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md), [`MainActivity.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/MainActivity.kt) | Recent Apps task switcher view is shielded by a flat vector leather cover with embossed monogram seal. |
-| **Historic Prayer AI Suppression** | [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt), [`JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt), [`PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt) | Entities with `isPreloadedHistoric = true` receive no AI prompt generation; these carry the prayers of the saints and need no AI augmentation. Subject header rendered as direct title (not "Praying for") in Sanctuary mode. |
+| **Historic Prayer AI & Answered Status Suppression** | [`SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt), [`JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt), [`PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt) | Entities with `isPreloadedHistoric = true` receive no AI prompt generation and suppress active/answered toggle buttons and status resolution across Sanctuary and Journal views; these carry the timeless prayers of the saints and require no temporal answered state. Subject header rendered as direct title (not "Praying for") in Sanctuary mode, with the 56dp left track serving as an unadorned structural spacer preserving the red margin rule. |
+| **Multi-Record Dotpoint Separation** | [`LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt), [`PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt) | Every new line in the lined notepad automatically formats with a dotpoint (`• `); when committed, each dotpoint is separated out via `splitIntoDotpoints` and persisted via `savePrayerPoints` as an independent `PrayerPoint` record in SQLite, enabling each dotpoint to be individually tracked and marked active or answered across Sanctuary and Journal views. |
+| **Multi-Session Concurrency & Build Serialization Protocol** | [`AGENTS.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/AGENTS.md), [`technical.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/technical.md) | When multiple agent sessions run concurrently, agents strictly serialize Gradle executions, bar `.\gradlew.bat --stop` or `clean`, use `--no-daemon` for tests, re-read files immediately before editing to prevent race conditions on shared files, and consolidate release deployments under a single-deployer protocol. |
 
 ---
 
@@ -251,18 +264,20 @@ graph TD
         
         subgraph Screens ["Screens (ui/screens/)"]
             HOME["HomeScreen.kt<br/>(Frontispiece Canvas)"]
-            SANCTUARY["SanctuaryPrayerScreen.kt<br/>(Buttonless Contemplation, 30/40/30 Zones & Collapsed Prompts)"]
+            SANCTUARY["SanctuaryPrayerScreen.kt<br/>(Buttonless Contemplation, 30/40/30 Zones, Baseline-Synchronized Ruled Lines & Collapsed Prompts)"]
             LOG["LogPrayerScreen.kt<br/>(Lined Notepad Canvas & Assistant)"]
-            JOURNAL["JournalScreen.kt<br/>(Relational Vault, Ribbon & Collapsed Prompts)"]
+            JOURNAL["JournalScreen.kt<br/>(Relational Vault, Bottom-Anchored Point Action, Ribbon & Collapsed Prompts)"]
             SETTINGS["SettingsScreen.kt<br/>(Folio Preferences & Binding)"]
+            LIBRARY["LibraryScreen.kt<br/>(Theological Catalog & Bookshelf)"]
+            READER["VolumeReaderScreen.kt<br/>(Immersive Folio Reader, Dynamic Baseline Rules & Pinch-to-Zoom)"]
         end
 
         subgraph Components_Theme ["Components, Theme & Gestures"]
             THEME["Theme.kt<br/>(4 Chromatic Tiers, 4 Leather Finishes, High-Contrast AA)"]
             SPACING["Spacing.kt<br/>(56dp Margin, 64dp Inset, 8dp Grid)"]
             TYPO["Typography.kt<br/>(Dual-Engine Serif + Sans Scaling)"]
-            GESTURES["TouchGestureModifier.kt<br/>(Directional & Edge Swipe)"]
-            NOTEPAD["components/LinedNotepad.kt<br/>(Baseline-Locked Ruled Canvas)"]
+            GESTURES["TouchGestureModifier.kt<br/>(Directional & Edge Swipe, Double-Tap Word Selection, Multi-Touch Pinch-to-Zoom)"]
+            NOTEPAD["components/LinedNotepad.kt<br/>(Baseline-Locked Ruled Canvas, AutoFocus & End-of-Last-Line Cursor Activation)"]
             RIBBON["components/SilkMarkerRibbon.kt<br/>(Swallow-Tail Bookmark Tab)"]
             SHIELD["components/ClosedFolioShield.kt<br/>(Privacy Concealment Cover)"]
         end
@@ -273,11 +288,12 @@ graph TD
     end
 
     subgraph Data_Layer ["Data & Storage Layer (data/)"]
-        REPO["PrayerRepository.kt<br/>(Entity/Point CRUD, Anti-Neglect Queue, getHistoricEntities)"]
-        DB_HELPER["PrayerDatabaseHelper.kt<br/>(SQLite Schema, DB v3 Migration, Multi-Entity Historic Seeding)"]
-        MODELS["Models.kt<br/>(Domain & Data Classes)"]
-        PRELOADED["PreloadedContent.kt<br/>(JSON catalog loader: parses res/raw/historic_prayers.json<br/>into 14 PreloadedHistoricTopic pairs:<br/>6 BCP/Creed + 8 Spurgeon pulpit prayers)"]
-        RAW_HISTORIC["res/raw/historic_prayers.json<br/>(Standalone structured historic prayer catalog)"]
+        REPO["PrayerRepository.kt<br/>(Entity/Point CRUD, Anti-Neglect Queue, Library Progress & Zoom Persistence)"]
+        DB_HELPER["PrayerDatabaseHelper.kt<br/>(SQLite Schema, DB v5 Migration, Multi-Entity Historic Seeding)"]
+        MODELS["Models.kt & LibraryModels.kt<br/>(Domain & Data Classes)"]
+        PRELOADED["PreloadedContent.kt & LibraryContent.kt<br/>(Loaders & memory caches)"]
+        RAW_HISTORIC["res/raw/historic_prayers.json<br/>(30 historic prayers catalog)"]
+        RAW_CALVIN["res/raw/library_calvin_prayer.json<br/>(Calvin: Of Prayer, 52 sections)"]
     end
 
     MAIN --> LIFO
@@ -285,6 +301,8 @@ graph TD
     MAIN --> SANCTUARY
     MAIN --> LOG
     MAIN --> JOURNAL
+    MAIN --> LIBRARY
+    MAIN --> READER
     MAIN --> SHIELD
     
     HOME --> THEME
@@ -294,22 +312,31 @@ graph TD
     SANCTUARY --> API_CLIENT
     LOG --> NOTEPAD
     LOG --> THEME
+    NOTEPAD --> GESTURES
     JOURNAL --> THEME
+    JOURNAL --> NOTEPAD
     JOURNAL --> RIBBON
     JOURNAL --> API_CLIENT
     JOURNAL --> SETTINGS
     SETTINGS --> THEME
+    LIBRARY --> THEME
+    READER --> GESTURES
+    READER --> THEME
+    READER --> RIBBON
 
     MAIN --> REPO
     LOG --> REPO
     JOURNAL --> REPO
     SANCTUARY --> REPO
+    LIBRARY --> REPO
+    READER --> REPO
 
     REPO --> DB_HELPER
     REPO --> MODELS
     REPO --> PRELOADED
     DB_HELPER --> MODELS
     PRELOADED --> RAW_HISTORIC
+    PRELOADED --> RAW_CALVIN
 ```
 
 ---
@@ -351,7 +378,7 @@ sequenceDiagram
     Main->>Home: Pop LIFO stack, restore Home
 ```
 
-### 6.2 Lined Notepad Entry & Asynchronous Auto-Titling
+### 6.2 Lined Notepad Entry & Multi-Record Dotpoint Separation
 ```mermaid
 sequenceDiagram
     autonumber
@@ -362,10 +389,11 @@ sequenceDiagram
 
     Believer->>Log: Writes bullet points on baseline-locked ruled notepad
     Believer->>Log: Taps "Next" -> Selects Person/Group
-    Log->>Main: onSavePrayerPoint(entityId, body, initialTitle="")
-    Main->>Repo: savePrayerPoint(entityId, title="", body)
-    Repo-->>Main: Saved PrayerPoint (ID: abc-123)
-    Main-->>Believer: Quiet Celadon Autosave Pulse + Undo Toast
+    Log->>Log: splitIntoDotpoints(text) -> List<String>
+    Log->>Main: onSavePrayerPoints(entityId, points)
+    Main->>Repo: savePrayerPoints(entityId, points)
+    Repo-->>Main: List<PrayerPoint> (each with distinct ID & ACTIVE status)
+    Main-->>Believer: Quiet Celadon Autosave Pulse + Batch Undo Toast
 ```
 
 ---
@@ -443,13 +471,13 @@ graph LR
 | **[`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js)** | AI API / Edge Proxy | Multi-route Cloudflare Worker router & inference proxy (mandates deployment via Wrangler script `npm run deploy` / `npx wrangler deploy` on change or edge sync) | `system_prompt.txt`, OpenRouter API | `PrayerApiClient.kt` |
 | **[`api/wrangler.jsonc`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/wrangler.jsonc)** | AI API / Deployment | Cloudflare Workers deployment configuration (`wrangler deploy`) | Cloudflare CLI | Cloudflare Edge Runtime |
 | **[`api/system_prompt.txt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/system_prompt.txt)** | AI API / Prompt | Authoritative compiled system prompt | `beliefs.md`, `BRD.md` | `worker.js` |
-| **[`android/app/src/main/java/au/prayer/app/MainActivity.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/MainActivity.kt)** | Android / Activity | Root activity, lifecycle, LIFO navigation, privacy mask, launch state | `PrayerRepository`, `LifoBackStack`, `Theme` | Android OS |
+| **[`android/app/src/main/java/au/prayer/app/MainActivity.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/MainActivity.kt)** | Android / Activity | Root activity, lifecycle, LIFO navigation, privacy mask, launch state, `WindowInsets.safeDrawing` keyboard inset management | `PrayerRepository`, `LifoBackStack`, `Theme` | Android OS |
 | **[`android/app/src/main/java/au/prayer/app/ui/screens/HomeScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/HomeScreen.kt)** | Android / Screen | Modern Folio frontispiece, bookplate actions, cold-boot opening revelation | `Theme.kt`, `Spacing.kt`, `SilkMarkerRibbon.kt` | `MainActivity.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)** | Android / Screen | Buttonless full-screen prayer mode with read-only AI prompts & 30/40/30 zones | `TouchGestureModifier.kt`, `Theme.kt`, `PrayerApiClient.kt` | `MainActivity.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt)** | Android / Screen | Ruled lined notepad canvas, zero AI assistance, single-tap save | `Theme.kt`, `Spacing.kt`, `LinedNotepad.kt` | `MainActivity.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)** | Android / Screen | Journal directory, date-separated entry listings, in-place subject creation per sphere, prayer point editing, silk ribbon, read-only AI prompts | `Theme.kt`, `Models.kt`, `PrayerApiClient.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SanctuaryPrayerScreen.kt)** | Android / Screen | Buttonless full-screen prayer mode with read-only AI prompts, 30/40/30 zones, instant inline status toggle on margin pencil icon / answered pill, and modal on long-press | `TouchGestureModifier.kt`, `Theme.kt`, `PrayerApiClient.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/LogPrayerScreen.kt)** | Android / Screen | Ruled lined notepad canvas, zero AI assistance, single-tap save, scrollable dialogs | `Theme.kt`, `Spacing.kt`, `LinedNotepad.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt)** | Android / Screen | Journal directory, date-separated entry listings, margin line-drawn pencil active indicator with 0ms optimistic status toggle, buttonless status in edit view with TopAppBar save, scrollable dialogs | `Theme.kt`, `Models.kt`, `PrayerApiClient.kt` | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/screens/SettingsScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/SettingsScreen.kt)** | Android / Screen | Modern Folio settings, leather dye swatches, live text scale previews, dialect selector, historic prayer & contrast toggles | `Theme.kt`, `Spacing.kt`, `Typography.kt`, `Models.kt` | `JournalScreen.kt` |
-| **[`android/app/src/main/java/au/prayer/app/ui/components/LinedNotepad.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/components/LinedNotepad.kt)** | Android / Component | Baseline-synchronized ruled notepad canvas with auto-bulleting | Compose Foundation | `LogPrayerScreen.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/components/LinedNotepad.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/components/LinedNotepad.kt)** | Android / Component | Baseline-synchronized ruled notepad canvas with auto-bulleting, autofocus, and end-of-last-line cursor positioning | Compose Foundation | `LogPrayerScreen.kt`, `JournalScreen.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/gestures/TouchGestureModifier.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/gestures/TouchGestureModifier.kt)** | Android / Gestures | High-precision swipe, 30/40/30 zoning, and edge-swipe detection | Android Compose Pointer API | `SanctuaryPrayerScreen.kt`, `JournalScreen.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/navigation/LifoBackStack.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/navigation/LifoBackStack.kt)** | Android / Navigation | LIFO screen state manager | Kotlin Collections | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/theme/Theme.kt)** | Android / Theming | Folio leather and vellum schemes | Material 3 Compose | All Screens |
@@ -458,9 +486,9 @@ graph LR
 | **[`android/app/src/main/res/values/themes.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/values/themes.xml)** | Android / Resources | Zero-flash Theme.Prayer with warm vellum windowBackground | Android OS Theme | Android Manifest |
 | **[`android/app/src/main/res/values-v31/themes.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/values-v31/themes.xml)** | Android / Resources | Android 12+ SplashScreen theme with debossed monogram icon | Android 12+ OS | Android Manifest |
 | **[`android/app/src/main/res/drawable/ic_splash_monogram.xml`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/drawable/ic_splash_monogram.xml)** | Android / Resources | Debossed Latin cross monogram vector icon | Android Vector | themes.xml (v31) |
-| **[`android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt)** | Android / Database | SQLite schema definition and table creation | Android SQLite | `PrayerRepository.kt` |
-| **[`android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt)** | Android / Repository | CRUD operations, Anti-Neglect queue query | `PrayerDatabaseHelper.kt`, `Models.kt` | `MainActivity.kt` |
+| **[`android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerDatabaseHelper.kt)** | Android / Database | SQLite schema definition (DB v10), entity/point tables, reading progress, suggestion_cache | Android SQLite | `PrayerRepository.kt` |
+| **[`android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt)** | Android / Repository | CRUD operations, Anti-Neglect queue query, suggestion cache persistence & retrieval | `PrayerDatabaseHelper.kt`, `Models.kt` | `MainActivity.kt` |
 | **[`android/app/src/main/java/au/prayer/app/data/models/Models.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt)** | Android / Domain Models | Enums and data classes | Kotlinx Serialization | Repository, API Client, UI |
-| **[`android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt)** | Android / Seed Data | Parses `res/raw/historic_prayers.json` into 14 `PreloadedHistoricTopic` pairs (entities + HISTORIC points); lazy singleton cache | `Models.kt`, Kotlinx Serialization, `res/raw/historic_prayers.json` | `PrayerDatabaseHelper.kt`, `PrayerRepository.kt` |
-| **[`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json)** | Android / Seed Data | Standalone structured catalog of the 14 public-domain historic prayers (Lord's Prayer, 1662 BCP collects, Apostles' Creed, Spurgeon pulpit prayers); single source of truth for historic content | User-authored (public domain texts) | `PreloadedContent.kt`, JVM test classpath (`AntiNeglectQueueTest.kt`) |
+| **[`android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt)** | Android / Seed Data | Parses `res/raw/historic_prayers.json` into 30 `PreloadedHistoricTopic` pairs (entities + HISTORIC points); lazy singleton cache | `Models.kt`, Kotlinx Serialization, `res/raw/historic_prayers.json` | `PrayerDatabaseHelper.kt`, `PrayerRepository.kt` |
+| **[`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json)** | Android / Seed Data | Standalone structured catalog of the 30 public-domain historic prayers (Lord's Prayer, 1662 BCP collects, Apostles' Creed, Spurgeon pulpit prayers, early church from Potts/CCEL); single source of truth for historic content | User-authored (public domain texts) | `PreloadedContent.kt`, JVM test classpath (`AntiNeglectQueueTest.kt`) |
 | **[`android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt)** | Android / Network | OkHttp client, wire payloads (`suggest`), grouped ambient prompts (Praise God, Thank God, Ask God) | OkHttp, Kotlinx Serialization | `MainActivity.kt`, `SanctuaryPrayerScreen.kt`, `JournalScreen.kt` |

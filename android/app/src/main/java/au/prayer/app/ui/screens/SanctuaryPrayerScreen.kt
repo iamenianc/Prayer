@@ -13,6 +13,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,11 +38,22 @@ import au.prayer.app.network.PromptGroup
 import au.prayer.app.network.RecordedPoint
 import au.prayer.app.network.SuggestRequest
 import au.prayer.app.ui.components.SilkMarkerRibbon
+import au.prayer.app.ui.gestures.calculateZoomScale
+import au.prayer.app.ui.gestures.pinchToZoom
 import au.prayer.app.ui.gestures.prayerSwipeGestures
 import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
 import au.prayer.app.ui.theme.PrayerSpacing
 import au.prayer.app.ui.theme.PrayerTypography
+import au.prayer.app.ui.theme.withZoom
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.LineHeightStyle
+import kotlinx.coroutines.delay
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -59,8 +72,32 @@ fun SanctuaryPrayerScreen(
 ) {
     val haptic = LocalHapticFeedback.current
     var actionPoint by remember { mutableStateOf<PrayerPoint?>(null) }
-    val promptsCache = remember { mutableStateMapOf<String, List<PromptGroup>>() }
+
+    val initialZoom = remember { repository?.getTextZoomScale() ?: 1.0f }
+    var zoomScale by remember { mutableFloatStateOf(initialZoom) }
+    var isZooming by remember { mutableStateOf(false) }
+    var showZoomPill by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isZooming) {
+        if (isZooming) {
+            showZoomPill = true
+        } else if (showZoomPill) {
+            delay(1500)
+            showZoomPill = false
+        }
+    }
+
+    val effectiveTypography = remember(typography, zoomScale) {
+        typography.withZoom(zoomScale)
+    }
+
+    val promptsCache = remember {
+        mutableStateMapOf<String, List<PromptGroup>>().apply {
+            repository?.getAllCachedSuggestions()?.let { putAll(it) }
+        }
+    }
     val promptsLoading = remember { mutableStateMapOf<String, Boolean>() }
+    val refreshedEntities = remember { mutableSetOf<String>() }
 
     BackHandler(enabled = true) {
         onExit()
@@ -76,12 +113,13 @@ fun SanctuaryPrayerScreen(
         ) {
             Text(
                 text = "No active prayer points found",
-                style = typography.prayerPointTitle,
+                style = effectiveTypography.prayerPointTitle,
                 color = colors.textSubtle
             )
         }
         return
     }
+
 
     // Full-Screen Sanctuary: strictly zero buttons, zero cards, zero borders
     Box(
@@ -160,9 +198,23 @@ fun SanctuaryPrayerScreen(
             var isAnsweredExpanded by remember(pageTopic.entity.id) { mutableStateOf(false) }
             var isPromptsExpanded by remember(pageTopic.entity.id) { mutableStateOf(false) }
             val scrollState = rememberScrollState()
+            var localIsPinned by remember(pageTopic.entity.id, pageTopic.entity.isPinned) {
+                mutableStateOf(pageTopic.entity.isPinned)
+            }
 
             LaunchedEffect(entityId) {
-                if (apiClient != null && totalPointsCount > 0 && !promptsCache.containsKey(entityId) && !pageTopic.entity.isPreloadedHistoric) {
+                // Ensure cached prompts from last time are immediately available
+                if (!promptsCache.containsKey(entityId)) {
+                    repository?.getCachedSuggestions(entityId)?.let { cached ->
+                        if (cached.isNotEmpty()) {
+                            promptsCache[entityId] = cached
+                        }
+                    }
+                }
+
+                // Refresh in background while showing the last list of prompts
+                if (apiClient != null && totalPointsCount > 0 && !pageTopic.entity.isPreloadedHistoric && !refreshedEntities.contains(entityId)) {
+                    refreshedEntities.add(entityId)
                     promptsLoading[entityId] = true
                     val contextData = repository?.getTargetContext(entityId)
                     val recorded = (contextData?.activePoints.orEmpty() + contextData?.answeredPoints.orEmpty()).ifEmpty {
@@ -185,6 +237,7 @@ fun SanctuaryPrayerScreen(
                     promptsLoading[entityId] = false
                     result.onSuccess { resp ->
                         if (resp.promptGroups.isNotEmpty()) {
+                            repository?.saveCachedSuggestions(entityId, resp)
                             promptsCache[entityId] = resp.promptGroups
                         }
                     }.onFailure {
@@ -199,8 +252,49 @@ fun SanctuaryPrayerScreen(
             val marginXPx = with(density) { PrayerSpacing.marginTrackWidth.toPx() }
             val feintRuleColor = colors.paperFeintRule
             val marginRuleColor = colors.paperMarginRule
-            val bodyCadencePx = with(density) { 28.sp.toPx() }
-            val topHeaderClearancePx = with(density) { 72.dp.toPx() }
+
+            // Baseline Synchronization: mathematically align typography and line metrics
+            @Suppress("DEPRECATION")
+            val synchronizedBulletStyle = remember(effectiveTypography.prayerPointBullet) {
+                effectiveTypography.prayerPointBullet.copy(
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.None
+                    )
+                )
+            }
+
+            @Suppress("DEPRECATION")
+            val synchronizedSubjectHeaderStyle = remember(effectiveTypography.subjectHeader) {
+                effectiveTypography.subjectHeader.copy(
+                    platformStyle = PlatformTextStyle(includeFontPadding = false),
+                    lineHeightStyle = LineHeightStyle(
+                        alignment = LineHeightStyle.Alignment.Center,
+                        trim = LineHeightStyle.Trim.None
+                    )
+                )
+            }
+
+            val textMeasurer = rememberTextMeasurer()
+            val sampleMeasure = remember(synchronizedBulletStyle, density) {
+                textMeasurer.measure(
+                    text = AnnotatedString("• Sample\n• Line"),
+                    style = synchronizedBulletStyle
+                )
+            }
+            val bodyCadencePx = if (sampleMeasure.lineCount > 1) {
+                sampleMeasure.getLineTop(1) - sampleMeasure.getLineTop(0)
+            } else {
+                sampleMeasure.getLineBottom(0) - sampleMeasure.getLineTop(0)
+            }.coerceAtLeast(1f)
+            val textToLineGapPx = with(density) { 2.dp.toPx() }
+            val bodyBaselineOffsetPx = (sampleMeasure.getLineBaseline(0) - sampleMeasure.getLineTop(0)).coerceAtLeast(0f) + textToLineGapPx
+            val bodyCadenceDp = with(density) { bodyCadencePx.toDp() }
+
+            // Dynamic anchor for first prayer point baseline on canvas
+            var firstPointBaselineY by remember(pageTopic.entity.id) { mutableStateOf<Float?>(null) }
+            val sanctuaryTextPaddingEnd = 36.dp
 
             Box(
                 modifier = Modifier
@@ -213,7 +307,21 @@ fun SanctuaryPrayerScreen(
                         .fillMaxHeight()
                         .widthIn(max = 720.dp)
                         .fillMaxWidth()
+                        .pinchToZoom(
+                            onZoomChange = { factor ->
+                                isZooming = true
+                                zoomScale = calculateZoomScale(zoomScale, factor)
+                            },
+                            onZoomStart = {
+                                isZooming = true
+                            },
+                            onZoomEnd = {
+                                isZooming = false
+                                repository?.saveTextZoomScale(zoomScale)
+                            }
+                        )
                 ) {
+
                     val viewportHeight = maxHeight
                     Column(
                         modifier = Modifier
@@ -230,8 +338,10 @@ fun SanctuaryPrayerScreen(
                                     strokeWidth = strokeWidth
                                 )
 
-                                // Draw baseline-locked feint horizontal rules at 28sp cadence
-                                var y = topHeaderClearancePx
+                                // Draw baseline-synchronized feint horizontal rules matching text spacing
+                                val anchor = firstPointBaselineY ?: (bodyCadencePx * 3f + bodyBaselineOffsetPx)
+                                val startY = ((anchor % bodyCadencePx) + bodyCadencePx) % bodyCadencePx
+                                var y = startY
                                 while (y <= size.height) {
                                     drawLine(
                                         color = feintRuleColor,
@@ -249,9 +359,9 @@ fun SanctuaryPrayerScreen(
                                 .fillMaxWidth()
                                 .padding(
                                     start = PrayerSpacing.textInset,
-                                    end = PrayerSpacing.narrativeRightPadding,
-                                    top = PrayerSpacing.large,
-                                    bottom = PrayerSpacing.large
+                                    end = sanctuaryTextPaddingEnd,
+                                    top = bodyCadenceDp,
+                                    bottom = bodyCadenceDp
                                 )
                         ) {
                             Text(
@@ -260,24 +370,34 @@ fun SanctuaryPrayerScreen(
                                 } else {
                                     "Praying for ${pageTopic.entity.displayName}"
                                 },
-                                style = typography.subjectHeader,
+                                style = synchronizedSubjectHeaderStyle,
                                 color = colors.inkPrimary
                             )
                         }
 
                         // Active Prayer Points: Two-track layout (56dp status pills on left, narrative text at 64dp)
-                        pageTopic.activePoints.forEach { point ->
+                        pageTopic.activePoints.forEachIndexed { pointIndex, point ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(bottom = PrayerSpacing.large)
+                                    .padding(bottom = bodyCadenceDp)
+                                    .then(
+                                        if (pointIndex == 0) {
+                                            Modifier.onGloballyPositioned { coords ->
+                                                val yInCol = coords.positionInParent().y
+                                                firstPointBaselineY = yInCol + bodyBaselineOffsetPx
+                                            }
+                                        } else Modifier
+                                    )
                                     .combinedClickable(
                                         interactionSource = remember { MutableInteractionSource() },
                                         indication = null,
                                         onClick = onNextTopic,
                                         onLongClick = {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                            actionPoint = point
+                                            if (!pageTopic.entity.isPreloadedHistoric && point.status != PrayerStatus.HISTORIC) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                actionPoint = point
+                                            }
                                         }
                                     )
                             ) {
@@ -285,31 +405,38 @@ fun SanctuaryPrayerScreen(
                                 Box(
                                     modifier = Modifier
                                         .width(PrayerSpacing.marginTrackWidth)
-                                        .defaultMinSize(minHeight = PrayerSpacing.minTouchTarget)
-                                        .padding(top = PrayerSpacing.extraSmall),
-                                    contentAlignment = Alignment.TopCenter
+                                        .height(bodyCadenceDp),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = Color.Transparent,
-                                        border = BorderStroke(0.5.dp, colors.inkMuted.copy(alpha = 0.50f)),
-                                        modifier = Modifier
-                                            .defaultMinSize(minWidth = 48.dp, minHeight = 28.dp)
-                                            .clickable(
-                                                interactionSource = remember { MutableInteractionSource() },
-                                                indication = null,
-                                                onClick = {
-                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    actionPoint = point
-                                                }
+                                    if (!pageTopic.entity.isPreloadedHistoric && point.status != PrayerStatus.HISTORIC) {
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = Color.Transparent,
+                                            border = BorderStroke(0.5.dp, colors.inkMuted.copy(alpha = 0.50f)),
+                                            modifier = Modifier
+                                                .defaultMinSize(minWidth = 48.dp, minHeight = 24.dp)
+                                                .combinedClickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication = null,
+                                                    onClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        onToggleAnswered?.invoke(point.id)
+                                                    },
+                                                    onLongClick = {
+                                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                        actionPoint = point
+                                                    }
+                                                )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Edit,
+                                                contentDescription = "Active prayer",
+                                                tint = colors.inkMuted,
+                                                modifier = Modifier
+                                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                                                    .size(12.dp)
                                             )
-                                    ) {
-                                        Text(
-                                            text = "ACTIVE",
-                                            style = typography.marginStatus,
-                                            color = colors.inkMuted,
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                        )
+                                        }
                                     }
                                 }
 
@@ -319,7 +446,7 @@ fun SanctuaryPrayerScreen(
                                         .weight(1f)
                                         .padding(
                                             start = PrayerSpacing.small,
-                                            end = PrayerSpacing.narrativeRightPadding
+                                            end = sanctuaryTextPaddingEnd
                                         )
                                 ) {
                                     val bulletText = if (point.description.trimStart().startsWith("•")) {
@@ -329,7 +456,7 @@ fun SanctuaryPrayerScreen(
                                     }
                                     Text(
                                         text = bulletText,
-                                        style = typography.prayerPointBullet,
+                                        style = synchronizedBulletStyle,
                                         color = colors.inkPrimary
                                     )
                                 }
@@ -347,7 +474,7 @@ fun SanctuaryPrayerScreen(
                                     .clickable { isPromptsExpanded = !isPromptsExpanded }
                                     .padding(
                                         start = PrayerSpacing.textInset,
-                                        end = PrayerSpacing.narrativeRightPadding,
+                                        end = sanctuaryTextPaddingEnd,
                                         top = PrayerSpacing.medium,
                                         bottom = PrayerSpacing.small
                                     ),
@@ -359,13 +486,13 @@ fun SanctuaryPrayerScreen(
                                 ) {
                                     Text(
                                         text = "❧   Prompts for Prayer   ❧",
-                                        style = typography.caption,
+                                        style = effectiveTypography.caption,
                                         color = colors.inkSecondary
                                     )
                                     Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
                                     Text(
                                         text = if (isPromptsExpanded) "Tap to collapse" else "Tap to view prompts",
-                                        style = typography.marginStatus,
+                                        style = effectiveTypography.marginStatus,
                                         color = colors.inkMuted
                                     )
                                 }
@@ -377,21 +504,21 @@ fun SanctuaryPrayerScreen(
                                         .fillMaxWidth()
                                         .padding(
                                             start = PrayerSpacing.textInset,
-                                            end = PrayerSpacing.narrativeRightPadding,
+                                            end = sanctuaryTextPaddingEnd,
                                             bottom = PrayerSpacing.large
                                         )
                                 ) {
                                     cachedGroups.forEach { group ->
                                         Text(
                                             text = group.title,
-                                            style = typography.categoryLedgerHeader,
+                                            style = effectiveTypography.categoryLedgerHeader,
                                             color = colors.inkSecondary,
                                             modifier = Modifier.padding(top = PrayerSpacing.medium, bottom = PrayerSpacing.extraSmall)
                                         )
                                         group.prompts.forEach { prompt ->
                                             Text(
                                                 text = "• $prompt",
-                                                style = typography.suggestedIntercession,
+                                                style = effectiveTypography.suggestedIntercession,
                                                 color = colors.inkMuted.copy(alpha = 0.85f),
                                                 modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
                                             )
@@ -402,7 +529,7 @@ fun SanctuaryPrayerScreen(
                         }
 
                         // Expandable Answered Prayer Points for Thanksgiving (feint rules suppressed inside card, 2dp Celadon rule)
-                        if (pageTopic.answeredPoints.isNotEmpty()) {
+                        if (!pageTopic.entity.isPreloadedHistoric && pageTopic.answeredPoints.isNotEmpty()) {
                             // Typographic Fleuron & Section Divider (§6.3)
                             Box(
                                 modifier = Modifier
@@ -410,7 +537,7 @@ fun SanctuaryPrayerScreen(
                                     .clickable { isAnsweredExpanded = !isAnsweredExpanded }
                                     .padding(
                                         start = PrayerSpacing.textInset,
-                                        end = PrayerSpacing.narrativeRightPadding,
+                                        end = sanctuaryTextPaddingEnd,
                                         top = PrayerSpacing.medium,
                                         bottom = PrayerSpacing.medium
                                     ),
@@ -422,15 +549,16 @@ fun SanctuaryPrayerScreen(
                                 ) {
                                     Text(
                                         text = "❧   Answered Prayers & Thanksgiving   ❧",
-                                        style = typography.caption,
+                                        style = effectiveTypography.caption,
                                         color = colors.inkAnswered
                                     )
                                     Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
                                     Text(
                                         text = if (isAnsweredExpanded) "Hide answered records" else "Review answered records",
-                                        style = typography.marginStatus,
+                                        style = effectiveTypography.marginStatus,
                                         color = colors.inkMuted.copy(alpha = 0.70f)
                                     )
+
                                 }
                             }
 
@@ -469,10 +597,14 @@ fun SanctuaryPrayerScreen(
                                                     border = BorderStroke(0.5.dp, colors.inkAnswered.copy(alpha = 0.60f)),
                                                     modifier = Modifier
                                                         .defaultMinSize(minWidth = 48.dp, minHeight = 28.dp)
-                                                        .clickable(
+                                                        .combinedClickable(
                                                             interactionSource = remember { MutableInteractionSource() },
                                                             indication = null,
                                                             onClick = {
+                                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                onToggleAnswered?.invoke(answeredPoint.id)
+                                                            },
+                                                            onLongClick = {
                                                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                                                 actionPoint = answeredPoint
                                                             }
@@ -493,7 +625,7 @@ fun SanctuaryPrayerScreen(
                                                     .weight(1f)
                                                     .padding(
                                                         start = PrayerSpacing.small,
-                                                        end = PrayerSpacing.narrativeRightPadding
+                                                        end = sanctuaryTextPaddingEnd
                                                     ),
                                                 shape = FlatSquareShape,
                                                 color = colors.surfaceSubtle,
@@ -520,7 +652,7 @@ fun SanctuaryPrayerScreen(
                                                         }
                                                         Text(
                                                             text = bulletText,
-                                                            style = typography.answeredThanksgiving.copy(
+                                                            style = effectiveTypography.answeredThanksgiving.copy(
                                                                 textDecoration = TextDecoration.LineThrough
                                                             ),
                                                             color = colors.inkAnswered
@@ -528,7 +660,7 @@ fun SanctuaryPrayerScreen(
                                                         if (!answeredPoint.answeredTestimony.isNullOrBlank()) {
                                                             Text(
                                                                 text = "Thanksgiving: ${answeredPoint.answeredTestimony}",
-                                                                style = typography.answeredThanksgiving,
+                                                                style = effectiveTypography.answeredThanksgiving,
                                                                 color = colors.inkAnswered,
                                                                 modifier = Modifier.padding(top = PrayerSpacing.extraSmall)
                                                             )
@@ -547,15 +679,85 @@ fun SanctuaryPrayerScreen(
 
                     // Interactive Silk Marker Ribbon Tab anchored at top margin (§2.3, §11.2)
                     SilkMarkerRibbon(
-                        isPinned = pageTopic.entity.isPinned,
+                        isPinned = localIsPinned,
                         onTogglePin = {
-                            onTogglePinEntity?.invoke(pageTopic.entity.id, !pageTopic.entity.isPinned)
+                            val newPinned = !localIsPinned
+                            localIsPinned = newPinned
+                            onTogglePinEntity?.invoke(pageTopic.entity.id, newPinned)
                         },
                         color = colors.ribbonPrimary,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(end = 16.dp)
+                        modifier = Modifier.align(Alignment.TopEnd)
                     )
+
+                    // Top Bar Zoom Reset Indicator (§1.5)
+                    if (zoomScale != 1.0f) {
+                        Text(
+                            text = "${(zoomScale * 100).roundToInt()}% ↺",
+                            style = effectiveTypography.marginStatus.copy(
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = colors.leatherActive,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(end = 56.dp, top = 8.dp)
+                                .clickable {
+                                    zoomScale = 1.0f
+                                    repository?.saveTextZoomScale(1.0f)
+                                    showZoomPill = true
+                                }
+                                .padding(horizontal = PrayerSpacing.extraSmall, vertical = PrayerSpacing.extraSmall)
+                        )
+                    }
+
+                    // Floating Zoom Indicator Pill
+                    AnimatedVisibility(
+                        visible = isZooming || showZoomPill,
+                        enter = fadeIn(),
+                        exit = fadeOut(),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 28.dp)
+                    ) {
+                        Surface(
+                            onClick = {
+                                zoomScale = 1.0f
+                                repository?.saveTextZoomScale(1.0f)
+                                showZoomPill = true
+                            },
+                            shape = FlatSquareShape,
+                            color = colors.leatherActive.copy(alpha = 0.92f),
+                            contentColor = colors.background,
+                            tonalElevation = PrayerSpacing.elevationCard,
+                            shadowElevation = PrayerSpacing.elevationCard,
+                            border = BorderStroke(1.dp, colors.borderSubtle)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "${(zoomScale * 100).roundToInt()}%",
+                                    style = effectiveTypography.caption.copy(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = colors.background
+                                )
+                                if (zoomScale != 1.0f) {
+                                    Text(
+                                        text = "• Reset",
+                                        style = effectiveTypography.caption.copy(
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium
+                                        ),
+                                        color = colors.background.copy(alpha = 0.85f)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -569,7 +771,7 @@ fun SanctuaryPrayerScreen(
             title = {
                 Text(
                     text = point.title,
-                    style = typography.prayerPointTitle,
+                    style = effectiveTypography.prayerPointTitle,
                     color = colors.textPrimary
                 )
             },
@@ -578,7 +780,9 @@ fun SanctuaryPrayerScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
                 ) {
-                    if (onToggleAnswered != null) {
+                    val currentTopic = topics.getOrNull(currentIndex)
+                    val isPreloaded = currentTopic?.entity?.isPreloadedHistoric == true || point.status == PrayerStatus.HISTORIC
+                    if (!isPreloaded && onToggleAnswered != null) {
                         OutlinedButton(
                             onClick = {
                                 val id = point.id
@@ -597,7 +801,7 @@ fun SanctuaryPrayerScreen(
                         ) {
                             Text(
                                 text = if (isAnswered) "Mark as Active" else "Mark as Answered",
-                                style = typography.button
+                                style = effectiveTypography.button
                             )
                         }
                     }
@@ -609,7 +813,7 @@ fun SanctuaryPrayerScreen(
                     onClick = { actionPoint = null },
                     shape = FlatSquareShape
                 ) {
-                    Text("Dismiss", style = typography.button, color = colors.textSubtle)
+                    Text("Dismiss", style = effectiveTypography.button, color = colors.textSubtle)
                 }
             },
             shape = FlatSquareShape,
@@ -618,3 +822,4 @@ fun SanctuaryPrayerScreen(
         )
     }
 }
+

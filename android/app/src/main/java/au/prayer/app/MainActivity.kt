@@ -9,8 +9,11 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
@@ -31,13 +34,16 @@ import au.prayer.app.ui.components.ClosedFolioShield
 import au.prayer.app.ui.navigation.LifoBackStack
 import au.prayer.app.ui.screens.*
 import au.prayer.app.ui.theme.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 enum class ScreenState {
     HOME,
     SANCTUARY_PRAYER,
     LOG_PRAYER,
-    JOURNAL
+    JOURNAL,
+    LIBRARY,
+    VOLUME_READER
 }
 
 class MainActivity : ComponentActivity() {
@@ -62,6 +68,8 @@ class MainActivity : ComponentActivity() {
             var journalTargetEntity by remember { mutableStateOf<IndividualEntity?>(null) }
             var journalNavKey by remember { mutableIntStateOf(0) }
             var isInitialColdLaunch by remember { mutableStateOf(true) }
+            var selectedVolumeId by remember { mutableStateOf("calvin-institutes-prayer") }
+            var readerStartSection by remember { mutableIntStateOf(1) }
 
             // Prayer sanctuary session state
             var prayerTopics by remember { mutableStateOf<List<TopicWithPoints>>(emptyList()) }
@@ -113,6 +121,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         containerColor = colors.background,
                         contentColor = colors.textPrimary,
+                        contentWindowInsets = WindowInsets.safeDrawing,
                         snackbarHost = {
                             SnackbarHost(snackbarHostState) { data ->
                                 Snackbar(
@@ -128,6 +137,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(innerPadding)
+                                .consumeWindowInsets(innerPadding)
                                 .background(colors.background)
                         ) {
                             AnimatedContent(
@@ -150,8 +160,8 @@ class MainActivity : ComponentActivity() {
                                                         slideOutVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) { it / 8 }
                                             )
                                     }
-                                    // Transitioning from Home to Journal or Add Prayer Points: slide in from right with fade
-                                    initialState == ScreenState.HOME && (targetState == ScreenState.JOURNAL || targetState == ScreenState.LOG_PRAYER) -> {
+                                    // Transitioning from Home to Journal, Add Prayer Points, or Library: slide in from right with fade
+                                    initialState == ScreenState.HOME && (targetState == ScreenState.JOURNAL || targetState == ScreenState.LOG_PRAYER || targetState == ScreenState.LIBRARY) -> {
                                         (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
                                                 fadeIn(animationSpec = tween(300)))
                                             .togetherWith(
@@ -159,8 +169,25 @@ class MainActivity : ComponentActivity() {
                                                         fadeOut(animationSpec = tween(200))
                                             )
                                     }
-                                    // Returning from Journal or Add Prayer Points to Home: slide in from left with fade
-                                    (initialState == ScreenState.JOURNAL || initialState == ScreenState.LOG_PRAYER) && targetState == ScreenState.HOME -> {
+                                    // Returning from Journal, Add Prayer Points, or Library to Home: slide in from left with fade
+                                    (initialState == ScreenState.JOURNAL || initialState == ScreenState.LOG_PRAYER || initialState == ScreenState.LIBRARY) && targetState == ScreenState.HOME -> {
+                                        (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
+                                                fadeIn(animationSpec = tween(300)))
+                                            .togetherWith(
+                                                slideOutHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
+                                                        fadeOut(animationSpec = tween(200))
+                                            )
+                                    }
+                                    // Transitioning between Library and Volume Reader:
+                                    initialState == ScreenState.LIBRARY && targetState == ScreenState.VOLUME_READER -> {
+                                        (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
+                                                fadeIn(animationSpec = tween(300)))
+                                            .togetherWith(
+                                                slideOutHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
+                                                        fadeOut(animationSpec = tween(200))
+                                            )
+                                    }
+                                    initialState == ScreenState.VOLUME_READER && targetState == ScreenState.LIBRARY -> {
                                         (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
                                                 fadeIn(animationSpec = tween(300)))
                                             .togetherWith(
@@ -209,6 +236,22 @@ class MainActivity : ComponentActivity() {
                                             preselectedEntity = null
                                             backStack.push(ScreenState.LOG_PRAYER)
                                         },
+                                        onOpenLibrary = {
+                                            backStack.push(ScreenState.LIBRARY)
+                                        },
+                                        hasPinnedPrayers = allEntities.any { it.isPinned },
+                                        onRibbonClick = {
+                                            if (allEntities.any { it.isPinned }) {
+                                                startPrayerSession()
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar("Entering Sanctuary with pinned focus")
+                                                }
+                                            } else {
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar("No pinned intercessions yet — mark any topic in Journal to pin")
+                                                }
+                                            }
+                                        },
                                         isInitialLaunch = isInitialColdLaunch,
                                         onInitialLaunchComplete = { isInitialColdLaunch = false }
                                     )
@@ -238,13 +281,36 @@ class MainActivity : ComponentActivity() {
                                         onExit = { backStack.pop() },
                                         onToggleAnswered = { pointId ->
                                             val currentTopic = prayerTopics.getOrNull(currentTopicIndex)
-                                            if (currentTopic != null) {
+                                            if (currentTopic != null && !currentTopic.entity.isPreloadedHistoric) {
                                                 val allPoints = currentTopic.activePoints + currentTopic.answeredPoints
-                                                val point = allPoints.find { it.id == pointId }
+                                                val point = allPoints.find { it.id == pointId && it.status != PrayerStatus.HISTORIC }
                                                 if (point != null) {
                                                     val newStatus = if (point.status == PrayerStatus.ACTIVE) PrayerStatus.ANSWERED else PrayerStatus.ACTIVE
-                                                    repository.updatePrayerPoint(point.id, point.title, point.description, newStatus, point.answeredTestimony)
-                                                    prayerTopics = repository.getContemplativeTopics(blendHistoric = appConfig.blendHistoricPrayers)
+                                                    val updatedPoint = point.copy(
+                                                        status = newStatus,
+                                                        answeredAt = if (newStatus == PrayerStatus.ANSWERED) System.currentTimeMillis() else null
+                                                    )
+                                                    val updatedActive = if (newStatus == PrayerStatus.ANSWERED) {
+                                                        currentTopic.activePoints.filter { it.id != pointId }
+                                                    } else {
+                                                        currentTopic.activePoints + updatedPoint
+                                                    }
+                                                    val updatedAnswered = if (newStatus == PrayerStatus.ANSWERED) {
+                                                        currentTopic.answeredPoints + updatedPoint
+                                                    } else {
+                                                        currentTopic.answeredPoints.filter { it.id != pointId }
+                                                    }
+                                                    val updatedTopic = currentTopic.copy(
+                                                        activePoints = updatedActive,
+                                                        answeredPoints = updatedAnswered
+                                                    )
+                                                    val updatedList = prayerTopics.toMutableList()
+                                                    updatedList[currentTopicIndex] = updatedTopic
+                                                    prayerTopics = updatedList
+
+                                                    coroutineScope.launch(Dispatchers.IO) {
+                                                        repository.updatePrayerPoint(point.id, point.title, point.description, newStatus, point.answeredTestimony)
+                                                    }
                                                     coroutineScope.launch {
                                                         snackbarHostState.showSnackbar(if (newStatus == PrayerStatus.ANSWERED) "Marked as answered" else "Marked as active")
                                                     }
@@ -255,6 +321,9 @@ class MainActivity : ComponentActivity() {
                                             repository.toggleEntityPinned(id, isPinned)
                                             prayerTopics = repository.getContemplativeTopics(blendHistoric = appConfig.blendHistoricPrayers)
                                             refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(if (isPinned) "Pinned to active intercession" else "Unpinned from active intercession")
+                                            }
                                         }
                                     )
                                 }
@@ -275,24 +344,28 @@ class MainActivity : ComponentActivity() {
                                             }
                                             entity
                                         },
-                                        onSavePrayerPoint = { entityId, body, _ ->
-                                            val savedPoint = repository.savePrayerPoint(
+                                        onSavePrayerPoints = { entityId, points ->
+                                            val savedPoints = repository.savePrayerPoints(
                                                 entityId = entityId,
-                                                title = "",
-                                                description = body
+                                                points = points
                                             )
                                             val targetEntity = allEntities.find { it.id == entityId }
                                             val entityName = targetEntity?.displayName ?: "Journal"
                                             refreshEntities()
 
                                             coroutineScope.launch {
+                                                val message = if (savedPoints.size > 1) {
+                                                    "Saved ${savedPoints.size} prayer points to $entityName"
+                                                } else {
+                                                    "Saved to $entityName"
+                                                }
                                                 val result = snackbarHostState.showSnackbar(
-                                                    message = "Saved to $entityName",
+                                                    message = message,
                                                     actionLabel = "Undo",
                                                     duration = SnackbarDuration.Short
                                                 )
                                                 if (result == SnackbarResult.ActionPerformed) {
-                                                    repository.deletePrayerPoint(savedPoint.id)
+                                                    savedPoints.forEach { repository.deletePrayerPoint(it.id) }
                                                     refreshEntities()
                                                 }
                                             }
@@ -342,13 +415,17 @@ class MainActivity : ComponentActivity() {
                                             repository.getPointsForEntity(entityId)
                                         },
                                         onUpdatePrayerPoint = { id, title, desc, status, testimony ->
-                                            repository.updatePrayerPoint(id, title, desc, status, testimony)
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                repository.updatePrayerPoint(id, title, desc, status, testimony)
+                                            }
                                             coroutineScope.launch {
                                                 snackbarHostState.showSnackbar("Changes saved")
                                             }
                                         },
                                         onDeletePrayerPoint = { id ->
-                                            repository.deletePrayerPoint(id)
+                                            coroutineScope.launch(Dispatchers.IO) {
+                                                repository.deletePrayerPoint(id)
+                                            }
                                             coroutineScope.launch {
                                                 snackbarHostState.showSnackbar("Prayer point deleted")
                                             }
@@ -381,9 +458,38 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onTogglePinEntity = { id, isPinned ->
                                             repository.toggleEntityPinned(id, isPinned)
+                                            prayerTopics = repository.getContemplativeTopics(blendHistoric = appConfig.blendHistoricPrayers)
                                             refreshEntities()
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(if (isPinned) "Pinned to active intercession" else "Unpinned from active intercession")
+                                            }
                                         },
                                         onBackToHome = { backStack.pop() }
+                                    )
+                                }
+
+                                ScreenState.LIBRARY -> {
+                                    LibraryScreen(
+                                        colors = colors,
+                                        typography = typography,
+                                        repository = repository,
+                                        onOpenVolume = { volumeId, startSection ->
+                                            selectedVolumeId = volumeId
+                                            readerStartSection = startSection
+                                            backStack.push(ScreenState.VOLUME_READER)
+                                        },
+                                        onBack = { backStack.pop() }
+                                    )
+                                }
+
+                                ScreenState.VOLUME_READER -> {
+                                    VolumeReaderScreen(
+                                        volumeId = selectedVolumeId,
+                                        startSectionNumber = readerStartSection,
+                                        colors = colors,
+                                        typography = typography,
+                                        repository = repository,
+                                        onBack = { backStack.pop() }
                                     )
                                 }
                             }

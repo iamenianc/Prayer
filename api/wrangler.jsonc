@@ -7,6 +7,6 @@
     "enabled": false
   },
   "vars": {
-    "OPENROUTER_MODEL": "meta-llama/llama-3.3-70b-instruct"
+    "OPENROUTER_MODEL": "openai/gpt-5.6-luna"
   }
 }

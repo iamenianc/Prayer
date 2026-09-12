@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import au.prayer.app.data.models.AppConfig
 import au.prayer.app.data.models.LocaleDialect
-import au.prayer.app.data.models.TextScale
 import au.prayer.app.data.models.ThemeMode
 import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
@@ -38,7 +37,6 @@ import au.prayer.app.ui.theme.PrayerTypography
  * Modern Leatherbound Folio Settings Screen.
  * Secluded preference controls for:
  * - Leather Casing Finish (Saddle Tan, Horween Cordovan, Hunter Forest, Obsidian Hide)
- * - Typographic Cadence & Text Scaling (Large, Regular, Compact)
  * - Liturgical Language & Dialect (AU/UK 1662 BCP vs US)
  * - Devotional Content (Historic Reformed Prayers in daily rotation)
  * - Display Accessibility (High-Contrast Mode)
@@ -83,7 +81,7 @@ fun SettingsScreen(
                 color = colors.inkMuted
             )
             Text(
-                text = "Configure the tactile materials, typographic scaling, and devotional rotation of your prayer journal.",
+                text = "Configure the tactile materials, liturgical dialect, and devotional rotation of your prayer journal.",
                 style = typography.caption,
                 color = colors.textSubtle,
                 modifier = Modifier.padding(top = PrayerSpacing.extraSmall, bottom = PrayerSpacing.large)
@@ -211,134 +209,14 @@ fun SettingsScreen(
             HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
             Spacer(modifier = Modifier.height(PrayerSpacing.large))
 
-            // --- Section 2: Typography & Reading Cadence ---
-            SettingsSectionHeader(
-                title = "Text Size",
-                subtitle = "Adjust the scale of literary serif petitions and ledger notation.",
-                colors = colors,
-                typography = typography
-            )
-
-            val textScaleOptions = listOf(
-                TextScaleOption(
-                    scale = TextScale.LARGE,
-                    title = "Large",
-                    badge = "Default",
-                    cadence = "18sp body • 28sp baseline cadence",
-                    sampleSize = 18.sp,
-                    sampleLineHeight = 28.sp
-                ),
-                TextScaleOption(
-                    scale = TextScale.REGULAR,
-                    title = "Regular",
-                    badge = null,
-                    cadence = "15sp body • 23sp baseline cadence",
-                    sampleSize = 15.sp,
-                    sampleLineHeight = 23.sp
-                ),
-                TextScaleOption(
-                    scale = TextScale.COMPACT,
-                    title = "Compact",
-                    badge = null,
-                    cadence = "13sp body • 19sp baseline cadence",
-                    sampleSize = 13.sp,
-                    sampleLineHeight = 19.sp
-                )
-            )
-
-            Column(
-                verticalArrangement = Arrangement.spacedBy(PrayerSpacing.small),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                textScaleOptions.forEach { opt ->
-                    val isSelected = config.textScale == opt.scale
-
-                    val cardBorder by animateColorAsState(
-                        targetValue = if (isSelected) colors.leatherActive else colors.borderSubtle,
-                        animationSpec = tween(200),
-                        label = "ScaleCardBorder"
-                    )
-
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = PrayerSpacing.primaryActionHeight)
-                            .clickable(role = Role.RadioButton) {
-                                onUpdateConfig(config.copy(textScale = opt.scale))
-                            },
-                        shape = FlatSquareShape,
-                        color = if (isSelected) colors.surfaceElevated else colors.surface,
-                        border = BorderStroke(if (isSelected) 1.5.dp else PrayerSpacing.hairlineWidth, cardBorder),
-                        tonalElevation = PrayerSpacing.elevationNone
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.medium),
-                            verticalArrangement = Arrangement.spacedBy(PrayerSpacing.extraSmall)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
-                                ) {
-                                    Text(
-                                        text = opt.title,
-                                        style = typography.prayerPointBody.copy(fontWeight = FontWeight.SemiBold),
-                                        color = colors.textPrimary
-                                    )
-                                    if (opt.badge != null) {
-                                        Text(
-                                            text = opt.badge,
-                                            style = typography.marginStatus,
-                                            color = colors.inkMuted
-                                        )
-                                    }
-                                }
-                                if (isSelected) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = "Selected",
-                                        tint = colors.leatherActive,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                            Text(
-                                text = opt.cadence,
-                                style = typography.caption,
-                                color = colors.textSubtle
-                            )
-                            // Live sample text rendered in authentic literary serif
-                            Text(
-                                text = "“Pray without ceasing. In every thing give thanks.”",
-                                fontFamily = FontFamily.Serif,
-                                fontStyle = FontStyle.Italic,
-                                fontSize = opt.sampleSize,
-                                lineHeight = opt.sampleLineHeight,
-                                color = colors.textPrimary,
-                                modifier = Modifier.padding(top = PrayerSpacing.extraSmall)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(PrayerSpacing.large))
-            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
-            Spacer(modifier = Modifier.height(PrayerSpacing.large))
-
-            // --- Section 3: Language & Liturgical Dialect ---
+            // --- Section 2: Language & Liturgical Dialect ---
             SettingsSectionHeader(
                 title = "Language & Orthography",
                 subtitle = "Liturgical vocabulary and spelling conventions for application copy and prayers.",
                 colors = colors,
                 typography = typography
             )
+
 
             val dialectOptions = listOf(
                 DialectOption(
@@ -428,7 +306,7 @@ fun SettingsScreen(
             HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
             Spacer(modifier = Modifier.height(PrayerSpacing.large))
 
-            // --- Section 4: Devotional Content (Historic Prayers) ---
+            // --- Section 3: Devotional Content (Historic Prayers) ---
             SettingsSectionHeader(
                 title = "Historic Prayers",
                 subtitle = "Classic Protestant collects, creeds, and liturgical prayers.",
@@ -492,7 +370,7 @@ fun SettingsScreen(
             HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
             Spacer(modifier = Modifier.height(PrayerSpacing.large))
 
-            // --- Section 5: Accessibility ---
+            // --- Section 4: Accessibility ---
             SettingsSectionHeader(
                 title = "Accessibility",
                 subtitle = "Display contrast and readability tuning.",
@@ -554,7 +432,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(PrayerSpacing.extraLarge))
 
-            // --- Section 6: Folio Colophon & Version Footer ---
+            // --- Section 5: Folio Colophon & Version Footer ---
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -624,18 +502,10 @@ private data class LeatherOption(
     val description: String
 )
 
-private data class TextScaleOption(
-    val scale: TextScale,
-    val title: String,
-    val badge: String?,
-    val cadence: String,
-    val sampleSize: androidx.compose.ui.unit.TextUnit,
-    val sampleLineHeight: androidx.compose.ui.unit.TextUnit
-)
-
 private data class DialectOption(
     val dialect: LocaleDialect,
     val title: String,
     val badge: String?,
     val description: String
 )
+

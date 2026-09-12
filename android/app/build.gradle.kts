@@ -52,6 +52,15 @@ android {
             resources.srcDir("src/main/res/raw")
         }
     }
+
+    testOptions {
+        unitTests.all {
+            it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+            it.testLogging {
+                events("failed", "skipped")
+            }
+        }
+    }
 }
 
 dependencies {

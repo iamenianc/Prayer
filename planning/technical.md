@@ -63,29 +63,54 @@ erDiagram
     }
 ```
 
-- **Preloaded Historic Content (DB Version 3)**:
-  - **Architecture**: Each historic prayer is its own distinct `IndividualEntity` (`is_preloaded_historic = true`, `rootCode = GENERAL`), paired 1:1 with a `PrayerPoint` (`status = HISTORIC`).
-  - **Standalone Content Document**: The full catalog of 14 prayers (entities + full prayer text) is maintained as a standalone structured JSON document at [`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json). It is the single source of truth for historic content: `PreloadedContent` parses it (via `kotlinx.serialization`) into `PreloadedHistoricTopic(entity, prayerPoint)` pairs at runtime and seeds the encrypted database on first launch. The same document is wired onto the JVM test classpath (`build.gradle.kts` test sourceSet) so unit tests parse the identical file.
+- **Preloaded Historic Content (DB Version 9)**:
+  - **Architecture**: Each historic prayer is its own distinct `IndividualEntity` (`is_preloaded_historic = true`, `rootCode = HISTORIC`), paired 1:1 with a `PrayerPoint` (`status = HISTORIC`).
+  - **Standalone Content Document**: The full catalog of 30 prayers (entities + full prayer text) is maintained as a standalone structured JSON document at [`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json). It is the single source of truth for historic content: `PreloadedContent` parses it (via `kotlinx.serialization`) into `PreloadedHistoricTopic(entity, prayerPoint)` pairs at runtime and seeds the encrypted database on first launch. The same document is wired onto the JVM test classpath (`build.gradle.kts` test sourceSet) so unit tests parse the identical file.
   - **Data Class**: `PreloadedHistoricTopic(entity: IndividualEntity, prayerPoint: PrayerPoint)` — the fundamental pairing unit.
-  - **DB Version**: `DATABASE_VERSION = 3`. Migration from v2→v3 deletes any legacy single-aggregate `historic-reformed-prayers` row and reseeds all 14 individual entities/points.
-  - **14 distinct topics** seeded under `General`:
+  - **DB Version**: `DATABASE_VERSION = 10`. Migration v2→v3 deletes legacy single-aggregate row; v4→v5 reseeds 30-prayer catalog; v6→v7 updates historic root code and title-first display names; v7→v8 updates all preloaded historic prayer points to latest wording and line breaks (`syncHistoricContent`); v8→v9 explicitly purges any orphaned/renamed historic entries (`historic-spurgeon-thanks-be-unto-god`) and any Spurgeon entities erroneously created under `GENERAL`, ensuring all Spurgeon entries reside exclusively under `HISTORIC`; v9→v10 creates `TABLE_SUGGESTION_CACHE` (`suggestion_cache`) to persist the last returned API prayer prompts per entity for instant display and seamless background refreshes. In addition, `onOpen(db)` automatically executes `syncHistoricContent` so bundled text enhancements are synchronized and orphans purged on every app launch without requiring a wipe or manual migration.
+  - **30 distinct topics** seeded under `Historic` (ordered after `General`, which follows `Mission Partners`), displaying Title first, then author/source:
     1. The Lord's Prayer (Matthew 6:9–13)
     2. Collect for Peace (1662 BCP, Morning Prayer)
     3. Collect for Grace (1662 BCP, Morning Prayer)
     4. Collect for Purity (1662 BCP, Holy Communion)
     5. A General Thanksgiving (1662 BCP, Bishop Edward Reynolds)
     6. The Apostles' Creed (ecumenical; Thirty-Nine Articles Art. VIII)
-    7. C.H. Spurgeon: Help from on High (Passmore & Alabaster 1905, Prayer I)
-    8. C.H. Spurgeon: A Prayer for Holiness (Prayer VIII)
-    9. C.H. Spurgeon: Thanks Be Unto God (Prayer II)
-    10. C.H. Spurgeon: Love Without Measure (Prayer III)
-    11. C.H. Spurgeon: The All-Prevailing Plea (Prayer IV)
-    12. C.H. Spurgeon: Under the Blood (Prayer XI)
-    13. C.H. Spurgeon: The Peace of God (Prayer XV)
-    14. C.H. Spurgeon: The Great Sacrifice (Prayer XX)
-  - **Public Domain Status**: Spurgeon died 1892; original 1905 Passmore & Alabaster edition digitized on Internet Archive. 1662 BCP is public domain. Only original texts used.
-  - **Zero-State Queue**: When no user topics exist, `getContemplativeTopics()` returns all 14 historic entities. When user topics exist, `blend_historic_prayers` boolean governs interleaving.
-  - **AI Suppression**: `isPreloadedHistoric = true` suppresses AI prompt generation and `JournalScreen` context AI actions for all historic entities.
+    7. Help from on High (C.H. Spurgeon) (Passmore & Alabaster 1905, Prayer I)
+    8. A Prayer for Holiness (C.H. Spurgeon) (Prayer VIII)
+    9. Thanks Be To God (C.H. Spurgeon) (Prayer II)
+    10. Love Without Measure (C.H. Spurgeon) (Prayer III)
+    11. The All-Prevailing Plea (C.H. Spurgeon) (Prayer IV)
+    12. Under the Blood (C.H. Spurgeon) (Prayer XI)
+    13. The Peace of God (C.H. Spurgeon) (Prayer XV)
+    14. The Great Sacrifice (C.H. Spurgeon) (Prayer XX)
+    15. A Morning Prayer (Syrian Clementine Liturgy, 1st c.)
+    16. For Rulers (Clement of Rome, 1st c.)
+    17. A Pure Heart (Clementine Liturgy, 1st c.)
+    18. Intercession (Polycarp, 2nd c.)
+    19. A Dying Prayer (Polycarp, 2nd c.)
+    20. For a Pure Heart (Liturgy of St James, 2nd c.)
+    21. For Right Blessings (Basil the Great, 4th c.)
+    22. For Two or Three (John Chrysostom, 4th c.)
+    23. For Pardon (Ambrose of Milan, 4th c.)
+    24. For Protection (Nerses of Clajes, 4th c.)
+    25. For Steadfastness (Augustine of Hippo, 4th–5th c.)
+    26. Evening Prayer (Augustine of Hippo, 4th–5th c.)
+    27. Praise (Augustine of Hippo, 4th–5th c.)
+    28. For Right Living (Leonine Sacramentary, 5th c.)
+    29. For Love of God (Gelasian Sacramentary, 5th c.)
+    30. To Serve You (Gelasian Sacramentary, 5th c.)
+  - **Public Domain Status**: Spurgeon died 1892; original 1905 Passmore & Alabaster edition digitized on Internet Archive. 1662 BCP is public domain. Early church texts from Potts, *Prayers of the Early Church* (1953, public domain in the U.S.; CCEL transcription). Only original texts used; early church and Spurgeon entries lightly modernised (replacement of archaic vocabulary, pronouns, and verb forms; structured with tasteful devotional line breaks for meditative reading cadence).
+  - **Zero-State Queue**: When no user topics exist, `getContemplativeTopics()` returns all 30 historic entities. When user topics exist, `blend_historic_prayers` boolean governs interleaving.
+  - **AI & Answered Status Suppression**: `isPreloadedHistoric = true` and `PrayerStatus.HISTORIC` suppress AI prompt generation, `JournalScreen` context AI actions, and all active/answered toggle buttons/actions across Sanctuary and Journal screens. The 56dp left track remains structurally rendered as an unadorned spacer to preserve the red margin guide line and 64dp text inset alignment.
+
+- **Theological Library Architecture & Standalone Document Assets**:
+  - **Inaugural Asset**: `android/app/src/main/res/raw/library_calvin_prayer.json` (190 KB).
+  - **Content**: John Calvin, *Institutes of the Christian Religion*, Book III, Chapter XX (*Of Prayer: A Perpetual Exercise of Faith*; trans. Henry Beveridge, 1845; Public Domain).
+  - **Structure**: 8 Principal Divisions, 52 analytical outline summaries, and 52 structured sections reflowed into 99 flowing paragraphs.
+  - **Data Models**: `@Serializable` Kotlin models (`LibraryVolume`, `VolumeDivision`, `VolumeSection`, `ReadingProgress`) in `au.prayer.app.data.models.LibraryModels.kt`.
+  - **Loader & Memory Cache**: `au.prayer.app.data.models.LibraryContent.kt` lazy singleton. Deserialized volume occupies ~400 KB heap memory, safely uncollected during reading.
+  - **Reading Persistence**: `ReadingProgress` tracks `lastSectionNumber`, `lastScrollOffset`, and `updatedAt` for seamless restoration across app lifecycles.
+
 
 
 
@@ -100,6 +125,10 @@ erDiagram
 - **Dual-Engine Typographic Configuration**:
   - **Narrative Typographic Engine**: High-grade literary serif (*Literata*, *Newsreader*, *EB Garamond*, or *Lora*) applied to narrative petitions, prayer point descriptions, answered thanksgiving notes, and frontispiece quotes.
   - **Ledger Typographic Engine**: Understated neo-grotesque or humanist sans-serif (*Plus Jakarta Sans*, *Inter*, or *Roboto Flex*) applied to category headers, timestamps, entity tags, margin status asides, and settings chrome.
+  - **Mathematical Baseline Synchronization Law (`SanctuaryPrayerScreen`)**:
+    - Feint horizontal rules strictly match active text line height: $H_{px} = \text{lineHeightInPx}$ (`LARGE`: 28sp, `REGULAR`: 23sp, `COMPACT`: 19sp), measured via `TextMeasurer` on `typography.prayerPointBullet` configured with `PlatformTextStyle(includeFontPadding = false)` and `LineHeightStyle(alignment = Alignment.Center, trim = Trim.None)`.
+    - Baseline anchor $Y_{anchor}$ derived from the first prayer point's sub-pixel layout baseline: feint lines are drawn via linear progression $y_k = Y_{anchor} + k \times H_{px}$, initialized at $y_{start} = Y_{anchor} \pmod{H_{px}}$ and continuing at step $H_{px}$ to the canvas bottom.
+    - Inter-point gutters and header clearance are quantized to integer multiples of line cadence ($1 \times H_{px}$), guaranteeing zero baseline drift across any number of wrapped lines, prayer points, and display scales.
 
 ---
 
@@ -127,11 +156,11 @@ Because writing on the lined notepad is 100% offline-first while past points pro
 
 | Feature / Flow | Network Requirement | Plaintext Exposure Boundary |
 | :--- | :--- | :--- |
-| **"Start praying"** (Passive contemplation queue + Read-Only Prompts) | **Online (Background async)** (Transit via Cloudflare Proxy) | Contemplation is offline-first. When viewing past points for an entity, past points are sent in batch to `POST /api/v1/suggest` to surface read-only prompts (strictly unlabelled in UI). Decrypted in device RAM; zero chat, zero questioning. |
-| **Journal Management** (Collapsible menus across People, Groups, General, Mission Partners; browsing, editing, answered tracking) | **100% Offline** (Zero network calls for vault) / **Online (Background async)** for Entity Detail read-only prompts | When viewing an entity's past points in detail, past points are sent to `POST /api/v1/suggest` to surface read-only prompts (strictly unlabelled in UI). |
+| **"Start praying"** (Passive contemplation queue + Read-Only Prompts) | **Online (Background async)** (Transit via Cloudflare Proxy) | Contemplation is offline-first. When viewing an entity, the UI immediately renders the last list of prompts from SQLite `suggestion_cache` (from the last time the app was used) while past points are sent asynchronously in the background to `POST /api/v1/suggest` to refresh prompts, updating the display and cache in place upon completion. Decrypted in device RAM; zero chat, zero questioning. |
+| **Journal Management** (Collapsible menus across People, Groups, General, Mission Partners; browsing, editing, answered tracking) | **100% Offline** (Zero network calls for vault) / **Online (Background async)** for Entity Detail read-only prompts | When viewing an entity's past points in detail, the UI immediately displays cached prompts from `suggestion_cache` while an asynchronous background refresh queries `POST /api/v1/suggest`, updating in-place upon completion. |
 | **"Add prayer points"** (Direct Lined Notepad writing & saving) | **100% Offline** (Zero network calls; strictly no AI assistance) | Committed immediately to device RAM and encrypted local SQLite. Zero AI suggestions pane. |
 | **Post-Commit Auto-Titling** (Branched AI Title Generator) | **Online (Async background)** | **Plaintext in memory** at: (1) Device RAM, (2) Cloudflare Worker runtime, (3) OpenRouter gateway, (4) Upstream model inference cluster. Theological validation exempt. |
-| **Offline Fallback** (Local manual entry & snippet titling) | **100% Offline** (Zero network calls) | When offline, notepad saves locally, read-only prompts gracefully omit or show cached items, and auto-titling falls back to initial text snippet. |
+| **Offline Fallback** (Local manual entry & snippet titling) | **100% Offline** (Zero network calls) | When offline, notepad saves locally, read-only prompts reliably display the last cached list from `suggestion_cache`, and auto-titling falls back to initial text snippet. |
 
 #### 1.3.3 Two-Tier Zero-Leakage Architecture
 The system isolates the API key behind an impenetrable serverless edge barrier, separating credential storage from client interaction:
@@ -185,7 +214,7 @@ graph TD
   - `OPTIONS`: Universal CORS preflight.
 - **Worker Script Source**: Tracked directly in repository at [`api/worker.js`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api/worker.js).
 - **Gateway Authentication Header**: `X-Prayer-Gateway-Secret: prayer-app-secret-key-2026`
-- **Active Upstream Model**: `meta-llama/llama-3.3-70b-instruct`
+- **Active Upstream Model**: `openai/gpt-5.6-luna`
 - **Reasoning Architecture & Two-Tier Pipeline**:
   - *Hidden Reasoning Disabled*: Configured with `reasoning: { enabled: false }` across all calls. Disables internal unconstrained reasoning overhead, reducing edge latency to ~1.2–1.6s.
   - *Two-Tier Pipeline Architecture (`api/worker.js`)*:
@@ -231,7 +260,7 @@ graph TD
         "suggestions": ["<flattened array of all generated prompts>"]
       }
       ```
-    - Total points clamped to a range of **3 to 12 points total** across all three groups, with at least one point in each group (*Praise God*, *Thank God*, *Ask God*).
+    - Total points clamped to a range of **3 to 12 points total** across all three groups, with at least one point in each group (*Praise God*, *Thank God*, *Ask God*). If there is no obvious good thing or blessing to thank God for from the recorded data, strictly at most one point (1 point maximum) is generated for *Thank God*.
     - Each line is strictly between **4 and 15 words long** (never fewer than 4 words, never exceeding 15 words; strictly avoiding wishy-washy general platitudes).
     - **Complete Grammatical Thoughts Invariant (Never Cut Off)**: Every suggestion must be a 100% complete, fully finished grammatical thought. Sentences must never be cut off mid-thought, truncated, or end on dangling prepositions, conjunctions, or articles (e.g., *and*, *or*, *in*, *to*, *for*, *with*, *that*, *of*, *on*, *at*, *the*, *a*).
     - Every prompt line must begin with **"For"**, **"That"**, **"A"** (or **"An"**), or **"Because"**.
@@ -281,14 +310,16 @@ The visual and ergonomic presentation strictly reflects the **Modern Leatherboun
 #### 1.5.2 The Silk Marker Ribbon (Interactive Bookmark Tab)
 - **Geometry**:
   - Resting height: `40dp`.
-  - Pinned / Active height: `54dp`.
+  - Pinned / Active height: `80dp`.
   - Tab width: `18dp`.
   - Notch: `6dp` triangular swallow-tail notch centered at `X = 9dp`.
+  - Margin & Anchoring: Anchored flush to the top-end margin (`Alignment.TopEnd` with `ribbonPaddingEnd = 4dp`, visual bounds `4dp` to `22dp`).
+  - Anti-Occlusion Clearance: Narrative text maintains `36dp` end clearance and prompt cards maintain `52dp` end clearance to guarantee the ribbon never obscures devotional text or menu text (*Show/Hide* toggle).
 - **Sensory Ergonomics**:
-  - Projected invisible touch bounding box: **`48dp` horizontal × `56dp` vertical**.
+  - Projected invisible touch bounding box: **`48dp` horizontal × `80dp` vertical** (dynamic with ribbon extension).
   - Spring dynamics: modeled on textile elasticity (stiffness `220`, damping ratio `0.70`), `-3dp` touch compression on press-down.
   - Haptics: Fires a crisp `CLOCK_TICK` haptic impulse at the peak of the downward extension.
-- **Devotional Role**: Tapping toggles the entity or point's pinned status (active intercession or milestone answered prayer).
+- **Devotional Role**: Tapping toggles the entity's pinned status (`is_pinned`), immediately prioritizing the entity to the head of the Sanctuary prayer queue (`ORDER BY e.is_pinned DESC`), grouping it under the dedicated "PINNED FOCUS" directory section in the Journal, and elongating the Home folio cover ribbon to indicate active intercessions.
 
 #### 1.5.3 Devotional Prayer Session (`PrayerSessionScreen`)
 - **Contemplative Immersion**: System bars, navigation chrome, and progress counters are completely suppressed (`display: none`).
@@ -318,10 +349,12 @@ The visual and ergonomic presentation strictly reflects the **Modern Leatherboun
   Viewing/advancing past a topic silently updates interaction timestamps and counters without toast alerts.
 
 #### 1.5.4 Direct Lined Notepad & Committal Flow (`LogPrayerScreen`)
-- **Typing-First Direct Entry**: Lands immediately on `LinedNotepad` pre-bound to feint rules.
+- **Typing-First Direct Entry & Instant Active Cursor**: Lands immediately on `LinedNotepad` pre-bound to feint rules with `autoFocus = true`. Focus is automatically requested and software keyboard displayed immediately upon screen entrance, with the typing cursor placed at the end of the last line (immediately after the initial bullet and space `• ` at `TextRange(2)`).
 - **Zero Title Field**: User writes directly onto the ruled vellum without preliminary title fields or categorization.
-- **Auto-Bullets**: Enter/Return inserts `\n• ` seated precisely on the next dynamic baseline rule (`250ms`, `FastOutSlowInEasing`).
+- **Auto-Bullets & Newline Formatting**: Every new line automatically formats as a dotpoint (`• `) seated precisely on the next dynamic baseline rule; pressing Enter anywhere in text or pasting multi-line text ensures every line has a dotpoint; backspacing a lone bullet on an empty line cleanly removes it without cursor trapping.
+- **Multi-Record Dotpoint Separation (`splitIntoDotpoints` & `savePrayerPoints`)**: When committing, the input text is parsed via `splitIntoDotpoints(text)` into individual clean dotpoint strings. `PrayerRepository.savePrayerPoints(entityId, points)` inserts each dotpoint as an independent row in SQLite `prayer_points` with incremented timestamps (`baseTime + index`) ensuring chronological fidelity under `ORDER BY created_at ASC`. Each dotpoint possesses its own distinct ID, allowing independent status transitions (`ACTIVE` $\leftrightarrow$ `ANSWERED`) in Sanctuary prayer and Journal screen.
 - **Target Selection & Committal**: Tapping "Next" opens the categorization sheet presenting the four spheres (`People`, `Groups`, `General`, `Mission Partners`).
+- **Batch Undo Feedback**: Immediate Snackbar toast (*"Saved N prayer points to [Name]"* / *"Saved to [Name]"*) with an Undo action that deletes all points created in the batch.
 - **Silent Autosave Pulse**: A discreet dot in the ledger bar pulses to Celadon Sage (`#3D6B52`) over `150ms`, holds for `800ms`, and decays over `400ms`. Entries are saved cleanly without synthetic titles.
 
 #### 1.5.5 Journal Directory & In-Place Editor (`JournalScreen`)
@@ -329,7 +362,9 @@ The visual and ergonomic presentation strictly reflects the **Modern Leatherboun
 - Subject creation: Action item at the top of each expanded category listing (`+ Add person`, `+ Add group`, `+ Add topic`, `+ Add mission partner`) displaying an `AlertDialog` with planar 0dp styling, name input, and sphere switcher, transitioning directly to Entity Detail upon save.
 - Entity Detail view expands via Material Container Transform (`300ms`, Emphasized Decelerate), presenting past prayer points and a collapsed-by-default prompts header card (`Prompts for Prayer` with `Show/Hide` toggle).
 - **Date Grouping & Separation**: Entries are grouped and separated by date of entry with day and month written out in full English words (e.g. `EEEE, d MMMM yyyy` -> *"Friday, 11 September 2026"*) in subtle, unflashy typography (`typography.marginStatus` / `colors.inkMuted`).
-- In-place editor: single-tap any saved prayer point to edit body, status, or thanksgiving note (titles are omitted).
+- **Margin Status Indicator**: Active prayer points display an analog line-drawn pencil icon (`Icons.Outlined.Edit`) within the 56dp margin track; answered prayers display the `[ ANSWERED ]` notation pill in Celadon green. Tapping either indicator toggles state in-place with instant optimistic Compose state (`localPoints`) and asynchronous background persistence on `Dispatchers.IO` for 0ms perceptible lag, accompanied by haptic feedback.
+- **In-place editor (`JournalView.EDIT_PRAYER_POINT`)**: Pure-text editing on `LinedNotepad`. When starting to edit an existing prayer point, the typing cursor is instantly active with keyboard focus requested, positioned precisely at the end of the last line (`TextRange(description.length)`). Excludes redundant Active/Answered toggle buttons (canonically handled in the margin track); displays the thanksgiving note field if the point is already marked answered. Includes a bottom "Save changes" button and a TopAppBar "Save" action.
+- **Keyboard Inset Architecture (`WindowInsets.safeDrawing`)**: Root `Scaffold` in `MainActivity.kt` configures `contentWindowInsets = WindowInsets.safeDrawing` with child `consumeWindowInsets(innerPadding)`, ensuring the layout shrinks and elevates all bottom buttons, menus, and controls cleanly above the software keyboard when it appears. Dialogs feature vertically scrollable content columns to prevent keyboard occlusion.
 - Deletion: stark planar confirmation dialog before cascading purge.
 - Sequestered Settings: Delegated to dedicated `SettingsScreen.kt` component featuring a scrollable vellum sheet, circular leather dye swatches (Saddle Tan, Horween Cordovan, Hunter Forest, Obsidian Hide), text scaling cards with live serif sample previews, dialect selection, and planar switches for historic prayer blending and high-contrast mode.
 
@@ -356,7 +391,7 @@ Lightweight, deterministic touch gesture engine ensuring fluid responsiveness:
 2. **Ergonomic Touch Boundaries & Minimum Envelopes**:
    - **Universal Minimum Target**: **`48 × 48dp`** minimum bounding box across all interactive elements.
    - **Slender Affordance Compensation**:
-     - Silk Marker Ribbon (`18dp` visual): **`48 × 56dp`** touch envelope.
+     - Silk Marker Ribbon (`18dp` visual): **`48 × 80dp`** dynamic touch envelope.
      - Margin Notation Pills (`11sp` visual): **`48dp`** vertical tap track.
    - **Inter-Affordance Spacing**: Minimum clear gutter of **`8dp`** (`12dp` to `16dp` standard) between adjacent touch boundaries.
 3. **Contextual Gesture Mapping**:
@@ -372,7 +407,15 @@ Lightweight, deterministic touch gesture engine ensuring fluid responsiveness:
    - **Universal Edge-Swipe Back Navigation (`Modifier.edgeSwipeRight`)**:
      - Thresholds: $X_{start} \le 25\text{dp}$, $\Delta X \ge +50\text{dp}$, $|\Delta X| \ge 1.5 |\Delta Y|$.
      - Seamlessly unwinds the reactive LIFO back stack (`LifoBackStack.pop()`).
-4. **Motion System Specifications & Reduced Motion**:
+4. **Library Reader Multi-Touch Pinch-to-Zoom & Baseline Synchronization**:
+   - **`VolumeReaderScreen` Gesture Discrimination**:
+     - 1-Finger Vertical Drag: Scrolls continuous text canvas via `Modifier.verticalScroll(scrollState)`.
+     - 1-Finger Horizontal Swipe: Navigates previous/next treatise sections (`Modifier.prayerSwipeGestures`).
+     - 1-Finger Downward Swipe / Edge-Right Swipe: Exits reader to Library bookshelf.
+     - 2-Finger Pinch Gesture (`Modifier.pinchToZoom`): Dynamically scales typographic font size between `0.75f` (75%) and `2.5f` (250%). Pointer events are consumed exclusively during 2-finger pinches to prevent scrolling or page navigation jumps.
+     - **Baseline Synchronization Law**: Baseline rule spacing scales dynamically in 1:1 parity with paragraph line-height (`lineHeight = (28 * zoomScale).sp`, `baselineSpacingPx = (28.sp * zoomScale).toPx()`).
+     - **Persistence**: Persisted via `PrayerRepository.saveLibraryZoomScale(scale)` to `TABLE_CONFIG` under key `"library_zoom_scale"`.
+5. **Motion System Specifications & Reduced Motion**:
    - Spring physics: Ribbon (stiffness `220`, damping `0.70`), Queue traversal (stiffness `320`, damping `0.85`).
    - Container transforms: `300ms` Emphasized Decelerate.
    - Reduced Motion: System setting `Settings.Global.TRANSITION_ANIMATION_SCALE = 0` or "Remove animations" immediately replaces positional slides and spring bounces with instantaneous `100ms` cross-fades or zero-duration cuts.
@@ -398,11 +441,29 @@ Lightweight, deterministic touch gesture engine ensuring fluid responsiveness:
 
 ---
 
+### 1.9 Multi-Session Concurrency & Build Locking Architecture
+
+To support parallel autonomous coding agents and prevent race conditions or working copy thrashing:
+
+1. **Gradle Build Serialization & Anti-Collision**:
+   - Concurrently executing `.\gradlew.bat` commands against a shared working directory causes Kotlin compiler daemon socket resets (`SocketException: Connection reset`) and Windows OS file lock collisions on `build/tmp/kotlin-classes/`.
+   - Agents must check for active tasks (`manage_task list`) or running processes (`Get-Process | Where-Object { $_.ProcessName -match "java|gradle" }`) before launching Gradle.
+   - **Absolute Ban on Daemon Stoppage**: `.\gradlew.bat --stop` and `.\gradlew.bat clean` are strictly barred while peer sessions or background tasks are active.
+   - **Isolated Compiler Mode**: Background test execution during multi-session activity must use `--no-daemon` (`.\gradlew.bat testDebugUnitTest --no-daemon`).
+2. **Single-Deployer & Post-Deployment Commit Invariant (`deployToDrive` & `git commit`)**:
+   - Multiple sessions must never simultaneously compile release APKs or write to `G:\My Drive\myApps\Prayer.apk`.
+   - When peer sessions have uncommitted or concurrent work, deployment is consolidated to a single final release build containing all validated changes.
+   - Upon successful deployment, the executing session commits all validated changes (`git add -A && git commit`) to preserve a clean and synchronized repository state.
+3. **Atomic Scope Replacement**:
+   - Edits via `replace_file_content` must use unique, bounded anchors rather than ambiguous block terminators (`}\n}\n}`) to prevent truncation of outer composable or function scopes.
+
+---
+
 ## 2. Open-Ended Technical Decisions & Refinements
 
 1. **Cross-Platform Core Technology Selection**:
    - Approved: Native Android with Jetpack Compose & Kotlin, optimized for Samsung Galaxy Flip and standard Android devices. Sideloadable release APK exported to `G:\My Drive\myApps\Prayer.apk`.
 2. **OpenRouter Default Model Selection**:
-   - Approved: `meta-llama/llama-3.3-70b-instruct` orchestrated via Two-Tier LLM pipeline in `api/worker.js` with `reasoning: { enabled: false }`.
+   - Approved: `openai/gpt-5.6-luna` orchestrated via Two-Tier LLM pipeline in `api/worker.js` with `reasoning: { enabled: false }`.
 3. **Offline Encrypted Backup Mechanics**:
    - Under consideration: Passphrase-protected AES-256 archive (`.prayerbackup`) or structured JSON/Markdown export.

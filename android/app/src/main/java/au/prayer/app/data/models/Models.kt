@@ -6,8 +6,9 @@ import java.util.UUID
 enum class RootCode(val displayTitle: String, val sortOrder: Int) {
     PEOPLE("People", 1),
     GROUPS("Groups", 2),
-    GENERAL("General", 3),
-    MISSION_PARTNERS("Mission Partners", 4)
+    MISSION_PARTNERS("Mission Partners", 3),
+    GENERAL("General", 4),
+    HISTORIC("Historic", 5)
 }
 
 enum class PrayerStatus {

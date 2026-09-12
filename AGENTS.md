@@ -22,9 +22,9 @@ This repository maintains three distinct domains:
 
 ---
 
-## 1.5. Mandatory Deploy-on-Completion Protocol (Android Client & Cloudflare Worker API)
+## 1.5. Mandatory Deploy & Git Commit Protocol (Android Client, Cloudflare Worker API & Version Control)
 
-**Whenever any production work is complete** — whether Android client modifications, Cloudflare Worker API changes, or both — the agent **MUST proactively execute the required deployment procedures before declaring the task finished.**
+**Whenever any production or workspace work is complete** — whether Android client modifications, Cloudflare Worker API changes, planning specifications, or general repository updates — the agent **MUST proactively execute the required deployment procedures AND commit all changes to Git before declaring the task finished.**
 
 ### 1.5.1 Android Client Deployment (`deployToDrive`)
 - **Trigger**: Any changes to Kotlin source code, XML resources, assets, manifests, or build scripts under `android/`.
@@ -52,16 +52,72 @@ This repository maintains three distinct domains:
      *(alternatively: `npx wrangler deploy`)*
   3. Confirm that the deployment succeeded, verify the active endpoint (`https://pray-proxy.reflex-game.workers.dev`), and report the deployment status and Version ID in the closing summary.
 
+### 1.5.3 Mandatory Post-Deployment Git Commit Protocol
+- **Trigger**: Any changes (modified, added, or deleted files) in the Git working tree upon completing development, testing, and deployment.
+- **Procedure**:
+  1. Inspect the state of the repository using:
+     ```powershell
+     git status
+     ```
+  2. Stage all relevant modifications, deletions, and new files:
+     ```powershell
+     git add -A
+     ```
+     *(Ensure no temporary test dumps or sensitive environment files outside `.gitignore` are accidentally included).*
+  3. Commit the staged changes with a descriptive, conventional commit message:
+     ```powershell
+     git commit -m "<type>(<scope>): <concise description of changes>"
+     ```
+     *(e.g., `git commit -m "feat(android): add library reader and stationery textures"`, `git commit -m "docs: update AGENTS.md post-deployment commit protocol"`)*
+  4. Verify the commit was recorded cleanly with `git status` and `git log -n 1 --oneline`.
+  5. Include the commit hash and message in your turn closing summary.
+
 ### When to Skip
 - Skip Android deployment (`deployToDrive`) if no Kotlin source, XML resources, or files under `android/` were modified.
 - Skip Wrangler deployment (`npm run deploy`) if no files under `api/` were modified and the edge API is already up to date.
+- Skip Git commit only if `git status` reveals no modified or untracked files (clean tree), or if the user explicitly instructs not to commit.
 - Skip when the user explicitly instructs a build-only or no-deploy run for this turn.
 
 ### Mandatory End-of-Turn Checklist
 Before concluding any turn:
 1. **Android changes present?** $\rightarrow$ Execute `.\gradlew.bat :app:deployToDrive`, verify `Prayer.apk` on Drive, and report size/timestamp.
 2. **API changes present / edge sync needed?** $\rightarrow$ Execute `npm run deploy` (or `npx wrangler deploy`) in `api/`, verify live endpoint, and report Version ID.
-3. Report the completion status of all relevant deployment actions in the final response.
+3. **Uncommitted changes present in Git?** $\rightarrow$ Execute `git add -A` and `git commit -m "<descriptive message>"`, verify clean working tree, and report commit hash and message.
+4. Report the completion status of all relevant deployment actions and the Git commit in the final response.
+
+---
+
+## 1.6. Multi-Session Concurrency & Peer Session Coordination Protocol
+
+When multiple agent sessions run concurrently within the workspace (e.g. parallel prompts or subagent workflows), agents **MUST adhere to strict anti-collision and serialization protocols** to prevent working tree corruption, compiler daemon crashes, and deployment race conditions.
+
+### 1.6.1 Pre-Flight Concurrency & Process Awareness
+- Before launching Gradle builds, heavy file refactors, or deployments, check if other background tasks or Gradle daemons are active (`manage_task list` or PowerShell `Get-Process | Where-Object { $_.ProcessName -match "java|gradle" }`).
+- Treat the repository as a shared concurrent environment: never assume your session is the sole actor in the workspace.
+
+### 1.6.2 Strict Working Copy & Shared File Rules
+- **Fresh Context Verification**: Always re-read target line ranges (`view_file`) immediately prior to making edits to shared files (e.g., [`JournalScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/JournalScreen.kt), [`MainActivity.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/MainActivity.kt), [`PrayerRepository.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/local/PrayerRepository.kt)) to ensure you do not overwrite changes committed by a concurrent session.
+- **Unambiguous Scope Matching**: In `replace_file_content`, use sufficiently unique target anchors. Never replace generic closing brace blocks (`}\n}\n}`) that risk truncating outer function or composable scopes.
+- **Do Not Revert Peer Edits**: If you encounter unexpected code added by another session, do not revert or discard it unless explicitly instructed. Re-read and integrate cleanly around it.
+
+### 1.6.3 Strict Gradle Serialization & Daemon Protection
+- **No Concurrent Gradle Executions**: Never launch `.\gradlew.bat` (test, build, or deploy) while another session is actively running a Gradle task. Wait for the running Gradle task to terminate before starting your own.
+- **ABSOLUTE BAN on `.\gradlew.bat --stop` & `clean` during Multi-Session Work**:
+  - **NEVER** run `.\gradlew.bat --stop` or `.\gradlew.bat clean` while other sessions or background tasks are active.
+  - Abruptly stopping daemons terminates in-flight Kotlin compiler workers in peer sessions, breaks daemon socket connections (`SocketException: Connection reset`), and corrupts shared compilation output.
+- **Isolated Compiler Mode**: When running test tasks while another session may be active, use isolated execution:
+  ```powershell
+  .\gradlew.bat testDebugUnitTest --no-daemon
+  ```
+
+### 1.6.4 Strict Multi-Session Deployment & Commit Invariant (Single-Deployer Law)
+- **No Concurrent Deployments**: Never run `.\gradlew.bat :app:deployToDrive` while another session is building or deploying. Concurrent release packaging corrupts `build/` artifacts and causes Windows `SharingViolationException` write-lock failures on `G:\My Drive\myApps\Prayer.apk`.
+- **Consolidated Deployment**: If a peer session has already built and deployed a release APK that includes your changes, verify `Get-Item -LiteralPath "G:\My Drive\myApps\Prayer.apk"` and avoid launching a redundant, competing deployment build.
+- **Broken Tree Invariant**: Never deploy if any file in the working tree has syntax or compilation errors introduced by an in-flight peer session. Resolve or await clean compilation before deploying.
+- **Atomic Post-Deployment Commits**: When committing after deployment in a multi-session context, ensure peer sessions are not actively writing partial edits or running in-flight builds before staging and committing.
+
+### 1.6.5 Peer Messaging & Orchestration
+- Use `send_message` to communicate status, coordinate build locks, and alert peer sessions when major files are updated or builds are in flight.
 
 ---
 

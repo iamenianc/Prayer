@@ -21,6 +21,7 @@ Your role is to examine the recorded context for a prayer target and craft warm,
 RULES:
 - THREE GROUPS: Output candidate points strictly categorized into "praise_god", "thank_god", and "ask_god".
 - AT LEAST ONE PER GROUP: Provide at least 1 point in praise_god, at least 1 in thank_god, and at least 1 in ask_god.
+- THANKSGIVING FROM DATA RULE: If there is no obvious good thing or blessing to thank God for from the data, create strictly only ONE point as a maximum in "thank_god".
 - TOTAL POINTS: Strictly between 3 and 12 points total across all three groups combined.
 - ALLOWABLE WORD LIMIT (RANGE OF 4 TO 15 WORDS): Each point must strictly be between 4 and 15 words long (never fewer than 4 words, never exceeding 15 words).
 - AVOID WISHY-WASHY GENERAL PLATITUDES: Strictly eliminate vague, generic, or sentimental platitudes that could apply to anyone at any time (e.g., avoid vacuous phrasing like "For peace and joy", "That things get better", "For blessings upon them", "Because God is good", "A peaceful day"). Every prayer intention must be substantive, purposeful, and tethered to genuine spiritual or circumstantial reality.
@@ -44,7 +45,6 @@ Output strictly valid JSON with no conversational text:
     "<substantive praise point 4 to 15 words starting with For/That/A/Because>"
   ],
   "thank_god": [
-    "<substantive thanksgiving point 4 to 15 words starting with For/That/A/Because>",
     "<substantive thanksgiving point 4 to 15 words starting with For/That/A/Because>"
   ],
   "ask_god": [
@@ -59,7 +59,7 @@ Review the target context and Tier 1 candidate suggestions. Output a refined lis
    - "praise_god": Praising God's character, holiness, and sovereignty.
    - "thank_god": Thanksgiving for His blessings, provision, and answered prayers in context.
    - "ask_god": Humble petitions for grace, spiritual endurance, wisdom, and guidance.
-2. AT LEAST ONE PER GROUP: Output at least 1 point in praise_god, at least 1 in thank_god, and at least 1 in ask_god.
+2. AT LEAST ONE PER GROUP (THANKSGIVING CEILING): Output at least 1 point in praise_god, at least 1 in thank_god, and at least 1 in ask_god. If there is no obvious good thing or blessing to thank God for from the data, strictly create only 1 thanks point as a maximum.
 3. TOTAL RANGE: Strictly between 3 and 12 total points across the three groups combined.
 4. STRICT LENGTH & COMPLETION (4 TO 15 WORDS): Strictly between 4 and 15 words per suggestion (never fewer than 4 words, never exceeding 15 words).
 5. COMPLETE, UNTRUNCATED THOUGHTS ONLY: Every suggestion must be a 100% complete, fully finished grammatical thought. NEVER truncate, chop, or leave a sentence hanging mid-thought. NEVER end on a preposition, conjunction, or article (such as 'and', 'or', 'in', 'to', 'for', 'with', 'that', 'of', 'on', 'at', 'the', 'a', 'an'). If a Tier 1 candidate is longer than 15 words, fewer than 4 words, or cut off, REWORD AND ADJUST IT into a complete, finished sentence of 4–15 words. Never blindly drop the ending of a sentence.
@@ -382,7 +382,7 @@ async function handleDistillationGuide(request, env) {
     };
 
     const promptJsonString = JSON.stringify(promptPayload);
-    const upstreamModel = env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct";
+    const upstreamModel = env.OPENROUTER_MODEL || "openai/gpt-5.6-luna";
 
     // --- DETERMINISTIC TURN-1 INQUIRY GATE ---
     // When the user has not yet provided a response (fresh Turn 1), a brief or
@@ -536,7 +536,7 @@ async function handleSuggestionGeneration(request, env) {
       locale: locale,
     };
 
-    const upstreamModel = env.OPENROUTER_MODEL || "meta-llama/llama-3.3-70b-instruct";
+    const upstreamModel = env.OPENROUTER_MODEL || "openai/gpt-5.6-luna";
 
     // --- TIER 1: Grounded Petition Ideas Drafter (Temperature: 0.8, Top_P: 0.95) ---
     const tier1Content = await callOpenRouter(env, {

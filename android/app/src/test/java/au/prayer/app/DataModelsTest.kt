@@ -112,7 +112,7 @@ class DataModelsTest {
     @Test
     fun `test RootCode enum values and sort order`() {
         val roots = RootCode.values()
-        assertEquals(4, roots.size)
+        assertEquals(5, roots.size)
 
         assertEquals(RootCode.PEOPLE, roots[0])
         assertEquals("People", RootCode.PEOPLE.displayTitle)
@@ -122,13 +122,17 @@ class DataModelsTest {
         assertEquals("Groups", RootCode.GROUPS.displayTitle)
         assertEquals(2, RootCode.GROUPS.sortOrder)
 
-        assertEquals(RootCode.GENERAL, roots[2])
-        assertEquals("General", RootCode.GENERAL.displayTitle)
-        assertEquals(3, RootCode.GENERAL.sortOrder)
-
-        assertEquals(RootCode.MISSION_PARTNERS, roots[3])
+        assertEquals(RootCode.MISSION_PARTNERS, roots[2])
         assertEquals("Mission Partners", RootCode.MISSION_PARTNERS.displayTitle)
-        assertEquals(4, RootCode.MISSION_PARTNERS.sortOrder)
+        assertEquals(3, RootCode.MISSION_PARTNERS.sortOrder)
+
+        assertEquals(RootCode.GENERAL, roots[3])
+        assertEquals("General", RootCode.GENERAL.displayTitle)
+        assertEquals(4, RootCode.GENERAL.sortOrder)
+
+        assertEquals(RootCode.HISTORIC, roots[4])
+        assertEquals("Historic", RootCode.HISTORIC.displayTitle)
+        assertEquals(5, RootCode.HISTORIC.sortOrder)
     }
 
     @Test
@@ -165,5 +169,23 @@ class DataModelsTest {
 
         val pinned = entity.copy(isPinned = true)
         assertTrue(pinned.isPinned)
+    }
+
+    @Test
+    fun `test ReadingProgress model defaults and updates`() {
+        val progress = ReadingProgress(
+            volumeId = "calvin-institutes-prayer",
+            lastSectionNumber = 29,
+            lastScrollOffset = 120
+        )
+
+        assertEquals("calvin-institutes-prayer", progress.volumeId)
+        assertEquals(29, progress.lastSectionNumber)
+        assertEquals(120, progress.lastScrollOffset)
+        assertTrue(progress.updatedAt > 0)
+
+        val updated = progress.copy(lastSectionNumber = 50, lastScrollOffset = 0)
+        assertEquals(50, updated.lastSectionNumber)
+        assertEquals(0, updated.lastScrollOffset)
     }
 }
