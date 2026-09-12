@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import au.prayer.app.data.models.*
+import au.prayer.app.data.security.VaultBackupCrypto
 import au.prayer.app.network.PromptGroup
 import au.prayer.app.network.SuggestResponse
 import kotlinx.serialization.encodeToString
@@ -573,6 +574,173 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
             PrayerDatabaseHelper.TABLE_SUGGESTION_CACHE,
             "${PrayerDatabaseHelper.COL_CACHE_ENTITY_ID} = ?",
             arrayOf(entityId)
+        )
+    }
+
+    // --- Vault Backup & Restore Operations ---
+
+    fun getAllReadingProgress(): List<ReadingProgress> {
+        val list = mutableListOf<ReadingProgress>()
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_LIBRARY_PROGRESS,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(
+                    ReadingProgress(
+                        volumeId = it.getString(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_VOLUME_ID)),
+                        lastSectionNumber = it.getInt(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_LAST_SECTION)),
+                        lastScrollOffset = it.getInt(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_LAST_OFFSET)),
+                        updatedAt = it.getLong(it.getColumnIndexOrThrow(PrayerDatabaseHelper.COL_PROGRESS_UPDATED))
+                    )
+                )
+            }
+        }
+        return list
+    }
+
+    fun createBackupPayload(): VaultBackupPayload {
+        // Query non-historic personal entities
+        val entities = mutableListOf<IndividualEntity>()
+        val entityCursor = db.query(
+            PrayerDatabaseHelper.TABLE_ENTITIES,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_HISTORIC} = 0",
+            null,
+            null,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_CREATED} ASC"
+        )
+        entityCursor.use {
+            while (it.moveToNext()) {
+                entities.add(cursorToEntity(it))
+            }
+        }
+
+        // Query all non-historic prayer points
+        val points = mutableListOf<PrayerPoint>()
+        val pointCursor = db.query(
+            PrayerDatabaseHelper.TABLE_POINTS,
+            null,
+            "${PrayerDatabaseHelper.COL_POINT_STATUS} != 'HISTORIC'",
+            null,
+            null,
+            null,
+            "${PrayerDatabaseHelper.COL_POINT_CREATED} ASC"
+        )
+        pointCursor.use {
+            while (it.moveToNext()) {
+                points.add(cursorToPoint(it))
+            }
+        }
+
+        val readingProgress = getAllReadingProgress()
+        val config = getConfig()
+
+        return VaultBackupPayload(
+            version = VaultBackupCrypto.CURRENT_VERSION,
+            createdAt = System.currentTimeMillis(),
+            appVersion = "1.0.0",
+            config = config,
+            entities = entities,
+            prayerPoints = points,
+            libraryProgress = readingProgress
+        )
+    }
+
+    fun restoreBackupPayload(payload: VaultBackupPayload, replaceExisting: Boolean): RestoreSummary {
+        db.beginTransaction()
+        var entitiesImported = 0
+        var pointsImported = 0
+        var progressImported = 0
+
+        try {
+            if (replaceExisting) {
+                // Delete all non-historic prayer points and entities, preserving historic ones
+                db.delete(
+                    PrayerDatabaseHelper.TABLE_POINTS,
+                    "${PrayerDatabaseHelper.COL_POINT_STATUS} != 'HISTORIC'",
+                    null
+                )
+                db.delete(
+                    PrayerDatabaseHelper.TABLE_ENTITIES,
+                    "${PrayerDatabaseHelper.COL_ENTITY_HISTORIC} = 0",
+                    null
+                )
+            }
+
+            // Restore/merge entities
+            for (entity in payload.entities) {
+                if (entity.isPreloadedHistoric) continue
+                val values = ContentValues().apply {
+                    put(PrayerDatabaseHelper.COL_ENTITY_ID, entity.id)
+                    put(PrayerDatabaseHelper.COL_ENTITY_ROOT, entity.rootCode.name)
+                    put(PrayerDatabaseHelper.COL_ENTITY_NAME, entity.displayName)
+                    put(PrayerDatabaseHelper.COL_ENTITY_CONTEXT, entity.contextDescription)
+                    put(PrayerDatabaseHelper.COL_ENTITY_HISTORIC, 0)
+                    put(PrayerDatabaseHelper.COL_ENTITY_INTERACTED, entity.interactedCount)
+                    put(PrayerDatabaseHelper.COL_ENTITY_LAST_INTERACTED, entity.lastInteractedAt)
+                    put(PrayerDatabaseHelper.COL_ENTITY_CREATED, entity.createdAt)
+                    put(PrayerDatabaseHelper.COL_ENTITY_PINNED, if (entity.isPinned) 1 else 0)
+                }
+                val rowId = db.insertWithOnConflict(
+                    PrayerDatabaseHelper.TABLE_ENTITIES,
+                    null,
+                    values,
+                    SQLiteDatabase.CONFLICT_REPLACE
+                )
+                if (rowId != -1L) entitiesImported++
+            }
+
+            // Restore/merge prayer points
+            for (point in payload.prayerPoints) {
+                if (point.status == PrayerStatus.HISTORIC) continue
+                val values = ContentValues().apply {
+                    put(PrayerDatabaseHelper.COL_POINT_ID, point.id)
+                    put(PrayerDatabaseHelper.COL_POINT_ENTITY_ID, point.entityId)
+                    put(PrayerDatabaseHelper.COL_POINT_TITLE, point.title)
+                    put(PrayerDatabaseHelper.COL_POINT_DESC, point.description)
+                    put(PrayerDatabaseHelper.COL_POINT_STATUS, point.status.name)
+                    put(PrayerDatabaseHelper.COL_POINT_INTERACTED, point.interactedCount)
+                    put(PrayerDatabaseHelper.COL_POINT_CREATED, point.createdAt)
+                    put(PrayerDatabaseHelper.COL_POINT_LAST_INTERACTED, point.lastInteractedAt)
+                    put(PrayerDatabaseHelper.COL_POINT_ANSWERED, point.answeredAt)
+                    put(PrayerDatabaseHelper.COL_POINT_TESTIMONY, point.answeredTestimony)
+                }
+                val rowId = db.insertWithOnConflict(
+                    PrayerDatabaseHelper.TABLE_POINTS,
+                    null,
+                    values,
+                    SQLiteDatabase.CONFLICT_REPLACE
+                )
+                if (rowId != -1L) pointsImported++
+            }
+
+            // Restore library reading progress
+            for (progress in payload.libraryProgress) {
+                saveReadingProgress(progress)
+                progressImported++
+            }
+
+            // Restore configuration
+            saveConfig(payload.config)
+
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+
+        return RestoreSummary(
+            entitiesImported = entitiesImported,
+            pointsImported = pointsImported,
+            readingProgressImported = progressImported,
+            isReplaced = replaceExisting
         )
     }
 

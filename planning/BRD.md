@@ -125,6 +125,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
 
 ### 3.1 Privacy & Local-First Persistence Rules
 - **100% Offline Vault**: All prayer points, relationships, updates, and answered testimonies reside exclusively on the physical device in SQLite (Room with SQLCipher).
+- **Vault Archive & Device Portability**: Users can manually seal and export a password-protected, hardware-resistant AES-256-GCM encrypted backup archive (`.folio`) via Android's Storage Access Framework, and unseal/restore it on a new device with Merge or Replace options, guaranteeing 100% data portability with zero cloud reliance.
 - **Zero Telemetry & Closed Folio Privacy Shield**: Prayers are never analyzed or transmitted to central databases. Recent Apps window is shielded with vector leather folio cover.
 - **Privacy Gate & Entity Masking**: Personal identifiers are masked on-device prior to proxy transmission.
 

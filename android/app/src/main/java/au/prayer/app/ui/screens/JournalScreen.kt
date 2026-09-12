@@ -92,6 +92,8 @@ fun JournalScreen(
     onLogForEntity: (IndividualEntity) -> Unit = onAddForEntity,
     apiClient: PrayerApiClient? = null,
     repository: PrayerRepository? = null,
+    onVaultRestored: ((RestoreSummary) -> Unit)? = null,
+    onShowMessage: ((String) -> Unit)? = null,
     onBackToHome: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
@@ -1118,7 +1120,10 @@ fun JournalScreen(
                             config = config,
                             colors = colors,
                             typography = typography,
-                            onUpdateConfig = onUpdateConfig
+                            onUpdateConfig = onUpdateConfig,
+                            repository = repository,
+                            onVaultRestored = onVaultRestored,
+                            onShowMessage = onShowMessage
                         )
                     }
                 }

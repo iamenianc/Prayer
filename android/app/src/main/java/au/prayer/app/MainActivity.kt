@@ -411,6 +411,23 @@ class MainActivity : ComponentActivity() {
                                             appConfig = updated
                                             repository.saveConfig(updated)
                                         },
+                                        onVaultRestored = { summary ->
+                                            allEntities = repository.getAllEntities()
+                                            appConfig = repository.getConfig()
+                                            coroutineScope.launch {
+                                                val msg = if (summary.isReplaced) {
+                                                    "Vault restored (${summary.entitiesImported} topics, ${summary.pointsImported} prayer points)"
+                                                } else {
+                                                    "Vault merged (${summary.entitiesImported} topics, ${summary.pointsImported} prayer points)"
+                                                }
+                                                snackbarHostState.showSnackbar(msg)
+                                            }
+                                        },
+                                        onShowMessage = { msg ->
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(msg)
+                                            }
+                                        },
                                         getPointsForEntity = { entityId ->
                                             repository.getPointsForEntity(entityId)
                                         },

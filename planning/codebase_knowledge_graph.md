@@ -42,14 +42,15 @@ graph TD
     subgraph Android_Client ["3. Native Android Client (android/)"]
         MAIN["MainActivity.kt<br/>(Lifecycle, Privacy Shield & Routing)"]
         UI_SCREENS["ui/screens/<br/>(Home, Sanctuary, Log, Journal, Settings, Library, VolumeReader)"]
-        UI_COMPONENTS["ui/components/<br/>(LinedNotepad, SilkMarkerRibbon, ClosedFolioShield)"]
+        UI_COMPONENTS["ui/components/<br/>(LinedNotepad, SilkMarkerRibbon, ClosedFolioShield, VaultBackupDialogs)"]
 
         UI_GESTURES["ui/gestures/<br/>(TouchGestureModifier, LIFO)"]
         DATA_LOCAL["data/local/<br/>(PrayerDatabaseHelper, Repository)"]
-        DATA_MODELS["data/models/<br/>(Models.kt, PreloadedContent.kt, LibraryModels.kt, LibraryContent.kt)"]
+        DATA_SECURITY["data/security/<br/>(VaultBackupCrypto.kt)"]
+        DATA_MODELS["data/models/<br/>(Models.kt, PreloadedContent.kt, LibraryModels.kt, LibraryContent.kt, VaultBackupPayload.kt)"]
         RAW_ASSETS["res/raw/<br/>(historic_prayers.json, library_calvin_prayer.json)"]
         NETWORK["network/<br/>(PrayerApiClient.kt)"]
-        JVM_TESTS["android/src/test/java/<br/>(138 Replicated JVM Tests)"]
+        JVM_TESTS["android/src/test/java/<br/>(139 Replicated JVM Tests)"]
     end
 
     BELIEFS -.->|"Doctrinal Constraints"| COMPILED_PROMPT
@@ -280,6 +281,7 @@ graph TD
             NOTEPAD["components/LinedNotepad.kt<br/>(Baseline-Locked Ruled Canvas, AutoFocus & End-of-Last-Line Cursor Activation)"]
             RIBBON["components/SilkMarkerRibbon.kt<br/>(Swallow-Tail Bookmark Tab)"]
             SHIELD["components/ClosedFolioShield.kt<br/>(Privacy Concealment Cover)"]
+            BACKUP_DIALOGS["components/VaultBackupDialogs.kt<br/>(Folio Passphrase Seal & Unseal Dialogs)"]
         end
     end
 
@@ -288,9 +290,10 @@ graph TD
     end
 
     subgraph Data_Layer ["Data & Storage Layer (data/)"]
-        REPO["PrayerRepository.kt<br/>(Entity/Point CRUD, Anti-Neglect Queue, Library Progress & Zoom Persistence)"]
-        DB_HELPER["PrayerDatabaseHelper.kt<br/>(SQLite Schema, DB v5 Migration, Multi-Entity Historic Seeding)"]
-        MODELS["Models.kt & LibraryModels.kt<br/>(Domain & Data Classes)"]
+        REPO["PrayerRepository.kt<br/>(Entity/Point CRUD, Anti-Neglect Queue, Library Progress, Vault Backup & Restore)"]
+        DB_HELPER["PrayerDatabaseHelper.kt<br/>(SQLite Schema, DB v10 Migration, Multi-Entity Historic Seeding)"]
+        CRYPTO["security/VaultBackupCrypto.kt<br/>(AES-256-GCM + PBKDF2WithHmacSHA256 Zero-Telemetry Engine)"]
+        MODELS["Models.kt, LibraryModels.kt & VaultBackupPayload.kt<br/>(Domain & Data Classes)"]
         PRELOADED["PreloadedContent.kt & LibraryContent.kt<br/>(Loaders & memory caches)"]
         RAW_HISTORIC["res/raw/historic_prayers.json<br/>(30 historic prayers catalog)"]
         RAW_CALVIN["res/raw/library_calvin_prayer.json<br/>(Calvin: Of Prayer, 52 sections)"]
@@ -495,3 +498,6 @@ graph LR
 | **[`android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/PreloadedContent.kt)** | Android / Seed Data | Parses `res/raw/historic_prayers.json` into 30 `PreloadedHistoricTopic` pairs (entities + HISTORIC points); lazy singleton cache | `Models.kt`, Kotlinx Serialization, `res/raw/historic_prayers.json` | `PrayerDatabaseHelper.kt`, `PrayerRepository.kt` |
 | **[`android/app/src/main/res/raw/historic_prayers.json`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/res/raw/historic_prayers.json)** | Android / Seed Data | Standalone structured catalog of the 30 public-domain historic prayers (Lord's Prayer, 1662 BCP collects, Apostles' Creed, Spurgeon pulpit prayers, early church from Potts/CCEL); single source of truth for historic content | User-authored (public domain texts) | `PreloadedContent.kt`, JVM test classpath (`AntiNeglectQueueTest.kt`) |
 | **[`android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/network/PrayerApiClient.kt)** | Android / Network | OkHttp client, wire payloads (`suggest`), grouped ambient prompts (Praise God, Thank God, Ask God) | OkHttp, Kotlinx Serialization | `MainActivity.kt`, `SanctuaryPrayerScreen.kt`, `JournalScreen.kt` |
+| **[`android/app/src/main/java/au/prayer/app/data/security/VaultBackupCrypto.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/security/VaultBackupCrypto.kt)** | Android / Security | AES-256-GCM authenticated encryption + PBKDF2WithHmacSHA256 (120,000 rounds) zero-telemetry vault backup/restore engine | `javax.crypto`, `VaultBackupPayload.kt` | `SettingsScreen.kt`, `PrayerRepository.kt` |
+| **[`android/app/src/main/java/au/prayer/app/data/models/VaultBackupPayload.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/VaultBackupPayload.kt)** | Android / Models | Serializable DTOs for portable vault archive and restore summary | Kotlinx Serialization | `VaultBackupCrypto.kt`, `PrayerRepository.kt` |
+| **[`android/app/src/main/java/au/prayer/app/ui/components/VaultBackupDialogs.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/components/VaultBackupDialogs.kt)** | Android / UI | Modern Folio passphrase seal & unseal modal dialogs with Merge/Replace restore strategy selection | Compose Material 3, FlatSquareShape | `SettingsScreen.kt` |

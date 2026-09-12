@@ -142,6 +142,23 @@ erDiagram
     - **iOS**: iOS Keychain Services (Secure Enclave).
   - Complete operational independence from cloud databases; zero user data is ever transmitted to a central database or remote sync server.
 
+#### 1.2.1 Vault Archive & Portability (Password-Protected AES-256-GCM Backup)
+- **Problem Statement**: Because Android sandbox data is permanently wiped upon app uninstall and Android Keystore hardware keys cannot migrate across devices, users changing phones require a zero-telemetry, offline mechanism to export and restore their prayer journal.
+- **Cryptographic Wire Specification**:
+  - **Magic Header**: 8 ASCII bytes `PWCVAULT` + 4-byte big-endian Int32 version (`1`).
+  - **Salt**: 16 cryptographically secure random bytes (`SecureRandom`).
+  - **Nonce / IV**: 12 cryptographically secure random bytes for Galois/Counter Mode (`AES/GCM/NoPadding`).
+  - **Key Derivation (KDF)**: `PBKDF2WithHmacSHA256` executed with 120,000 iterations to derive a 256-bit AES key from the user's secret passphrase.
+  - **AEAD Integrity**: Authenticated Encryption with Associated Data binds the magic header as Associated Authenticated Data (AAD) and appends a 128-bit authentication tag. Any tampering, truncation, or incorrect passphrase fails immediately (`AEADBadTagException`) with zero plaintext leakage.
+- **Payload Data Model (`VaultBackupPayload`)**:
+  - Portable JSON serialization containing non-historic personal entities, all user prayer points (active & answered with testimonies), library reading progress, and application configuration.
+- **Storage Access Framework (SAF) Integration**:
+  - Export: `ActivityResultContracts.CreateDocument("application/octet-stream")` generates a `.folio` archive (e.g., `PrayerVault_YYYYMMDD_HHmm.folio`) written directly via `ContentResolver`.
+  - Restore: `ActivityResultContracts.OpenDocument()` reads user-selected `.folio` files.
+- **Restore Strategies**:
+  - **Merge (Default & Recommended)**: Safely merges imported entities and prayer points without overwriting existing entries.
+  - **Replace**: Clears all user entities and prayer points within a single atomic SQLite transaction and imports the archive. Factory preloaded historic prayers and library volumes are preserved.
+
 ---
 
 ### 1.3 Zero-Leakage API Key Security Architecture & Serverless Proxy

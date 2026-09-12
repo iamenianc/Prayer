@@ -1,5 +1,8 @@
 package au.prayer.app.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -13,11 +16,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -25,13 +28,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.AppConfig
 import au.prayer.app.data.models.LocaleDialect
+import au.prayer.app.data.models.RestoreSummary
 import au.prayer.app.data.models.ThemeMode
+import au.prayer.app.data.security.VaultBackupCrypto
+import au.prayer.app.ui.components.ExportVaultBackupDialog
+import au.prayer.app.ui.components.RestoreVaultBackupDialog
 import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
 import au.prayer.app.ui.theme.PrayerSpacing
 import au.prayer.app.ui.theme.PrayerTypography
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Modern Leatherbound Folio Settings Screen.
@@ -40,6 +53,7 @@ import au.prayer.app.ui.theme.PrayerTypography
  * - Liturgical Language & Dialect (AU/UK 1662 BCP vs US)
  * - Devotional Content (Historic Reformed Prayers in daily rotation)
  * - Display Accessibility (High-Contrast Mode)
+ * - Vault Archive & Portability (Password-Protected AES-256-GCM Backup & Restore)
  *
  * Adheres strictly to the Modern Folio visual design bible:
  * - 0dp rectilinear geometry (FlatSquareShape)
@@ -53,9 +67,94 @@ fun SettingsScreen(
     colors: PrayerColors,
     typography: PrayerTypography,
     onUpdateConfig: (AppConfig) -> Unit,
+    repository: PrayerRepository? = null,
+    onVaultRestored: ((RestoreSummary) -> Unit)? = null,
+    onShowMessage: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var showExportDialog by remember { mutableStateOf(false) }
+    var pendingExportPassphrase by remember { mutableStateOf<String?>(null) }
+
+    var showRestoreDialog by remember { mutableStateOf(false) }
+    var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri: Uri? ->
+        val passphrase = pendingExportPassphrase
+        pendingExportPassphrase = null
+        if (uri != null && passphrase != null && repository != null) {
+            coroutineScope.launch(Dispatchers.IO) {
+                try {
+                    val payload = repository.createBackupPayload()
+                    val bytes = VaultBackupCrypto.encryptPayload(payload, passphrase.toCharArray())
+                    context.contentResolver.openOutputStream(uri)?.use { output ->
+                        output.write(bytes)
+                        output.flush()
+                    }
+                    onShowMessage?.invoke("Prayer vault successfully sealed and exported")
+                } catch (e: Exception) {
+                    onShowMessage?.invoke("Export failed: ${e.localizedMessage ?: "Unknown error"}")
+                }
+            }
+        }
+    }
+
+    val openDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            pendingRestoreUri = uri
+            showRestoreDialog = true
+        }
+    }
+
+    if (showExportDialog) {
+        ExportVaultBackupDialog(
+            colors = colors,
+            typography = typography,
+            onDismiss = { showExportDialog = false },
+            onConfirmExport = { passphrase ->
+                showExportDialog = false
+                pendingExportPassphrase = passphrase
+                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.ENGLISH).format(Date())
+                createDocumentLauncher.launch("PrayerVault_$timeStamp.folio")
+            }
+        )
+    }
+
+    if (showRestoreDialog) {
+        RestoreVaultBackupDialog(
+            colors = colors,
+            typography = typography,
+            onDismiss = {
+                showRestoreDialog = false
+                pendingRestoreUri = null
+            },
+            onConfirmRestore = { passphrase, replaceExisting ->
+                showRestoreDialog = false
+                val uri = pendingRestoreUri
+                pendingRestoreUri = null
+                if (uri != null && repository != null) {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        try {
+                            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                                ?: throw IllegalStateException("Could not open selected archive file.")
+                            val payload = VaultBackupCrypto.decryptPayload(bytes, passphrase.toCharArray())
+                            val summary = repository.restoreBackupPayload(payload, replaceExisting)
+                            onVaultRestored?.invoke(summary)
+                        } catch (e: Exception) {
+                            onShowMessage?.invoke(e.localizedMessage ?: "Failed to restore archive.")
+                        }
+                    }
+                }
+            }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -430,9 +529,106 @@ fun SettingsScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(PrayerSpacing.large))
+            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+            Spacer(modifier = Modifier.height(PrayerSpacing.large))
+
+            // --- Section 5: Vault Archive & Portability ---
+            SettingsSectionHeader(
+                title = "Vault Archive & Portability",
+                subtitle = "Manual, zero-telemetry export and restore. Seal your prayer journal into a password-encrypted .folio file.",
+                colors = colors,
+                typography = typography
+            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(PrayerSpacing.small),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Export Card
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = PrayerSpacing.primaryActionHeight)
+                        .clickable(role = Role.Button) {
+                            showExportDialog = true
+                        },
+                    shape = FlatSquareShape,
+                    color = colors.surface,
+                    border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle),
+                    tonalElevation = PrayerSpacing.elevationNone
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.medium),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.medium)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Export Encrypted Archive",
+                                style = typography.prayerPointBody.copy(fontWeight = FontWeight.SemiBold),
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = "Seals personal topics, prayer points, and reading progress with AES-256-GCM using your personal passphrase.",
+                                style = typography.caption,
+                                color = colors.textSubtle
+                            )
+                        }
+                        Text(
+                            text = "SEAL ↗",
+                            style = typography.marginStatus,
+                            color = colors.leatherActive
+                        )
+                    }
+                }
+
+                // Restore Card
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = PrayerSpacing.primaryActionHeight)
+                        .clickable(role = Role.Button) {
+                            openDocumentLauncher.launch(arrayOf("*/*"))
+                        },
+                    shape = FlatSquareShape,
+                    color = colors.surface,
+                    border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle),
+                    tonalElevation = PrayerSpacing.elevationNone
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.medium),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.medium)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Restore Folio Archive",
+                                style = typography.prayerPointBody.copy(fontWeight = FontWeight.SemiBold),
+                                color = colors.textPrimary
+                            )
+                            Text(
+                                text = "Unseal a previously exported backup file to restore or merge prayer entries across devices.",
+                                style = typography.caption,
+                                color = colors.textSubtle
+                            )
+                        }
+                        Text(
+                            text = "UNSEAL ↙",
+                            style = typography.marginStatus,
+                            color = colors.leatherActive
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(PrayerSpacing.extraLarge))
 
-            // --- Section 5: Folio Colophon & Version Footer ---
+            // --- Section 6: Folio Colophon & Version Footer ---
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
