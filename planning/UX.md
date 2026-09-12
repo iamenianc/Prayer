@@ -128,14 +128,22 @@ The application is strictly organized around five primary functional pathways ra
 
 ### 2.5 Pathway 5: Daily Reflections & Study Notes (`NotesScreen`)
 - **Entry**: Tapping **"Notes"** on Home.
-- **Directory & Quick-Add**:
-  - Displays a chronological directory of daily reflection and study notes entitled by day and date (e.g., *"Friday, 11 September 2026"*).
-  - Elevated tactile card `+ Today's Note` at the top of the directory automatically finds or creates the current date's entry.
-  - Pinning support via the Silk Marker Ribbon (`SilkMarkerRibbon`), hoisting pinned notes to the top of the directory under a dedicated Pinned Focus header.
-- **Standard Notepad Drafting**:
-  - Functions as a natural ruled notepad canvas: freeform typing with standard carriage returns (no forced bullets on Enter).
-  - Feint rules dynamically lock to typographic baselines with multi-touch pinch-to-zoom (`0.75f` to `2.5f`), floating zoom pill, and top bar reset trigger (`${percent}% ↺`).
-  - Autosaves quietly to SQLite on back navigation or text change debounce.
+- **The Date as Grouping Invariant**: The calendar date is not a note; it is an organizing grouping container under which the believer can file any number of notes with individual titles (though titles are optional).
+- **Three-Tier Folio Navigation Architecture (`LifoBackStack`)**:
+  - **Tier 1: Date Groupings Directory (`NotesView.OVERVIEW`)**:
+    - Displays date groupings chronologically (`is_pinned DESC, created_at DESC`).
+    - Elevated tactile card **Today** displays today's date, current filed note count, and a direct `+ Note` quick creation action.
+    - Past Date Groupings display note counts (e.g. `"3 notes"`), study topic tag, and preview of note titles/snippets.
+    - Pinned date groupings display the Garnet Silk Marker Ribbon (`❧`).
+  - **Tier 2: Date Detail View (`NotesView.DATE_DETAIL`)**:
+    - Folio header presents the full date in `typography.subjectHeader`, Silk Marker Ribbon toggle, and editable inline study topic pill (`+ Add study topic or passage`).
+    - Prominent `+ Add Note` button to file another note under this date.
+    - Vertical list of filed notes showing title (or italic `(Untitled Note)`), timestamp (`10:45 AM`), 2-line snippet preview, and deletion actions.
+  - **Tier 3: Ruled Notepad Canvas (`NotesView.NOTE_EDITOR`)**:
+    - Header shows breadcrumb date indicator and individual **Title (Optional)** field in Literary Serif (`20sp`, semi-bold).
+    - Natural ruled notepad canvas (`LinedNotepad`): freeform typing with standard carriage returns (no forced bullets on Enter).
+    - Feint rules dynamically lock to typographic baselines with multi-touch pinch-to-zoom (`0.75f` to `2.5f`), floating zoom pill, and top bar reset trigger (`${percent}% ↺`).
+    - Autosaves quietly to SQLite on back navigation or explicit Save click.
 - **Contemplative AI Prayer Prompts**:
   - Collapsed by default under a quiet reverent fleuron divider (`❧   Prompts for Prayer   ❧` with *Tap to view prompts*), honoring quiet contemplation.
   - Analyzes the reflection or study note content to generate contemplative prompts categorized under **Praise God**, **Thank God**, and **Ask God** (`typography.categoryLedgerHeader`, `colors.leatherPrimary`).

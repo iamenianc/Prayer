@@ -272,7 +272,7 @@ graph TD
             SETTINGS["SettingsScreen.kt<br/>(Folio Preferences & Binding)"]
             LIBRARY["LibraryScreen.kt<br/>(Theological Catalog & Bookshelf)"]
             READER["VolumeReaderScreen.kt<br/>(Immersive Folio Reader, Dynamic Baseline Rules & Pinch-to-Zoom)"]
-            NOTES["NotesScreen.kt<br/>(Date-Entitled Daily Reflections, Ruled Notepad, Pinch-to-Zoom & Collapsed AI Prompts)"]
+            NOTES["NotesScreen.kt<br/>(Date Grouping Directory, Filed Notes List, Ruled Notepad Editor with Optional Titles, Pinch-to-Zoom & Grounded AI Prompts)"]
         end
 
         subgraph Components_Theme ["Components, Theme & Gestures"]

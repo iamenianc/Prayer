@@ -18,19 +18,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
@@ -39,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.IndividualEntity
+import au.prayer.app.data.models.PrayerPoint
 import au.prayer.app.data.models.PrayerStatus
 import au.prayer.app.data.models.RootCode
 import au.prayer.app.network.PrayerApiClient
@@ -67,11 +65,17 @@ import kotlin.math.roundToInt
 
 enum class NotesView {
     OVERVIEW,
-    DETAIL
+    DATE_DETAIL,
+    NOTE_EDITOR
 }
 
 private fun formatNoteDate(timestamp: Long): String {
     val sdf = SimpleDateFormat("EEEE, d MMMM yyyy", Locale.ENGLISH)
+    return sdf.format(Date(timestamp))
+}
+
+private fun formatNoteTime(timestamp: Long): String {
+    val sdf = SimpleDateFormat("h:mm a", Locale.ENGLISH)
     return sdf.format(Date(timestamp))
 }
 
@@ -92,20 +96,29 @@ fun NotesScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     val notesBackStack = remember { LifoBackStack(NotesView.OVERVIEW) }
     val currentView = notesBackStack.current
 
-    var allNotes by remember { mutableStateOf(repository.getNotesEntities()) }
-    var selectedNoteEntity by remember { mutableStateOf<IndividualEntity?>(null) }
-    var noteTextState by remember { mutableStateOf(TextFieldValue("")) }
-    var noteContextTopic by remember { mutableStateOf("") }
-    var lastSavedText by remember { mutableStateOf("") }
+    var allDateEntities by remember { mutableStateOf(repository.getNotesEntities()) }
+    var selectedDateEntity by remember { mutableStateOf<IndividualEntity?>(null) }
+    var notesForDate by remember { mutableStateOf<List<PrayerPoint>>(emptyList()) }
+    var dateContextTopic by remember { mutableStateOf("") }
     var isEditingTopic by remember { mutableStateOf(false) }
 
-    var noteToDelete by remember { mutableStateOf<IndividualEntity?>(null) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
+    // Note Editor state
+    var selectedNote by remember { mutableStateOf<PrayerPoint?>(null) }
+    var noteTitleState by remember { mutableStateOf("") }
+    var noteBodyState by remember { mutableStateOf(TextFieldValue("")) }
+    var lastSavedTitle by remember { mutableStateOf("") }
+    var lastSavedBody by remember { mutableStateOf("") }
+    var isNewNote by remember { mutableStateOf(false) }
+
+    // Deletion states
+    var dateToDelete by remember { mutableStateOf<IndividualEntity?>(null) }
+    var showDeleteDateConfirm by remember { mutableStateOf(false) }
+    var noteToDelete by remember { mutableStateOf<PrayerPoint?>(null) }
+    var showDeleteNoteConfirm by remember { mutableStateOf(false) }
 
     // AI Prompts state
     var isPromptsExpanded by remember { mutableStateOf(false) }
@@ -131,25 +144,71 @@ fun NotesScreen(
         typography.withZoom(zoomScale)
     }
 
-    fun refreshNotes() {
-        allNotes = repository.getNotesEntities()
+    fun refreshDateEntities() {
+        allDateEntities = repository.getNotesEntities()
     }
 
-    fun loadPromptsForEntity(entity: IndividualEntity, currentText: String) {
+    fun refreshNotesForSelectedDate() {
+        val entityId = selectedDateEntity?.id ?: return
+        notesForDate = repository.getNotesForDateEntity(entityId)
+    }
+
+    fun openDateDetail(entity: IndividualEntity) {
+        selectedDateEntity = entity
+        dateContextTopic = entity.contextDescription
+        isEditingTopic = false
+        notesForDate = repository.getNotesForDateEntity(entity.id)
+        notesBackStack.push(NotesView.DATE_DETAIL)
+    }
+
+    fun openOrCreateTodayDateDetail() {
+        val todayStr = getTodayDateString()
+        val entity = repository.getOrCreateTodayNoteEntity(todayStr)
+        refreshDateEntities()
+        openDateDetail(entity)
+    }
+
+    fun openNewNoteEditor(dateEntity: IndividualEntity) {
+        selectedDateEntity = dateEntity
+        selectedNote = null
+        noteTitleState = ""
+        noteBodyState = TextFieldValue("")
+        lastSavedTitle = ""
+        lastSavedBody = ""
+        isNewNote = true
+        isPromptsExpanded = false
+        promptGroups = emptyList()
+        notesBackStack.push(NotesView.NOTE_EDITOR)
+    }
+
+    fun openNoteEditor(note: PrayerPoint) {
+        selectedNote = note
+        noteTitleState = note.title
+        noteBodyState = TextFieldValue(note.description, TextRange(note.description.length))
+        lastSavedTitle = note.title
+        lastSavedBody = note.description
+        isNewNote = false
+        isPromptsExpanded = false
+        promptGroups = repository.getCachedSuggestions(selectedDateEntity?.id ?: "").orEmpty()
+        notesBackStack.push(NotesView.NOTE_EDITOR)
+    }
+
+    fun loadPromptsForNote(entity: IndividualEntity, noteTitle: String, currentText: String) {
         val cached = repository.getCachedSuggestions(entity.id)
         if (!cached.isNullOrEmpty()) {
             promptGroups = cached
         }
 
-        if (currentText.isNotBlank()) {
+        if (currentText.isNotBlank() || noteTitle.isNotBlank()) {
             isLoadingPrompts = true
             coroutineScope.launch(Dispatchers.IO) {
                 val recordedLines = currentText.lines().map { it.trim() }.filter { it.isNotBlank() }
                 val recorded = recordedLines.map { line ->
                     RecordedPoint(title = line.take(40), body = line, status = "active")
                 }
+                val effectiveTarget = if (noteTitle.isNotBlank()) "${entity.displayName} • $noteTitle" else entity.displayName
                 val request = SuggestRequest(
-                    targetName = entity.displayName,
+                    targetName = effectiveTarget,
                     root = RootCode.NOTES.name,
                     group = null,
                     contextDescription = entity.contextDescription.takeIf { it.isNotBlank() },
@@ -172,59 +231,66 @@ fun NotesScreen(
         }
     }
 
-    fun openNote(entity: IndividualEntity) {
-        selectedNoteEntity = entity
-        val text = repository.getNoteText(entity.id)
-        noteTextState = TextFieldValue(text, TextRange(text.length))
-        lastSavedText = text
-        noteContextTopic = entity.contextDescription
-        isEditingTopic = false
-        isPromptsExpanded = false
-
-        // Load existing cache
-        promptGroups = repository.getCachedSuggestions(entity.id).orEmpty()
-
-        notesBackStack.push(NotesView.DETAIL)
-    }
-
-    fun openOrCreateTodayNote() {
-        val todayStr = getTodayDateString()
-        val entity = repository.getOrCreateTodayNoteEntity(todayStr)
-        refreshNotes()
-        openNote(entity)
-    }
-
-    fun saveCurrentNote(silent: Boolean = false) {
-        val entity = selectedNoteEntity ?: return
-        val currentText = noteTextState.text
-        repository.saveNoteText(entity.id, currentText)
-        if (entity.contextDescription != noteContextTopic) {
+    fun saveDateTopic() {
+        val entity = selectedDateEntity ?: return
+        if (entity.contextDescription != dateContextTopic) {
             repository.updateEntity(
                 id = entity.id,
                 displayName = entity.displayName,
                 rootCode = RootCode.NOTES,
-                contextDescription = noteContextTopic
+                contextDescription = dateContextTopic
             )
-            selectedNoteEntity = entity.copy(contextDescription = noteContextTopic)
+            selectedDateEntity = entity.copy(contextDescription = dateContextTopic)
+            refreshDateEntities()
         }
-        lastSavedText = currentText
-        refreshNotes()
-        if (!silent) {
-            onShowMessage("Note saved")
+    }
+
+    fun saveCurrentNote(silent: Boolean = false) {
+        val dateEntity = selectedDateEntity ?: return
+        val title = noteTitleState.trim()
+        val body = noteBodyState.text
+
+        if (isNewNote) {
+            if (title.isNotBlank() || body.isNotBlank()) {
+                val created = repository.createNote(dateEntity.id, title, body)
+                selectedNote = created
+                isNewNote = false
+                lastSavedTitle = title
+                lastSavedBody = body
+                refreshNotesForSelectedDate()
+                refreshDateEntities()
+                if (!silent) onShowMessage("Note saved")
+            }
+        } else {
+            val note = selectedNote ?: return
+            if (title != lastSavedTitle || body != lastSavedBody) {
+                val updated = repository.updateNote(note.id, title, body)
+                selectedNote = updated
+                lastSavedTitle = title
+                lastSavedBody = body
+                refreshNotesForSelectedDate()
+                refreshDateEntities()
+                if (!silent) onShowMessage("Note saved")
+            }
         }
     }
 
     fun handleNotesBack(): Boolean {
-        if (currentView == NotesView.DETAIL) {
-            // Save on exit
-            if (noteTextState.text != lastSavedText || selectedNoteEntity?.contextDescription != noteContextTopic) {
+        when (currentView) {
+            NotesView.NOTE_EDITOR -> {
                 saveCurrentNote(silent = true)
+                notesBackStack.pop()
+                return true
             }
-            notesBackStack.pop()
-            return true
-        } else {
-            onBackToHome()
-            return true
+            NotesView.DATE_DETAIL -> {
+                saveDateTopic()
+                notesBackStack.pop()
+                return true
+            }
+            NotesView.OVERVIEW -> {
+                onBackToHome()
+                return true
+            }
         }
     }
 
@@ -272,9 +338,9 @@ fun NotesScreen(
                                 .padding(horizontal = PrayerSpacing.small)
                         )
                     }
-                    if (currentView == NotesView.DETAIL) {
-                        val hasUnsavedChanges = noteTextState.text != lastSavedText ||
-                                (selectedNoteEntity?.contextDescription != noteContextTopic)
+                    if (currentView == NotesView.NOTE_EDITOR) {
+                        val hasUnsavedChanges = (noteTitleState.trim() != lastSavedTitle || noteBodyState.text != lastSavedBody) &&
+                                (noteTitleState.isNotBlank() || noteBodyState.text.isNotBlank())
                         Text(
                             text = if (hasUnsavedChanges) "Save" else "Saved",
                             style = activeTypography.marginStatus.copy(
@@ -324,7 +390,15 @@ fun NotesScreen(
             AnimatedContent(
                 targetState = currentView,
                 transitionSpec = {
-                    if (targetState == NotesView.DETAIL) {
+                    val orderMap = mapOf(
+                        NotesView.OVERVIEW to 0,
+                        NotesView.DATE_DETAIL to 1,
+                        NotesView.NOTE_EDITOR to 2
+                    )
+                    val fromOrder = orderMap[initialState] ?: 0
+                    val toOrder = orderMap[targetState] ?: 0
+
+                    if (toOrder > fromOrder) {
                         (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
                                 fadeIn(animationSpec = tween(250)))
                             .togetherWith(
@@ -346,8 +420,9 @@ fun NotesScreen(
                 when (view) {
                     NotesView.OVERVIEW -> {
                         val todayStr = getTodayDateString()
-                        val todayNote = allNotes.find { it.displayName.equals(todayStr, ignoreCase = true) }
-                        val pastNotes = allNotes.filter { !it.displayName.equals(todayStr, ignoreCase = true) }
+                        val todayEntity = allDateEntities.find { it.displayName.equals(todayStr, ignoreCase = true) }
+                        val todayNotesCount = todayEntity?.let { repository.getNoteCountForEntity(it.id) } ?: 0
+                        val pastDateEntities = allDateEntities.filter { !it.displayName.equals(todayStr, ignoreCase = true) }
 
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
@@ -381,13 +456,13 @@ fun NotesScreen(
                                 HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.borderSubtle)
                             }
 
-                            // Prominent Today's Note Action Card
-                            item(key = "action_today_note") {
+                            // Prominent Today's Date Grouping Card
+                            item(key = "action_today_date_group") {
                                 Surface(
-                                    onClick = { openOrCreateTodayNote() },
+                                    onClick = { openOrCreateTodayDateDetail() },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .heightIn(min = 64.dp),
+                                        .heightIn(min = 68.dp),
                                     shape = FlatSquareShape,
                                     color = colors.surface,
                                     contentColor = colors.textPrimary,
@@ -408,36 +483,64 @@ fun NotesScreen(
                                         Column(modifier = Modifier.weight(1f)) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Text(
-                                                    text = "✎",
-                                                    fontSize = 16.sp,
+                                                    text = "TODAY",
+                                                    style = activeTypography.marginStatus.copy(
+                                                        fontWeight = FontWeight.Bold,
+                                                        letterSpacing = 1.sp
+                                                    ),
                                                     color = colors.leatherActive
                                                 )
                                                 Spacer(modifier = Modifier.width(PrayerSpacing.small))
                                                 Text(
-                                                    text = if (todayNote != null) "Today's Note" else "+ Today's Note",
-                                                    style = activeTypography.topicTitle.copy(fontWeight = FontWeight.SemiBold),
-                                                    color = colors.textPrimary
+                                                    text = if (todayNotesCount == 0) "• No notes filed yet" else "• $todayNotesCount ${if (todayNotesCount == 1) "note" else "notes"}",
+                                                    style = activeTypography.caption,
+                                                    color = colors.inkMuted
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(2.dp))
+                                            Text(
+                                                text = todayStr,
+                                                style = activeTypography.topicTitle.copy(fontWeight = FontWeight.SemiBold),
+                                                color = colors.textPrimary
+                                            )
+                                        }
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
+                                        ) {
+                                            TextButton(
+                                                onClick = {
+                                                    val entity = todayEntity ?: repository.getOrCreateTodayNoteEntity(todayStr)
+                                                    refreshDateEntities()
+                                                    selectedDateEntity = entity
+                                                    dateContextTopic = entity.contextDescription
+                                                    notesForDate = repository.getNotesForDateEntity(entity.id)
+                                                    notesBackStack.push(NotesView.DATE_DETAIL)
+                                                    openNewNoteEditor(entity)
+                                                },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(
+                                                    text = "+ Note",
+                                                    style = activeTypography.marginStatus.copy(fontWeight = FontWeight.SemiBold),
+                                                    color = colors.leatherActive
                                                 )
                                             }
                                             Text(
-                                                text = todayStr,
-                                                style = activeTypography.caption,
-                                                color = colors.inkMuted
+                                                text = "›",
+                                                fontFamily = FontFamily.Serif,
+                                                fontSize = 22.sp,
+                                                color = colors.leatherActive.copy(alpha = 0.65f)
                                             )
                                         }
-                                        Text(
-                                            text = "›",
-                                            fontFamily = FontFamily.Serif,
-                                            fontSize = 22.sp,
-                                            color = colors.leatherActive.copy(alpha = 0.65f)
-                                        )
                                     }
                                 }
                                 HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                             }
 
-                            // Past Reflections & Notes Section Header
-                            item(key = "header_past_notes") {
+                            // Past Date Groupings Section Header
+                            item(key = "header_past_dates") {
                                 Surface(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -458,7 +561,7 @@ fun NotesScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "PAST REFLECTIONS (${pastNotes.size})",
+                                            text = "PAST DATES (${pastDateEntities.size})",
                                             style = activeTypography.categoryLedgerHeader,
                                             color = colors.leatherActive
                                         )
@@ -467,8 +570,8 @@ fun NotesScreen(
                                 HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
                             }
 
-                            if (pastNotes.isEmpty()) {
-                                item(key = "empty_past_notes") {
+                            if (pastDateEntities.isEmpty()) {
+                                item(key = "empty_past_dates") {
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -476,7 +579,7 @@ fun NotesScreen(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = "No previous study notes yet.\nOpen Today's Note to begin.",
+                                            text = "No previous date groupings yet.\nOpen Today to begin filing notes.",
                                             style = activeTypography.caption,
                                             color = colors.inkMuted,
                                             textAlign = TextAlign.Center
@@ -484,18 +587,19 @@ fun NotesScreen(
                                     }
                                 }
                             } else {
-                                items(pastNotes, key = { it.id }) { entity ->
-                                    val noteText = remember(entity.id) { repository.getNoteText(entity.id) }
+                                items(pastDateEntities, key = { it.id }) { entity ->
+                                    val count = remember(entity.id) { repository.getNoteCountForEntity(entity.id) }
+                                    val previewNotes = remember(entity.id) { repository.getNotesForDateEntity(entity.id) }
                                     Surface(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .animateItem()
                                             .combinedClickable(
-                                                onClick = { openNote(entity) },
+                                                onClick = { openDateDetail(entity) },
                                                 onLongClick = {
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                    noteToDelete = entity
-                                                    showDeleteConfirm = true
+                                                    dateToDelete = entity
+                                                    showDeleteDateConfirm = true
                                                 }
                                             ),
                                         shape = FlatSquareShape,
@@ -533,26 +637,43 @@ fun NotesScreen(
                                                     )
                                                 }
 
-                                                if (entity.contextDescription.isNotBlank()) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
+                                                ) {
                                                     Text(
-                                                        text = entity.contextDescription,
+                                                        text = "$count ${if (count == 1) "note" else "notes"}",
                                                         style = activeTypography.caption.copy(fontWeight = FontWeight.Medium),
                                                         color = colors.leatherActive
                                                     )
+                                                    if (entity.contextDescription.isNotBlank()) {
+                                                        Text(
+                                                            text = "• ${entity.contextDescription}",
+                                                            style = activeTypography.caption,
+                                                            color = colors.inkMuted,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
                                                 }
 
-                                                if (noteText.isNotBlank()) {
+                                                if (previewNotes.isNotEmpty()) {
                                                     Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
-                                                    Text(
-                                                        text = noteText,
-                                                        style = activeTypography.prayerPointBody.copy(
-                                                            fontSize = 14.sp,
-                                                            lineHeight = 20.sp
-                                                        ),
-                                                        color = colors.textSubtle,
-                                                        maxLines = 2,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
+                                                    val previewText = previewNotes.mapNotNull {
+                                                        if (it.title.isNotBlank()) it.title else it.description.lines().firstOrNull { l -> l.isNotBlank() }
+                                                    }.take(2).joinToString(" • ")
+                                                    if (previewText.isNotBlank()) {
+                                                        Text(
+                                                            text = previewText,
+                                                            style = activeTypography.prayerPointBody.copy(
+                                                                fontSize = 13.sp,
+                                                                lineHeight = 18.sp
+                                                            ),
+                                                            color = colors.textSubtle,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                    }
                                                 }
                                             }
 
@@ -562,13 +683,13 @@ fun NotesScreen(
                                             ) {
                                                 IconButton(
                                                     onClick = {
-                                                        noteToDelete = entity
-                                                        showDeleteConfirm = true
+                                                        dateToDelete = entity
+                                                        showDeleteDateConfirm = true
                                                     }
                                                 ) {
                                                     Icon(
                                                         imageVector = Icons.Default.Delete,
-                                                        contentDescription = "Delete Note",
+                                                        contentDescription = "Delete Date Grouping",
                                                         tint = colors.textSubtle.copy(alpha = 0.5f),
                                                         modifier = Modifier.size(18.dp)
                                                     )
@@ -588,13 +709,13 @@ fun NotesScreen(
                         }
                     }
 
-                    NotesView.DETAIL -> {
-                        selectedNoteEntity?.let { entity ->
+                    NotesView.DATE_DETAIL -> {
+                        selectedDateEntity?.let { dateEntity ->
                             Box(modifier = Modifier.fillMaxSize()) {
                                 Column(
                                     modifier = Modifier.fillMaxSize()
                                 ) {
-                                    // Header: Day and Date + Optional Study Topic
+                                    // Folio Canvas Header: Full Date & Optional Passage/Topic
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -606,7 +727,7 @@ fun NotesScreen(
                                             )
                                     ) {
                                         Text(
-                                            text = entity.displayName,
+                                            text = dateEntity.displayName,
                                             style = activeTypography.subjectHeader,
                                             color = colors.textPrimary
                                         )
@@ -620,15 +741,15 @@ fun NotesScreen(
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 BasicTextField(
-                                                    value = noteContextTopic,
-                                                    onValueChange = { noteContextTopic = it },
+                                                    value = dateContextTopic,
+                                                    onValueChange = { dateContextTopic = it },
                                                     textStyle = activeTypography.caption.copy(
                                                         fontSize = 14.sp,
                                                         color = colors.textPrimary
                                                     ),
                                                     modifier = Modifier.weight(1f),
                                                     decorationBox = { inner ->
-                                                        if (noteContextTopic.isEmpty()) {
+                                                        if (dateContextTopic.isEmpty()) {
                                                             Text(
                                                                 text = "e.g. Study • Romans 8:28–39",
                                                                 style = activeTypography.caption,
@@ -645,18 +766,18 @@ fun NotesScreen(
                                                     modifier = Modifier
                                                         .clickable {
                                                             isEditingTopic = false
-                                                            saveCurrentNote(silent = true)
+                                                            saveDateTopic()
                                                         }
                                                         .padding(horizontal = 8.dp)
                                                 )
                                             }
                                         } else {
                                             Text(
-                                                text = if (noteContextTopic.isNotBlank()) noteContextTopic else "+ Add study topic or passage",
+                                                text = if (dateContextTopic.isNotBlank()) dateContextTopic else "+ Add study topic or passage",
                                                 style = activeTypography.caption.copy(
-                                                    fontWeight = if (noteContextTopic.isNotBlank()) FontWeight.Medium else FontWeight.Normal
+                                                    fontWeight = if (dateContextTopic.isNotBlank()) FontWeight.Medium else FontWeight.Normal
                                                 ),
-                                                color = if (noteContextTopic.isNotBlank()) colors.leatherActive else colors.inkMuted,
+                                                color = if (dateContextTopic.isNotBlank()) colors.leatherActive else colors.inkMuted,
                                                 modifier = Modifier.clickable { isEditingTopic = true }
                                             )
                                         }
@@ -668,140 +789,402 @@ fun NotesScreen(
                                         modifier = Modifier.padding(bottom = PrayerSpacing.extraSmall)
                                     )
 
-                                    // Lined Notepad Canvas (Standard Notepad Writing - fills remaining space)
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .weight(1f)
-                                    ) {
-                                        LinedNotepad(
-                                            text = noteTextState,
-                                            onTextChange = { newVal ->
-                                                noteTextState = newVal
-                                            },
-                                            colors = colors,
-                                            typography = activeTypography,
-                                            placeholder = "Write today's reflections, meditation on Scripture, or study notes..."
-                                        )
-                                    }
-
-                                    // Prompts for Prayer Card (Collapsed by default at the bottom)
+                                    // Action Card: + Add Note under this date
                                     Surface(
+                                        onClick = { openNewNoteEditor(dateEntity) },
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(
                                                 horizontal = PrayerSpacing.large,
                                                 vertical = PrayerSpacing.small
-                                            )
-                                            .clickable {
-                                                isPromptsExpanded = !isPromptsExpanded
-                                                if (isPromptsExpanded && promptGroups.isEmpty() && !isLoadingPrompts) {
-                                                    loadPromptsForEntity(entity, noteTextState.text)
-                                                }
-                                            },
+                                            ),
                                         shape = FlatSquareShape,
-                                        color = colors.surfaceSubtle,
-                                        tonalElevation = PrayerSpacing.elevationNone,
-                                        border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
+                                        color = colors.surface,
+                                        contentColor = colors.textPrimary,
+                                        tonalElevation = PrayerSpacing.elevationCard,
+                                        border = BorderStroke(1.dp, colors.leatherActive.copy(alpha = 0.40f))
                                     ) {
-                                        Column(
+                                        Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.small)
+                                                .padding(
+                                                    horizontal = PrayerSpacing.medium,
+                                                    vertical = PrayerSpacing.medium
+                                                ),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .heightIn(min = PrayerSpacing.minTouchTarget),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                            ) {
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    Text(
-                                                        text = "❧",
-                                                        fontFamily = FontFamily.Serif,
-                                                        fontSize = 14.sp,
-                                                        color = colors.leatherActive
-                                                    )
-                                                    Spacer(modifier = Modifier.width(PrayerSpacing.small))
-                                                    Text(
-                                                        text = "Prompts for Prayer",
-                                                        style = activeTypography.caption.copy(fontWeight = FontWeight.SemiBold),
-                                                        color = colors.leatherActive
-                                                    )
-                                                }
-                                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                                    if (isLoadingPrompts) {
-                                                        CircularProgressIndicator(
-                                                            modifier = Modifier.size(12.dp),
-                                                            strokeWidth = 1.dp,
-                                                            color = colors.textSubtle
-                                                        )
-                                                        Spacer(modifier = Modifier.width(PrayerSpacing.small))
-                                                    }
-                                                    Text(
-                                                        text = if (isPromptsExpanded) "Hide" else "Show",
-                                                        style = activeTypography.marginStatus,
-                                                        color = colors.inkMuted
-                                                    )
-                                                }
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = "✎",
+                                                    fontSize = 16.sp,
+                                                    color = colors.leatherActive
+                                                )
+                                                Spacer(modifier = Modifier.width(PrayerSpacing.small))
+                                                Text(
+                                                    text = "+ Add Note",
+                                                    style = activeTypography.topicTitle.copy(fontWeight = FontWeight.SemiBold),
+                                                    color = colors.leatherActive
+                                                )
                                             }
+                                            Text(
+                                                text = "›",
+                                                fontFamily = FontFamily.Serif,
+                                                fontSize = 20.sp,
+                                                color = colors.leatherActive.copy(alpha = 0.65f)
+                                            )
+                                        }
+                                    }
 
-                                            if (isPromptsExpanded) {
-                                                Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
-                                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
-                                                Spacer(modifier = Modifier.height(PrayerSpacing.small))
+                                    // Filed Notes Section Header
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                horizontal = PrayerSpacing.large,
+                                                vertical = PrayerSpacing.small
+                                            ),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "FILED NOTES (${notesForDate.size})",
+                                            style = activeTypography.categoryLedgerHeader,
+                                            color = colors.leatherActive
+                                        )
+                                    }
 
-                                                Column(
+                                    HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+
+                                    if (notesForDate.isEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1f)
+                                                .padding(PrayerSpacing.large),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "No notes filed under this date yet.\nTap '+ Add Note' above to write one.",
+                                                style = activeTypography.caption,
+                                                color = colors.inkMuted,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    } else {
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .weight(1f)
+                                        ) {
+                                            items(notesForDate, key = { it.id }) { note ->
+                                                Surface(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .heightIn(max = 220.dp)
-                                                        .verticalScroll(rememberScrollState())
+                                                        .animateItem()
+                                                        .combinedClickable(
+                                                            onClick = { openNoteEditor(note) },
+                                                            onLongClick = {
+                                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                noteToDelete = note
+                                                                showDeleteNoteConfirm = true
+                                                            }
+                                                        ),
+                                                    shape = FlatSquareShape,
+                                                    color = colors.surface,
+                                                    contentColor = colors.textPrimary,
+                                                    tonalElevation = PrayerSpacing.elevationNone
                                                 ) {
-                                                    if (isLoadingPrompts && promptGroups.isEmpty()) {
-                                                        Box(
-                                                            modifier = Modifier
-                                                                .fillMaxWidth()
-                                                                .padding(vertical = PrayerSpacing.medium),
-                                                            contentAlignment = Alignment.Center
-                                                        ) {
-                                                            CircularProgressIndicator(
-                                                                modifier = Modifier.size(16.dp),
-                                                                strokeWidth = 1.5.dp,
-                                                                color = colors.textSubtle
-                                                            )
-                                                        }
-                                                    } else if (promptGroups.isEmpty()) {
-                                                        Text(
-                                                            text = if (noteTextState.text.isBlank()) {
-                                                                "Write your reflection or study notes above to generate prayer prompts."
-                                                            } else {
-                                                                "Tap to generate prompts grounded in your study notes."
-                                                            },
-                                                            style = activeTypography.caption,
-                                                            color = colors.inkMuted,
-                                                            modifier = Modifier
-                                                                .padding(vertical = PrayerSpacing.small)
-                                                                .clickable {
-                                                                    loadPromptsForEntity(entity, noteTextState.text)
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(
+                                                                horizontal = PrayerSpacing.large,
+                                                                vertical = PrayerSpacing.medium
+                                                            ),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Column(modifier = Modifier.weight(1f)) {
+                                                            Row(
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
+                                                            ) {
+                                                                if (note.title.isNotBlank()) {
+                                                                    Text(
+                                                                        text = note.title,
+                                                                        style = activeTypography.prayerPointTitle,
+                                                                        color = colors.textPrimary
+                                                                    )
+                                                                } else {
+                                                                    Text(
+                                                                        text = "(Untitled Note)",
+                                                                        style = activeTypography.prayerPointTitle.copy(fontStyle = FontStyle.Italic),
+                                                                        color = colors.inkMuted
+                                                                    )
                                                                 }
-                                                        )
-                                                    } else {
-                                                        promptGroups.forEach { group ->
-                                                            Text(
-                                                                text = group.title,
-                                                                style = activeTypography.categoryLedgerHeader,
-                                                                color = colors.leatherPrimary,
-                                                                modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
-                                                            )
-                                                            group.prompts.forEach { prompt ->
                                                                 Text(
-                                                                    text = "• $prompt",
-                                                                    style = activeTypography.prayerPointBody,
-                                                                    color = colors.textPrimary,
-                                                                    modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                                    text = "• ${formatNoteTime(note.createdAt)}",
+                                                                    style = activeTypography.caption,
+                                                                    color = colors.inkMuted
                                                                 )
                                                             }
+
+                                                            if (note.description.isNotBlank()) {
+                                                                Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                                                Text(
+                                                                    text = note.description,
+                                                                    style = activeTypography.prayerPointBody.copy(
+                                                                        fontSize = 14.sp,
+                                                                        lineHeight = 20.sp
+                                                                    ),
+                                                                    color = colors.textSubtle,
+                                                                    maxLines = 2,
+                                                                    overflow = TextOverflow.Ellipsis
+                                                                )
+                                                            }
+                                                        }
+
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.small)
+                                                            ) {
+                                                            IconButton(
+                                                                onClick = {
+                                                                    noteToDelete = note
+                                                                    showDeleteNoteConfirm = true
+                                                                }
+                                                            ) {
+                                                                Icon(
+                                                                    imageVector = Icons.Default.Delete,
+                                                                    contentDescription = "Delete Note",
+                                                                    tint = colors.textSubtle.copy(alpha = 0.5f),
+                                                                    modifier = Modifier.size(18.dp)
+                                                                )
+                                                            }
+                                                            Text(
+                                                                text = "›",
+                                                                fontFamily = FontFamily.Serif,
+                                                                fontSize = 18.sp,
+                                                                color = colors.textSubtle.copy(alpha = 0.6f)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Interactive Silk Marker Ribbon Tab anchored at top right
+                                SilkMarkerRibbon(
+                                    isPinned = dateEntity.isPinned,
+                                    onTogglePin = {
+                                        val newPinned = !dateEntity.isPinned
+                                        selectedDateEntity = dateEntity.copy(isPinned = newPinned)
+                                        repository.toggleEntityPinned(dateEntity.id, newPinned)
+                                        refreshDateEntities()
+                                        onShowMessage(if (newPinned) "Pinned date grouping" else "Unpinned date grouping")
+                                    },
+                                    color = colors.ribbonPrimary,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(end = 20.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    NotesView.NOTE_EDITOR -> {
+                        selectedDateEntity?.let { dateEntity ->
+                            Column(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                // Folio Note Header: Date Indicator & Optional Title Field
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            horizontal = PrayerSpacing.textInset,
+                                            vertical = PrayerSpacing.small
+                                        )
+                                ) {
+                                    Text(
+                                        text = dateEntity.displayName,
+                                        style = activeTypography.caption.copy(
+                                            fontWeight = FontWeight.Medium,
+                                            letterSpacing = 0.5.sp
+                                        ),
+                                        color = colors.leatherActive
+                                    )
+
+                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+
+                                    // Individual Note Title Field (Optional)
+                                    BasicTextField(
+                                        value = noteTitleState,
+                                        onValueChange = { noteTitleState = it },
+                                        textStyle = activeTypography.subjectHeader.copy(
+                                            fontSize = 20.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.textPrimary
+                                        ),
+                                        singleLine = true,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        decorationBox = { innerTextField ->
+                                            if (noteTitleState.isEmpty()) {
+                                                Text(
+                                                    text = "Title (Optional)",
+                                                    style = activeTypography.subjectHeader.copy(
+                                                        fontSize = 20.sp,
+                                                        color = colors.textSubtle.copy(alpha = 0.45f)
+                                                    )
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
+                                    )
+                                }
+
+                                HorizontalDivider(
+                                    thickness = PrayerSpacing.hairlineWidth,
+                                    color = colors.paperFeintRule,
+                                    modifier = Modifier.padding(bottom = PrayerSpacing.extraSmall)
+                                )
+
+                                // Lined Notepad Canvas (Writing pad fills space)
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .weight(1f)
+                                ) {
+                                    LinedNotepad(
+                                        text = noteBodyState,
+                                        onTextChange = { newVal ->
+                                            noteBodyState = newVal
+                                        },
+                                        colors = colors,
+                                        typography = activeTypography,
+                                        placeholder = "Write note reflections, meditation on Scripture, or study thoughts..."
+                                    )
+                                }
+
+                                // Grounded AI Prompts for Prayer Card (Collapsed by default)
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            horizontal = PrayerSpacing.large,
+                                            vertical = PrayerSpacing.small
+                                        )
+                                        .clickable {
+                                            isPromptsExpanded = !isPromptsExpanded
+                                            if (isPromptsExpanded && promptGroups.isEmpty() && !isLoadingPrompts) {
+                                                loadPromptsForNote(dateEntity, noteTitleState, noteBodyState.text)
+                                            }
+                                        },
+                                    shape = FlatSquareShape,
+                                    color = colors.surfaceSubtle,
+                                    tonalElevation = PrayerSpacing.elevationNone,
+                                    border = BorderStroke(PrayerSpacing.hairlineWidth, colors.borderSubtle)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = PrayerSpacing.medium, vertical = PrayerSpacing.small)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .heightIn(min = PrayerSpacing.minTouchTarget),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = "❧",
+                                                    fontFamily = FontFamily.Serif,
+                                                    fontSize = 14.sp,
+                                                    color = colors.leatherActive
+                                                )
+                                                Spacer(modifier = Modifier.width(PrayerSpacing.small))
+                                                Text(
+                                                    text = "Prompts for Prayer",
+                                                    style = activeTypography.caption.copy(fontWeight = FontWeight.SemiBold),
+                                                    color = colors.leatherActive
+                                                )
+                                            }
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                if (isLoadingPrompts) {
+                                                    CircularProgressIndicator(
+                                                        modifier = Modifier.size(12.dp),
+                                                        strokeWidth = 1.dp,
+                                                        color = colors.textSubtle
+                                                    )
+                                                    Spacer(modifier = Modifier.width(PrayerSpacing.small))
+                                                }
+                                                Text(
+                                                    text = if (isPromptsExpanded) "Hide" else "Show",
+                                                    style = activeTypography.marginStatus,
+                                                    color = colors.inkMuted
+                                                )
+                                            }
+                                        }
+
+                                        if (isPromptsExpanded) {
+                                            Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                            Spacer(modifier = Modifier.height(PrayerSpacing.small))
+
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(max = 220.dp)
+                                                    .verticalScroll(rememberScrollState())
+                                            ) {
+                                                if (isLoadingPrompts && promptGroups.isEmpty()) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(vertical = PrayerSpacing.medium),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        CircularProgressIndicator(
+                                                            modifier = Modifier.size(16.dp),
+                                                            strokeWidth = 1.5.dp,
+                                                            color = colors.textSubtle
+                                                        )
+                                                    }
+                                                } else if (promptGroups.isEmpty()) {
+                                                    Text(
+                                                        text = if (noteBodyState.text.isBlank() && noteTitleState.isBlank()) {
+                                                            "Write your reflection or study notes above to generate prayer prompts."
+                                                        } else {
+                                                            "Tap to generate prompts grounded in this note."
+                                                        },
+                                                        style = activeTypography.caption,
+                                                        color = colors.inkMuted,
+                                                        modifier = Modifier
+                                                            .padding(vertical = PrayerSpacing.small)
+                                                            .clickable {
+                                                                loadPromptsForNote(dateEntity, noteTitleState, noteBodyState.text)
+                                                            }
+                                                    )
+                                                } else {
+                                                    promptGroups.forEach { group ->
+                                                        Text(
+                                                            text = group.title,
+                                                            style = activeTypography.categoryLedgerHeader,
+                                                            color = colors.leatherPrimary,
+                                                            modifier = Modifier.padding(top = PrayerSpacing.small, bottom = PrayerSpacing.extraSmall)
+                                                        )
+                                                        group.prompts.forEach { prompt ->
+                                                            Text(
+                                                                text = "• $prompt",
+                                                                style = activeTypography.prayerPointBody,
+                                                                color = colors.textPrimary,
+                                                                modifier = Modifier.padding(vertical = PrayerSpacing.extraSmall)
+                                                            )
                                                         }
                                                     }
                                                 }
@@ -809,22 +1192,6 @@ fun NotesScreen(
                                         }
                                     }
                                 }
-
-                                // Interactive Silk Marker Ribbon Tab anchored at top margin
-                                SilkMarkerRibbon(
-                                    isPinned = entity.isPinned,
-                                    onTogglePin = {
-                                        val newPinned = !entity.isPinned
-                                        selectedNoteEntity = entity.copy(isPinned = newPinned)
-                                        repository.toggleEntityPinned(entity.id, newPinned)
-                                        refreshNotes()
-                                        onShowMessage(if (newPinned) "Pinned note" else "Unpinned note")
-                                    },
-                                    color = colors.ribbonPrimary,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(end = 20.dp)
-                                )
                             }
                         }
                     }
@@ -863,11 +1230,66 @@ fun NotesScreen(
         }
     }
 
-    // Delete Note Confirmation Dialog
-    if (showDeleteConfirm && noteToDelete != null) {
+    // Delete Date Grouping Confirmation Dialog
+    if (showDeleteDateConfirm && dateToDelete != null) {
         AlertDialog(
             onDismissRequest = {
-                showDeleteConfirm = false
+                showDeleteDateConfirm = false
+                dateToDelete = null
+            },
+            shape = FlatSquareShape,
+            containerColor = colors.surfaceElevated,
+            title = {
+                Text(
+                    text = "Delete Date Grouping",
+                    style = activeTypography.topicTitle,
+                    color = colors.textPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to permanently delete \"${dateToDelete?.displayName}\" and all of its filed notes?",
+                    style = activeTypography.prayerPointBody,
+                    color = colors.textSubtle
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val toDelete = dateToDelete
+                        if (toDelete != null) {
+                            repository.deleteEntity(toDelete.id)
+                            refreshDateEntities()
+                            onShowMessage("Date grouping deleted")
+                            if (currentView == NotesView.DATE_DETAIL && selectedDateEntity?.id == toDelete.id) {
+                                notesBackStack.pop()
+                            }
+                        }
+                        showDeleteDateConfirm = false
+                        dateToDelete = null
+                    }
+                ) {
+                    Text("Delete", color = colors.stateAlert)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDateConfirm = false
+                        dateToDelete = null
+                    }
+                ) {
+                    Text("Cancel", color = colors.textPrimary)
+                }
+            }
+        )
+    }
+
+    // Delete Individual Note Confirmation Dialog
+    if (showDeleteNoteConfirm && noteToDelete != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showDeleteNoteConfirm = false
                 noteToDelete = null
             },
             shape = FlatSquareShape,
@@ -880,8 +1302,9 @@ fun NotesScreen(
                 )
             },
             text = {
+                val titlePreview = if (!noteToDelete?.title.isNullOrBlank()) "\"${noteToDelete?.title}\"" else "this untitled note"
                 Text(
-                    text = "Are you sure you want to permanently delete the note for \"${noteToDelete?.displayName}\"?",
+                    text = "Are you sure you want to permanently delete $titlePreview?",
                     style = activeTypography.prayerPointBody,
                     color = colors.textSubtle
                 )
@@ -891,14 +1314,15 @@ fun NotesScreen(
                     onClick = {
                         val toDelete = noteToDelete
                         if (toDelete != null) {
-                            repository.deleteEntity(toDelete.id)
-                            refreshNotes()
+                            repository.deleteNote(toDelete.id)
+                            refreshNotesForSelectedDate()
+                            refreshDateEntities()
                             onShowMessage("Note deleted")
-                            if (currentView == NotesView.DETAIL && selectedNoteEntity?.id == toDelete.id) {
+                            if (currentView == NotesView.NOTE_EDITOR && selectedNote?.id == toDelete.id) {
                                 notesBackStack.pop()
                             }
                         }
-                        showDeleteConfirm = false
+                        showDeleteNoteConfirm = false
                         noteToDelete = null
                     }
                 ) {
@@ -908,7 +1332,7 @@ fun NotesScreen(
             dismissButton = {
                 TextButton(
                     onClick = {
-                        showDeleteConfirm = false
+                        showDeleteNoteConfirm = false
                         noteToDelete = null
                     }
                 ) {

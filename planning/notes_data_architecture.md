@@ -15,9 +15,10 @@ The *Pray Without Ceasing* application organizes all spiritual content, liturgic
 
 3. **Daily Study Notes & Scripture Reflections (`RootCode.NOTES` Projection)**:
    - A quiet, reverent daily reflection, Scripture meditation, and study canvas.
-   - Rather than introducing a disparate or disjointed table structure, daily notes elegantly project onto the unified **Entity-Point relational architecture**:
-     - Identity, calendar date, study topic, and silk ribbon pin state are held in `IndividualEntity` with `rootCode = RootCode.NOTES`.
-     - Multi-line reflection text is persisted in an associated 1:1 `PrayerPoint`.
+   - **The Date as Grouping Invariant**: The calendar date is not a note; the date is an organizing grouping container (`IndividualEntity` with `rootCode = RootCode.NOTES`), under which the believer can file **any number of notes** (`PrayerPoint` records) with individual, optional titles.
+   - Rather than introducing a disparate or disjointed table structure, daily notes project naturally onto the unified **Entity-Point relational architecture**:
+     - Date grouping container, calendar date, study topic, and silk ribbon pin state are held in `IndividualEntity` with `rootCode = RootCode.NOTES`.
+     - Individual notes are persisted in associated `PrayerPoint` records referencing the date entity (`1:N`), each with an optional `title` (empty string `""` if untitled) and multi-line `description` body.
      - Ambient AI prompt suggestions are cached in `suggestion_cache`.
    - Strictly isolated from the contemplative prayer queue via the **Sanctuary Isolation Invariant**.
 
@@ -30,7 +31,7 @@ This tripartite architecture enforces database normalization, zero-migration sch
 ```mermaid
 erDiagram
     ROOT_CODE ||--o{ INDIVIDUAL_ENTITY : "categorises"
-    INDIVIDUAL_ENTITY ||--o{ PRAYER_POINT : "has many (1:N for Topics, 1:1 for Notes)"
+    INDIVIDUAL_ENTITY ||--o{ PRAYER_POINT : "has many (1:N for Topics & Date Groupings)"
     INDIVIDUAL_ENTITY ||--o| SUGGESTION_CACHE : "caches AI prompt suggestions"
     LIBRARY_VOLUME ||--o{ VOLUME_DIVISION : "structured into"
     VOLUME_DIVISION ||--o{ VOLUME_SECTION : "contains outline & text"
@@ -328,36 +329,45 @@ data class VolumeSection(
 
 ## 5. Domain 3: Daily Reflection & Study Notes
 
-### 5.1 The Entity-Point Projection Architecture
+### 5.1 The Entity-Point Projection Architecture (Date as Grouping Container)
 
-Daily study notes and reflections intentionally reuse the unified Entity-Point relational schema:
-- **Identity & Study Header**: Represented as an [`IndividualEntity`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt#L42-L52) where:
+Daily study notes and reflections project onto the unified Entity-Point relational schema:
+- **Date Grouping Container**: Represented as an [`IndividualEntity`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt#L42-L52) where:
   - `rootCode = RootCode.NOTES` (`"NOTES"`)
   - `displayName = formattedDate` (e.g. `"Saturday, 12 September 2026"`, RFC/ISO compliant daily deduplication key)
   - `contextDescription = studyTopic` (Optional Scripture passage or study theme, e.g. `"Study • Romans 8:28–39"`)
-  - `isPinned = isPinned` (Pins the note to the top of the Past Reflections archive)
-- **Multi-Line Note Body**: Stored as a 1:1 associated [`PrayerPoint`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt#L55-L66) where:
-  - `entityId = entity.id`
-  - `title = ""` (Empty string)
-  - `description = fullMultiLineText` (The complete reflection body)
+  - `isPinned = isPinned` (Pins the date grouping to the top of the archive)
+- **Individual Filed Notes (1:N Children)**: Stored as multiple associated [`PrayerPoint`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/data/models/Models.kt#L55-L66) records where:
+  - `entityId = entity.id` (Foreign key referencing the parent date grouping)
+  - `title = noteTitle` (Individual title; empty string `""` if untitled, as titling is optional)
+  - `description = fullMultiLineText` (The complete reflection or study note body)
   - `status = PrayerStatus.ACTIVE`
+  - `createdAt = timestamp` (Timestamp of note instantiation)
 - **AI Reflection Prompts**: Caches generated prompts in `TABLE_SUGGESTION_CACHE` keyed by `entity_id`.
 
 ```mermaid
 graph LR
-    subgraph Daily_Note_Entity ["IndividualEntity (root_code = 'NOTES')"]
+    subgraph Date_Grouping_Entity ["IndividualEntity (root_code = 'NOTES')"]
         ID["id (UUID)"]
         DATE["display_name ('Saturday, 12 September 2026')"]
         TOPIC["context_description ('Romans 8:28–39')"]
         PIN["is_pinned (Silk Ribbon Marker)"]
     end
 
-    subgraph Note_Body_Point ["PrayerPoint (1:1 Child)"]
-        PID["id (UUID)"]
-        FK["entity_id (FK -> IndividualEntity.id)"]
-        TITLE["title = ''"]
-        TEXT["description (Multi-line study text)"]
-        STATUS["status = 'ACTIVE'"]
+    subgraph Note_Item_1 ["PrayerPoint (Note 1)"]
+        PID1["id (UUID)"]
+        FK1["entity_id (FK -> Date Group)"]
+        TITLE1["title = 'Morning Meditation'"]
+        TEXT1["description (Psalm 23 reflection)"]
+        STATUS1["status = 'ACTIVE'"]
+    end
+
+    subgraph Note_Item_2 ["PrayerPoint (Note 2 - Untitled)"]
+        PID2["id (UUID)"]
+        FK2["entity_id (FK -> Date Group)"]
+        TITLE2["title = '' (Optional Untitled)"]
+        TEXT2["description (Parish fellowship notes)"]
+        STATUS2["status = 'ACTIVE'"]
     end
 
     subgraph Prompt_Cache ["SuggestionCache (1:1 Cache)"]
@@ -367,8 +377,9 @@ graph LR
         ASK["ask_god (Supplication prompts)"]
     end
 
-    Daily_Note_Entity --> Note_Body_Point
-    Daily_Note_Entity --> Prompt_Cache
+    Date_Grouping_Entity --> Note_Item_1
+    Date_Grouping_Entity --> Note_Item_2
+    Date_Grouping_Entity --> Prompt_Cache
 ```
 
 ---
@@ -397,12 +408,28 @@ The visual presentation of notes uses [`LinedNotepad.kt`](file:///c:/Users/ianch
 
 ---
 
-### 5.4 TopAppBar Titling Normalization & Folio Canvas Header Invariant
+### 5.4 Three-Tier Folio Navigation Architecture (`LifoBackStack`)
 
-- **Chrome vs. Canvas Division**:
-  - `TopAppBar` in [`NotesScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/NotesScreen.kt) is permanently fixed to the static, predictable section title `"Notes"` with `maxLines = 1` and `TextOverflow.Ellipsis`.
-  - The paper canvas owns the authentic Folio page header: rendering `entity.displayName` (full formatted date string) in `typography.subjectHeader`, accompanied by the interactive Silk Marker Ribbon (`❧`) and inline study topic pill (`entity.contextDescription`).
-  - This prevents visual title redundancy between the app bar and page canvas, eliminates text wrapping collisions with top bar action buttons (zoom indicator and save label), and maximizes vertical notepad writing space.
+[`NotesScreen.kt`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android/app/src/main/java/au/prayer/app/ui/screens/NotesScreen.kt) organizes notes into a three-tier LIFO navigational hierarchy:
+
+1. **`NotesView.OVERVIEW` (Date Groupings Directory)**:
+   - Lists date groupings in reverse chronological order (`is_pinned DESC, created_at DESC`).
+   - Prominent **Today's Date Grouping Card** displays the formatted date string, current note count, and a direct `+ Note` quick creation action.
+   - Past Date Groupings display note counts (e.g. `"3 notes"`), study topic pill, and note previews.
+   - Tapping a date grouping opens `DATE_DETAIL`.
+
+2. **`NotesView.DATE_DETAIL` (Filed Notes for Date)**:
+   - Folio header displays the full date in `typography.subjectHeader`, Silk Marker Ribbon pin toggle, and inline editable study topic/passage pill.
+   - Prominent `+ Add Note` button to file a new note under this date.
+   - LazyColumn of filed notes displaying individual titles (or italic `(Untitled Note)` when blank), timestamp (`10:45 AM`), 2-line snippet preview, and deletion actions.
+   - Tapping any note opens `NOTE_EDITOR`.
+
+3. **`NotesView.NOTE_EDITOR` (The Ruled Notepad Canvas)**:
+   - TopAppBar: Permanently fixed to `"Notes"`, with zoom reset indicator and quiet autosave status (`Save` / `Saved`).
+   - Canvas Header: Breadcrumb date indicator and individual **Title (Optional)** `BasicTextField` in Literary Serif (`20sp`, semi-bold).
+   - Lined notepad canvas (`LinedNotepad`) with dynamic pinch-to-zoom (`0.75f` to `2.5f`) and baseline synchronization.
+   - Collapsed-by-default `❧ Prompts for Prayer ❧` card generating contemplative prompts grounded in the active note.
+   - Strict LIFO back navigation autosaves text changes quietly on return.
 
 ---
 
@@ -690,9 +717,15 @@ Key Takeaways:
 | **Library Books** | `getReadingProgress(volumeId)` | Queries `TABLE_LIBRARY_PROGRESS` to retrieve last saved section and scroll position. |
 | **Library Books** | `saveReadingProgress(progress)` | Uses `INSERT OR REPLACE` to persist bookmark section number, pixel scroll offset, and timestamp. |
 | **Daily Notes** | `getNotesEntities()` | Queries `TABLE_ENTITIES` where `root_code = 'NOTES'`, sorted by `is_pinned DESC, created_at DESC`. |
-| **Daily Notes** | `getOrCreateTodayNoteEntity(dateStr)` | Gets or creates the entity for the current calendar day (`display_name = dateStr`). |
-| **Daily Notes** | `getNoteText(entityId)` | Joins all point descriptions for the note entity with newlines. |
-| **Daily Notes** | `saveNoteText(entityId, text)` | Idempotently updates the single 1:1 `PrayerPoint` holding the note body. |
+| **Daily Notes** | `getOrCreateTodayNoteEntity(dateStr)` | Gets or creates the grouping entity for the current calendar day (`display_name = dateStr`). |
+| **Daily Notes** | `getNotesForDateEntity(entityId)` | Retrieves all individual notes (`PrayerPoint`s) filed under the date grouping, sorted chronologically (`created_at ASC`). |
+| **Daily Notes** | `getNote(noteId)` | Retrieves a specific note by ID. |
+| **Daily Notes** | `createNote(entityId, title, description)` | Inserts a new note under the date grouping with optional title. |
+| **Daily Notes** | `updateNote(noteId, title, description)` | Updates title and body of an existing note. |
+| **Daily Notes** | `deleteNote(noteId)` | Deletes a specific note without affecting sibling notes or the date grouping. |
+| **Daily Notes** | `getNoteCountForEntity(entityId)` | Counts total notes filed under a date grouping. |
+| **Daily Notes** | `getNoteText(entityId)` | Joins all point descriptions for the note entity with newlines (legacy). |
+| **Daily Notes** | `saveNoteText(entityId, text)` | Non-destructively updates the first note or inserts a new one. |
 | **Suggestion Cache** | `getCachedSuggestions(entityId)` | Retrieves cached praise, thanksgiving, and ask prompts if generated within freshness window. |
 | **Suggestion Cache** | `saveCachedSuggestions(entityId, resp)` | Serializes and persists OpenRouter AI suggestions to `TABLE_SUGGESTION_CACHE`. |
 | **Vault Backup** | `createBackupPayload()` | Gathers all user entities, points, library progress, and config into a `VaultBackupPayload`. |

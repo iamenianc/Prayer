@@ -328,6 +328,57 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         )
     }
 
+    fun getNotesForDateEntity(entityId: String): List<PrayerPoint> {
+        return getPointsForEntity(entityId)
+    }
+
+    fun getNote(noteId: String): PrayerPoint? {
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_POINTS,
+            null,
+            "${PrayerDatabaseHelper.COL_POINT_ID} = ?",
+            arrayOf(noteId),
+            null,
+            null,
+            null
+        )
+        return cursor.use {
+            if (it.moveToNext()) cursorToPoint(it) else null
+        }
+    }
+
+    fun createNote(entityId: String, title: String = "", description: String): PrayerPoint {
+        return savePrayerPoint(entityId, title, description, PrayerStatus.ACTIVE)
+    }
+
+    fun updateNote(noteId: String, title: String, description: String): PrayerPoint {
+        val existing = getNote(noteId)
+        val status = existing?.status ?: PrayerStatus.ACTIVE
+        val testimony = existing?.answeredTestimony
+        updatePrayerPoint(noteId, title, description, status, testimony)
+        return getNote(noteId) ?: PrayerPoint(
+            id = noteId,
+            entityId = existing?.entityId ?: "",
+            title = title,
+            description = description,
+            status = status
+        )
+    }
+
+    fun deleteNote(noteId: String) {
+        deletePrayerPoint(noteId)
+    }
+
+    fun getNoteCountForEntity(entityId: String): Int {
+        val cursor = db.rawQuery(
+            "SELECT COUNT(*) FROM ${PrayerDatabaseHelper.TABLE_POINTS} WHERE ${PrayerDatabaseHelper.COL_POINT_ENTITY_ID} = ?",
+            arrayOf(entityId)
+        )
+        return cursor.use {
+            if (it.moveToNext()) it.getInt(0) else 0
+        }
+    }
+
     fun getNoteText(entityId: String): String {
         val points = getPointsForEntity(entityId)
         return points.joinToString("\n") { it.description }
@@ -338,9 +389,6 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         return if (points.isNotEmpty()) {
             val first = points.first()
             updatePrayerPoint(first.id, first.title, text, first.status, first.answeredTestimony)
-            for (i in 1 until points.size) {
-                deletePrayerPoint(points[i].id)
-            }
             first.copy(description = text)
         } else {
             savePrayerPoint(entityId, "", text, PrayerStatus.ACTIVE)

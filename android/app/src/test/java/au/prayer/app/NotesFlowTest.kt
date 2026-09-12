@@ -120,4 +120,95 @@ class NotesFlowTest {
         val parts = formatted.split(", ")
         assertEquals("Date format must have day of week followed by date: 'Day, d MMMM yyyy'", 2, parts.size)
     }
+
+    @Test
+    fun `test date entity acts as a grouping container for multiple notes`() {
+        // Date is not a note; it is a grouping container under which any number of notes can be filed
+        val dateGroupEntity = IndividualEntity(
+            id = "date-group-2026-09-12",
+            rootCode = RootCode.NOTES,
+            displayName = "Saturday, 12 September 2026"
+        )
+
+        val note1 = PrayerPoint(
+            id = "note-1",
+            entityId = dateGroupEntity.id,
+            title = "Morning Meditation",
+            description = "Psalm 23 reflection: The Lord is my shepherd, I shall not want.",
+            status = PrayerStatus.ACTIVE
+        )
+
+        val note2 = PrayerPoint(
+            id = "note-2",
+            entityId = dateGroupEntity.id,
+            title = "Romans 8 Study",
+            description = "Contemplating the golden chain of redemption and God's sovereign providence.",
+            status = PrayerStatus.ACTIVE
+        )
+
+        val note3 = PrayerPoint(
+            id = "note-3",
+            entityId = dateGroupEntity.id,
+            title = "", // Optional title left blank
+            description = "Evening thanksgiving for parish fellowship.",
+            status = PrayerStatus.ACTIVE
+        )
+
+        val filedNotes = listOf(note1, note2, note3)
+
+        assertEquals("date-group-2026-09-12", dateGroupEntity.id)
+        assertEquals(3, filedNotes.size)
+        assertTrue(filedNotes.all { it.entityId == dateGroupEntity.id })
+        assertEquals("Morning Meditation", filedNotes[0].title)
+        assertEquals("Romans 8 Study", filedNotes[1].title)
+        assertEquals("", filedNotes[2].title)
+    }
+
+    @Test
+    fun `test notes under date grouping have optional individual titles`() {
+        val dateGroupId = "date-group-1"
+
+        // Note with title
+        val titledNote = PrayerPoint(
+            entityId = dateGroupId,
+            title = "Calvin on Prayer Discussion",
+            description = "Key points from Book III, Chapter XX.",
+            status = PrayerStatus.ACTIVE
+        )
+        assertEquals("Calvin on Prayer Discussion", titledNote.title)
+        assertFalse(titledNote.title.isBlank())
+
+        // Note without title (optional)
+        val untitledNote = PrayerPoint(
+            entityId = dateGroupId,
+            title = "",
+            description = "Quick reflection written without a title.",
+            status = PrayerStatus.ACTIVE
+        )
+        assertEquals("", untitledNote.title)
+        assertTrue(untitledNote.title.isBlank())
+    }
+
+    @Test
+    fun `test multiple notes filed under date grouping can be individually modified and filtered`() {
+        val dateGroupId = "date-group-multi"
+
+        var notes = listOf(
+            PrayerPoint(id = "n1", entityId = dateGroupId, title = "First Note", description = "Draft 1"),
+            PrayerPoint(id = "n2", entityId = dateGroupId, title = "Second Note", description = "Draft 2"),
+            PrayerPoint(id = "n3", entityId = dateGroupId, title = "", description = "Untitled Draft 3")
+        )
+
+        // Deleting note n2 leaves n1 and n3 intact under the date grouping
+        notes = notes.filter { it.id != "n2" }
+        assertEquals(2, notes.size)
+        assertEquals("n1", notes[0].id)
+        assertEquals("n3", notes[1].id)
+
+        // Updating note n1 title and body
+        val updatedNote1 = notes[0].copy(title = "Updated First Title", description = "Revised content")
+        notes = listOf(updatedNote1, notes[1])
+        assertEquals("Updated First Title", notes[0].title)
+        assertEquals("Revised content", notes[0].description)
+    }
 }

@@ -112,15 +112,23 @@ erDiagram
   - **Reading Persistence**: `ReadingProgress` tracks `lastSectionNumber`, `lastScrollOffset`, and `updatedAt` for seamless restoration across app lifecycles.
 
 - **Daily Reflections & Study Notes Architecture (`NotesScreen`, `RootCode.NOTES`)**:
-  - **Entity Representation**: Date-entitled entries are stored in `TABLE_ENTITIES` with `rootCode = RootCode.NOTES` (sort order 6) and display names formatted as `"[Day of week], [d] [MMMM] [yyyy]"` (e.g. `"Friday, 11 September 2026"`).
-  - **Note Text Persistence**: Note bodies are persisted in `TABLE_POINTS` associated 1:1 with the date entity, storing the full text in `description` and `"Note"` in `title` (`status = PrayerStatus.ACTIVE`).
+  - **Date as Grouping Container**: The calendar date is not a note; it is an organizing grouping container stored in `TABLE_ENTITIES` with `rootCode = RootCode.NOTES` (sort order 6) and display names formatted as `"[Day of week], [d] [MMMM] [yyyy]"` (e.g. `"Saturday, 12 September 2026"`).
+  - **Multi-Note Child Persistence (1:N)**: Multiple notes are filed under each date grouping in `TABLE_POINTS` (`entity_id = dateEntity.id`). Each note carries an optional `title` (`""` if untitled) and full note text in `description` (`status = PrayerStatus.ACTIVE`).
   - **Repository Methods**:
-    - `getNotesEntities()`: Retrieves all entities under `RootCode.NOTES`, ordered by created timestamp descending.
-    - `getOrCreateTodayNoteEntity()`: Checks for an existing note matching today's formatted title; if not found, creates an `IndividualEntity(rootCode = RootCode.NOTES, displayName = "[Today's Date]")`.
-    - `getNoteText(entityId)`: Retrieves the note body string from `TABLE_POINTS`.
-    - `saveNoteText(entityId, text)`: Atomically updates or inserts the note body record in `TABLE_POINTS`.
+    - `getNotesEntities()`: Retrieves all date grouping entities under `RootCode.NOTES`, ordered by pinned state descending and created timestamp descending.
+    - `getOrCreateTodayNoteEntity(dateStr)`: Retrieves or instantiates the grouping container for today's calendar date.
+    - `getNotesForDateEntity(entityId)`: Retrieves all notes filed under the date grouping, sorted chronologically (`created_at ASC`).
+    - `getNote(noteId)`: Retrieves an individual note by UUID.
+    - `createNote(entityId, title, description)`: Inserts a new note under the date grouping with optional title.
+    - `updateNote(noteId, title, description)`: Updates title and body of an existing note.
+    - `deleteNote(noteId)`: Deletes an individual note without affecting sibling notes or the parent date container.
+    - `getNoteCountForEntity(entityId)`: Counts notes filed under a date grouping.
+  - **Three-Tier Navigation (`LifoBackStack`)**:
+    - `NotesView.OVERVIEW`: Date Groupings Directory (Today's note count and quick `+ Note` action, plus Past Dates).
+    - `NotesView.DATE_DETAIL`: List of filed notes for the selected date grouping, with inline study topic editor, Silk Ribbon toggle, and `+ Add Note`.
+    - `NotesView.NOTE_EDITOR`: Ruled notepad canvas (`LinedNotepad`) with individual **Title (Optional)** field, dynamic zoom, quiet autosave, and grounded AI prompts.
   - **Sanctuary Isolation Invariant**: `PrayerRepository.getContemplativeTopics()` explicitly filters out `RootCode.NOTES` (`userEntityQuery = "... WHERE root_code != 'NOTES' AND is_preloaded_historic = 0 ..."`), ensuring daily notes and study reflections never enter the devotional intercession queue.
-  - **AI Prompt Integration & Persistent Cache**: Notes content triggers asynchronous suggest requests via `PrayerApiClient.getSuggestions(...)` with `root = "NOTES"`, mapping non-empty lines to `RecordedPoint` items. Prompts are grouped into *Praise God*, *Thank God*, and *Ask God*, cached in `TABLE_SUGGESTION_CACHE` (`suggestion_cache`), and collapsed by default under the `❧ Prompts for Prayer ❧` divider.
+  - **AI Prompt Integration & Persistent Cache**: Note content triggers asynchronous suggest requests via `PrayerApiClient.getSuggestions(...)` with `root = "NOTES"` and target name reflecting date and note title. Prompts are grouped into *Praise God*, *Thank God*, and *Ask God*, cached in `TABLE_SUGGESTION_CACHE` (`suggestion_cache`), and collapsed by default under the `❧ Prompts for Prayer ❧` divider.
 
 - **Client Configuration & Preferences Schema (`APP_CONFIG`)**:
   - Encrypted key-value or single-row table in SQLite storing local preferences:

@@ -121,10 +121,11 @@ Many believers struggle with consistency, distraction, and cognitive overload du
     - **Analog Reading Experience**: Cream vellum writing canvas, baseline-locked feint rules (`28sp`), Literary Serif typography, Table of Contents quick-jump navigation, and persistent Silk Ribbon reading progress tracking.
 
 13. **Daily Reflections & Study Notes Pathway (`NotesScreen`)**:
-    - Houses freeform study notes and daily reflections titled by day and date (e.g., *"Friday, 11 September 2026"*).
-    - **Zero-Friction Access**: Dedicated 5th tactile bookplate on `HomeScreen` below Library, leading to a date-sorted directory with prominent `+ Today's Note` quick creation.
-    - **Freeform Ruled Notepad**: Standard text entry without forced bullet formatting on newlines; baseline-locked dynamic ruling rules synchronized to Literary Serif typography with pinch-to-zoom magnification (`0.75f` to `2.5f`).
-    - **Contemplative AI Assistance**: Collapsed-by-default prayer prompt suggestions card (`❧ Prompts for Prayer ❧`), offering contemplative Praise, Thank, and Ask God suggestions derived from the reflection text, backed by persistent SQLite caching and background refresh.
+    - Houses freeform study notes and meditations organized by calendar date groupings (e.g., *"Saturday, 12 September 2026"*).
+    - **The Date as Grouping Invariant**: The calendar date is not a note, but a grouping container under which any number of notes with individual, optional titles can be filed.
+    - **Zero-Friction Access & Multi-Note Filing**: Dedicated 5th tactile bookplate on `HomeScreen` below Library, leading to a date groupings directory with prominent Today status and quick `+ Note` drafting.
+    - **Freeform Ruled Notepad**: Standard text entry without forced bullet formatting on newlines; baseline-locked dynamic ruling rules synchronized to Literary Serif typography with optional individual note titles and pinch-to-zoom magnification (`0.75f` to `2.5f`).
+    - **Contemplative AI Assistance**: Collapsed-by-default prayer prompt suggestions card (`❧ Prompts for Prayer ❧`), offering contemplative Praise, Thank, and Ask God suggestions derived from the active note, backed by persistent SQLite caching and background refresh.
     - **Sanctuary Isolation**: Strictly excluded from the contemplative intercession queue traversal, ensuring personal journal reflections never intrude upon devotional prayer sessions.
 
 ---
