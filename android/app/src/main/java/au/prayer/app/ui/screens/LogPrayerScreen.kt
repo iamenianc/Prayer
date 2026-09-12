@@ -38,6 +38,13 @@ import au.prayer.app.ui.theme.FlatSquareShape
 import au.prayer.app.ui.theme.PrayerColors
 import au.prayer.app.ui.theme.PrayerSpacing
 import au.prayer.app.ui.theme.PrayerTypography
+import au.prayer.app.ui.gestures.calculateZoomScale
+import au.prayer.app.ui.gestures.pinchToZoom
+import au.prayer.app.ui.theme.withZoom
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private enum class LogStep {
@@ -91,6 +98,24 @@ fun LogPrayerScreen(
     var isCreatingNewEntity by remember { mutableStateOf(false) }
 
     var directText by remember { mutableStateOf(TextFieldValue("• ", selection = TextRange(2))) }
+
+    val initialZoom = remember { repository?.getTextZoomScale() ?: 1.0f }
+    var zoomScale by remember { mutableFloatStateOf(initialZoom) }
+    var isZooming by remember { mutableStateOf(false) }
+    var showZoomPill by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isZooming) {
+        if (isZooming) {
+            showZoomPill = true
+        } else if (showZoomPill) {
+            delay(1500)
+            showZoomPill = false
+        }
+    }
+
+    val typography = remember(typography, zoomScale) {
+        typography.withZoom(zoomScale)
+    }
 
     fun commitPoints(entity: IndividualEntity) {
         val parsed = splitIntoDotpoints(directText.text)
@@ -220,6 +245,25 @@ fun LogPrayerScreen(
                     }
                 },
                 actions = {
+                    if (currentStep == LogStep.DRAFT_PRAYER_POINTS) {
+                        if (zoomScale != 1.0f) {
+                            Text(
+                                text = "${(zoomScale * 100).roundToInt()}% ↺",
+                                style = typography.marginStatus.copy(
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.leatherActive,
+                                modifier = Modifier
+                                    .clickable {
+                                        zoomScale = 1.0f
+                                        repository?.saveTextZoomScale(1.0f)
+                                        showZoomPill = true
+                                    }
+                                    .padding(horizontal = PrayerSpacing.small, vertical = PrayerSpacing.extraSmall)
+                            )
+                        }
+                    }
                     val hasDraftText = splitIntoDotpoints(directText.text).isNotEmpty()
                     if (currentStep == LogStep.DRAFT_PRAYER_POINTS && hasDraftText) {
                         TextButton(
@@ -253,12 +297,34 @@ fun LogPrayerScreen(
             )
         }
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .edgeSwipeRight { handleLogPrayerBack() }
+                .pinchToZoom(
+                    onZoomChange = { factor ->
+                        if (currentStep == LogStep.DRAFT_PRAYER_POINTS) {
+                            isZooming = true
+                            zoomScale = calculateZoomScale(zoomScale, factor)
+                        }
+                    },
+                    onZoomStart = {
+                        if (currentStep == LogStep.DRAFT_PRAYER_POINTS) {
+                            isZooming = true
+                        }
+                    },
+                    onZoomEnd = {
+                        if (currentStep == LogStep.DRAFT_PRAYER_POINTS) {
+                            isZooming = false
+                            repository?.saveTextZoomScale(zoomScale)
+                        }
+                    }
+                )
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
             HorizontalDivider(thickness = 0.5.dp, color = colors.borderSubtle)
 
             AnimatedContent(
@@ -591,6 +657,56 @@ fun LogPrayerScreen(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Floating Zoom Indicator Pill
+            AnimatedVisibility(
+                visible = (isZooming || showZoomPill) && (currentStep == LogStep.DRAFT_PRAYER_POINTS),
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 28.dp)
+            ) {
+                Surface(
+                    onClick = {
+                        zoomScale = 1.0f
+                        repository?.saveTextZoomScale(1.0f)
+                        showZoomPill = true
+                    },
+                    shape = FlatSquareShape,
+                    color = colors.leatherActive.copy(alpha = 0.92f),
+                    contentColor = colors.background,
+                    tonalElevation = PrayerSpacing.elevationCard,
+                    shadowElevation = PrayerSpacing.elevationCard,
+                    border = BorderStroke(1.dp, colors.borderSubtle)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "${(zoomScale * 100).roundToInt()}%",
+                            style = typography.caption.copy(
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = colors.background
+                        )
+                        if (zoomScale != 1.0f) {
+                            Text(
+                                text = "• Reset",
+                                style = typography.caption.copy(
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                ),
+                                color = colors.background.copy(alpha = 0.85f)
+                            )
                         }
                     }
                 }

@@ -216,7 +216,7 @@ fun JournalScreen(
                     }
                 },
                 actions = {
-                    if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                    if (currentView != JournalView.SETTINGS) {
                         if (zoomScale != 1.0f) {
                             Text(
                                 text = "${(zoomScale * 100).roundToInt()}% ↺",
@@ -313,18 +313,18 @@ fun JournalScreen(
                 .edgeSwipeRight { handleJournalBack() }
                 .pinchToZoom(
                     onZoomChange = { factor ->
-                        if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                        if (currentView != JournalView.SETTINGS) {
                             isZooming = true
                             zoomScale = calculateZoomScale(zoomScale, factor)
                         }
                     },
                     onZoomStart = {
-                        if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                        if (currentView != JournalView.SETTINGS) {
                             isZooming = true
                         }
                     },
                     onZoomEnd = {
-                        if (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL) {
+                        if (currentView != JournalView.SETTINGS) {
                             isZooming = false
                             repository?.saveTextZoomScale(zoomScale)
                         }
@@ -1127,7 +1127,7 @@ fun JournalScreen(
 
         // Floating Zoom Indicator Pill
             AnimatedVisibility(
-                visible = (isZooming || showZoomPill) && (currentView == JournalView.OVERVIEW || currentView == JournalView.ENTITY_DETAIL),
+                visible = (isZooming || showZoomPill) && (currentView != JournalView.SETTINGS),
                 enter = fadeIn(),
                 exit = fadeOut(),
                 modifier = Modifier

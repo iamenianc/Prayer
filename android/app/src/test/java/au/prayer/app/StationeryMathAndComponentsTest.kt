@@ -279,6 +279,37 @@ class StationeryMathAndComponentsTest {
     }
 
     @Test
+    fun `test edit prayer point page typography and lined notepad scaling with text zoom`() {
+        fun computeNotepadLineHeight(fontSizeSp: Float): Float {
+            return if (fontSizeSp > 0f) {
+                fontSizeSp * 1.9f
+            } else {
+                36f
+            }
+        }
+
+        val baseTypography = getPrayerTypography(TextScale.REGULAR)
+        val zoomFactors = listOf(0.75f, 1.0f, 1.25f, 1.5f, 2.0f)
+
+        for (zoom in zoomFactors) {
+            val zoomed = baseTypography.withZoom(zoom)
+            val baseBodySize = baseTypography.prayerPointBody.fontSize.value
+            val expectedBodySize = baseBodySize * zoom
+
+            assertEquals(expectedBodySize, zoomed.prayerPointBody.fontSize.value, 0.001f)
+
+            // Lined notepad dynamically calculates line height from zoomed font size
+            val expectedNotepadLineHeight = expectedBodySize * 1.9f
+            val computedNotepadLineHeight = computeNotepadLineHeight(zoomed.prayerPointBody.fontSize.value)
+            assertEquals(expectedNotepadLineHeight, computedNotepadLineHeight, 0.001f)
+
+            // Thanksgiving note label (caption) and button text also scale
+            assertEquals(baseTypography.caption.fontSize.value * zoom, zoomed.caption.fontSize.value, 0.001f)
+            assertEquals(baseTypography.button.fontSize.value * zoom, zoomed.button.fontSize.value, 0.001f)
+        }
+    }
+
+    @Test
     fun `test modern folio launcher icon complies with design principles and rejects stark black white`() {
         val candidates = listOf(
             File("src/main/res/drawable/ic_launcher_background.xml"),

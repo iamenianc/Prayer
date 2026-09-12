@@ -396,13 +396,13 @@ fun Modifier.pinchToZoom(
 ): Modifier = this.pointerInput(onZoomChange, onZoomStart, onZoomEnd) {
     awaitEachGesture {
         do {
-            val event = awaitPointerEvent()
+            val event = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
             val downPointers = event.changes.filter { it.pressed }
             if (downPointers.size >= 2) {
                 onZoomStart()
                 var prevDistance = (downPointers[0].position - downPointers[1].position).getDistance()
                 while (true) {
-                    val nextEvent = awaitPointerEvent()
+                    val nextEvent = awaitPointerEvent(androidx.compose.ui.input.pointer.PointerEventPass.Initial)
                     val activePointers = nextEvent.changes.filter { it.pressed }
                     if (activePointers.size < 2) {
                         activePointers.forEach { it.consume() }
