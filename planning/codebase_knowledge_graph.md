@@ -15,7 +15,7 @@
 The *Pray Without Ceasing* repository is organized into three primary operational domains:
 
 1. **Planning, Conceptualization & Product Specification ([`planning/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning))**:
-   The doctrinal, functional, technical, and UX contract repository. It holds living doctrinal specifications (`beliefs.md`), business requirements (`BRD.md`), technical reference (`technical.md`), UX specifications (`UX.md`), notes data architecture (`notes_data_architecture.md`), the immutable visual design bible ([`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md)), and the automated browser-based layout and gesture contract test suite.
+   The doctrinal, functional, technical, and UX contract repository. It holds living doctrinal specifications (`beliefs.md`), business requirements (`BRD.md`), technical reference (`technical.md`), UX specifications (`UX.md`), unified data architecture covering prayer points, library books, and daily notes (`notes_data_architecture.md`), the immutable visual design bible ([`android_journal_design_principles.md`](file:///c:/Users/ianch/sourcecode/repos/Prayer/planning/android_journal_design_principles.md)), and the automated browser-based layout and gesture contract test suite.
 2. **AI Agent API Production Engine ([`api/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/api))**:
    A zero-cost, stateless Cloudflare Worker serverless edge proxy that interfaces anonymously with upstream LLM inference providers (OpenRouter) with strict Reformed theological guardrails, budget hard ceilings ($5.00/mo), and dual execution branches (Ambient Grounded Suggestions & Post-Commit Auto-Titling).
 3. **Native Android Production Client ([`android/`](file:///c:/Users/ianch/sourcecode/repos/Prayer/android))**:
@@ -28,7 +28,7 @@ graph TD
         BRD["BRD.md<br/>(Business Requirements)"]
         TECH["technical.md<br/>(Technical Reference)"]
         UX["UX.md<br/>(Design & Interaction)"]
-        NOTES_ARCH["notes_data_architecture.md<br/>(Notes Data Architecture)"]
+        NOTES_ARCH["notes_data_architecture.md<br/>(Unified Data Architecture:<br/>Points, Books & Notes)"]
         JOURNAL_DESIGN["android_journal_design_principles.md<br/>(Canonical Folio Design Bible - Read-Only)"]
         TEST_RUNNER["test_runner.html<br/>(DOM & Layout Contract)"]
         SPEC_TESTS["planning/tests/*.spec.js<br/>(Playwright Verification)"]

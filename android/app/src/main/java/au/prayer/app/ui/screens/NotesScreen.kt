@@ -239,10 +239,7 @@ fun NotesScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = when (currentView) {
-                            NotesView.OVERVIEW -> "Notes"
-                            NotesView.DETAIL -> selectedNoteEntity?.displayName ?: "Notes"
-                        },
+                        text = "Notes",
                         style = activeTypography.prayerPointTitle,
                         color = colors.textPrimary,
                         maxLines = 1,

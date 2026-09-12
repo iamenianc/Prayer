@@ -26,6 +26,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import au.prayer.app.data.local.PrayerRepository
 import au.prayer.app.data.models.IndividualEntity
@@ -223,13 +224,14 @@ fun LogPrayerScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = when {
-                            selectedEntity != null -> "Praying for ${selectedEntity!!.displayName}"
-                            currentStep == LogStep.SELECT_ENTITY -> "Who are you praying for?"
-                            else -> "Add prayer points"
+                        text = when (currentStep) {
+                            LogStep.SELECT_ENTITY -> "Select Topic"
+                            else -> "Add Prayer"
                         },
                         style = typography.prayerPointTitle,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
@@ -356,6 +358,26 @@ fun LogPrayerScreen(
                         Column(
                             modifier = Modifier.fillMaxSize()
                         ) {
+                            if (selectedEntity != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(
+                                            start = PrayerSpacing.textInset,
+                                            end = PrayerSpacing.large,
+                                            top = PrayerSpacing.medium,
+                                            bottom = PrayerSpacing.small
+                                        )
+                                ) {
+                                    Text(
+                                        text = "Praying for ${selectedEntity!!.displayName}",
+                                        style = typography.subjectHeader,
+                                        color = colors.leatherActive
+                                    )
+                                }
+                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                            }
+
                             // Section 1: Lined Notepad Canvas
                             Box(
                                 modifier = Modifier

@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -216,12 +217,14 @@ fun JournalScreen(
                     Text(
                         text = when (currentView) {
                             JournalView.OVERVIEW -> "Journal"
-                            JournalView.ENTITY_DETAIL -> selectedEntity?.displayName ?: "Prayer points"
+                            JournalView.ENTITY_DETAIL -> selectedEntity?.rootCode?.displayTitle ?: "Journal"
                             JournalView.EDIT_PRAYER_POINT -> "Edit Prayer Point"
                             JournalView.SETTINGS -> "Settings"
                         },
                         style = typography.prayerPointTitle,
-                        color = colors.textPrimary
+                        color = colors.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
@@ -731,6 +734,35 @@ fun JournalScreen(
                                     }
 
                                     LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
+                                        // Folio Subject Header on Canvas
+                                        item(key = "entity_header_${entity.id}") {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(
+                                                        start = PrayerSpacing.textInset,
+                                                        end = PrayerSpacing.large + 36.dp,
+                                                        top = PrayerSpacing.medium,
+                                                        bottom = PrayerSpacing.small
+                                                    )
+                                            ) {
+                                                Text(
+                                                    text = entity.displayName,
+                                                    style = typography.subjectHeader,
+                                                    color = colors.textPrimary
+                                                )
+                                                if (entity.contextDescription.isNotBlank()) {
+                                                    Spacer(modifier = Modifier.height(PrayerSpacing.extraSmall))
+                                                    Text(
+                                                        text = entity.contextDescription,
+                                                        style = typography.caption.copy(fontWeight = FontWeight.Medium),
+                                                        color = colors.leatherActive
+                                                    )
+                                                }
+                                            }
+                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                        }
+
                                         groupedPoints.forEach { (dateHeader, datePoints) ->
                                             item(key = "date_header_${entity.id}_$dateHeader") {
                                                 Box(
