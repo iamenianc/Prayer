@@ -15,6 +15,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
@@ -90,6 +96,7 @@ fun JournalScreen(
     onCreateEntity: ((rootCode: RootCode, displayName: String) -> IndividualEntity)? = null,
     onAddForEntity: (IndividualEntity) -> Unit = {},
     onLogForEntity: (IndividualEntity) -> Unit = onAddForEntity,
+    onSavePrayerPoints: ((entityId: String, points: List<String>) -> Unit)? = null,
     apiClient: PrayerApiClient? = null,
     repository: PrayerRepository? = null,
     onVaultRestored: ((RestoreSummary) -> Unit)? = null,
@@ -152,7 +159,18 @@ fun JournalScreen(
     var pointForContextActions by remember { mutableStateOf<PrayerPoint?>(null) }
     var pointToDelete by remember { mutableStateOf<PrayerPoint?>(null) }
 
+    // Inline draft point state when viewing an active record in ENTITY_DETAIL
+    var isAddingDraftPoint by remember { mutableStateOf(false) }
+    var draftPointText by remember { mutableStateOf(TextFieldValue("• ", selection = TextRange(2))) }
+    val draftFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     fun handleJournalBack(): Boolean {
+        if (isAddingDraftPoint) {
+            isAddingDraftPoint = false
+            draftPointText = TextFieldValue("• ", selection = TextRange(2))
+            return true
+        }
         return if (journalBackStack.canPop) {
             journalBackStack.pop()
             true
@@ -786,7 +804,25 @@ fun JournalScreen(
                                         points.groupBy { formatJournalDate(it.createdAt) }
                                     }
 
-                                    LazyColumn(modifier = Modifier.weight(1f)) {
+                                    val listState = rememberLazyListState()
+
+                                    LaunchedEffect(isAddingDraftPoint) {
+                                        if (isAddingDraftPoint) {
+                                            delay(60)
+                                            listState.animateScrollToItem(listState.layoutInfo.totalItemsCount.coerceAtLeast(1) - 1)
+                                            repeat(5) {
+                                                try {
+                                                    draftFocusRequester.requestFocus()
+                                                    keyboardController?.show()
+                                                    return@LaunchedEffect
+                                                } catch (_: Exception) {
+                                                    delay(50)
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    LazyColumn(state = listState, modifier = Modifier.weight(1f)) {
                                         groupedPoints.forEach { (dateHeader, datePoints) ->
                                             item(key = "date_header_${entity.id}_$dateHeader") {
                                                 Box(
@@ -933,31 +969,176 @@ fun JournalScreen(
                                             }
                                         }
 
-                                        // Quick Action: Add prayer point for this person/group at the bottom of the list of points
-                                        item(key = "add_point_${entity.id}") {
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(PrayerSpacing.primaryActionHeight),
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                OutlinedButton(
-                                                    onClick = { onAddForEntity(entity) },
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .fillMaxHeight(),
+                                        // Inline editable draft point below existing points
+                                        if (isAddingDraftPoint) {
+                                            item(key = "draft_point_${entity.id}") {
+                                                Surface(
+                                                    modifier = Modifier.fillMaxWidth(),
                                                     shape = FlatSquareShape,
-                                                    border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border),
-                                                    colors = ButtonDefaults.outlinedButtonColors(
-                                                        containerColor = colors.surface,
-                                                        contentColor = colors.textPrimary
-                                                    )
+                                                    color = colors.surfaceSubtle,
+                                                    contentColor = colors.textPrimary,
+                                                    tonalElevation = PrayerSpacing.elevationNone
                                                 ) {
-                                                    Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
+                                                    Column {
+                                                        Row(
+                                                            modifier = Modifier
+                                                                .fillMaxWidth()
+                                                                .height(IntrinsicSize.Min)
+                                                        ) {
+                                                            // Left Track: 37.52dp margin track with [ DRAFT ] pill
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .width(PrayerSpacing.marginTrackWidth)
+                                                                    .fillMaxHeight()
+                                                                    .padding(top = PrayerSpacing.medium),
+                                                                contentAlignment = Alignment.TopCenter
+                                                            ) {
+                                                                Surface(
+                                                                    shape = RoundedCornerShape(4.dp),
+                                                                    border = BorderStroke(0.5.dp, colors.leatherPrimary.copy(alpha = 0.5f)),
+                                                                    color = colors.surface
+                                                                ) {
+                                                                    Text(
+                                                                        text = "DRAFT",
+                                                                        style = typography.marginStatus,
+                                                                        color = colors.leatherPrimary,
+                                                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                                    )
+                                                                }
+                                                            }
+
+                                                            // 0.75dp red/sepia vertical margin guide rule
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .width(PrayerSpacing.hairlineWidth)
+                                                                    .fillMaxHeight()
+                                                                    .background(colors.paperMarginRule)
+                                                            )
+
+                                                            // Right Track: Prayer Text Canvas
+                                                            Column(
+                                                                modifier = Modifier
+                                                                    .weight(1f)
+                                                                    .padding(
+                                                                        start = 8.dp,
+                                                                        end = 16.dp,
+                                                                        top = PrayerSpacing.medium,
+                                                                        bottom = PrayerSpacing.medium
+                                                                    )
+                                                            ) {
+                                                                BasicTextField(
+                                                                    value = draftPointText,
+                                                                    onValueChange = { draftPointText = it },
+                                                                    modifier = Modifier
+                                                                        .fillMaxWidth()
+                                                                        .focusRequester(draftFocusRequester),
+                                                                    textStyle = typography.prayerPointBody.copy(color = colors.textPrimary),
+                                                                    cursorBrush = SolidColor(colors.textPrimary),
+                                                                    decorationBox = { innerTextField ->
+                                                                        if (draftPointText.text.isEmpty()) {
+                                                                            Text(
+                                                                                text = "• Enter prayer point...",
+                                                                                style = typography.prayerPointBody,
+                                                                                color = colors.textSubtle
+                                                                            )
+                                                                        }
+                                                                        innerTextField()
+                                                                    }
+                                                                )
+
+                                                                Spacer(modifier = Modifier.height(PrayerSpacing.medium))
+
+                                                                // Inline Action Buttons: Cancel and Save
+                                                                Row(
+                                                                    modifier = Modifier.fillMaxWidth(),
+                                                                    horizontalArrangement = Arrangement.End,
+                                                                    verticalAlignment = Alignment.CenterVertically
+                                                                ) {
+                                                                    TextButton(
+                                                                        onClick = {
+                                                                            isAddingDraftPoint = false
+                                                                            draftPointText = TextFieldValue("• ", selection = TextRange(2))
+                                                                        },
+                                                                        shape = FlatSquareShape
+                                                                    ) {
+                                                                        Text("Cancel", style = typography.caption, color = colors.textSubtle)
+                                                                    }
+
+                                                                    Spacer(modifier = Modifier.width(PrayerSpacing.small))
+
+                                                                    val hasValidDraft = draftPointText.text.replace("•", "").trim().isNotBlank()
+                                                                    Button(
+                                                                        onClick = {
+                                                                            val pointsToSave = splitIntoDotpoints(draftPointText.text)
+                                                                            if (pointsToSave.isNotEmpty()) {
+                                                                                val saved = repository?.savePrayerPoints(entity.id, pointsToSave)
+                                                                                    ?: pointsToSave.map { desc ->
+                                                                                        PrayerPoint(entityId = entity.id, title = "", description = desc)
+                                                                                    }
+                                                                                localPoints = repository?.getPointsForEntity(entity.id) ?: (localPoints + saved)
+                                                                                onSavePrayerPoints?.invoke(entity.id, pointsToSave)
+                                                                                isAddingDraftPoint = false
+                                                                                draftPointText = TextFieldValue("• ", selection = TextRange(2))
+                                                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                                onShowMessage?.invoke(
+                                                                                    if (pointsToSave.size > 1) "Saved ${pointsToSave.size} prayer points"
+                                                                                    else "Prayer point saved"
+                                                                                )
+                                                                            }
+                                                                        },
+                                                                        enabled = hasValidDraft,
+                                                                        shape = FlatSquareShape,
+                                                                        colors = ButtonDefaults.buttonColors(
+                                                                            containerColor = colors.leatherPrimary,
+                                                                            contentColor = Color.White
+                                                                        ),
+                                                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                                                    ) {
+                                                                        Text(
+                                                                            text = "Save Point",
+                                                                            style = typography.button.copy(fontSize = 13.sp),
+                                                                            color = Color.White
+                                                                        )
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                        HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                                    }
                                                 }
                                             }
-                                            HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
-                                            Spacer(modifier = Modifier.height(PrayerSpacing.large))
+                                        }
+
+                                        // Quick Action: Add prayer point button below list when not drafting
+                                        if (!isAddingDraftPoint && !entity.isPreloadedHistoric) {
+                                            item(key = "add_point_${entity.id}") {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(PrayerSpacing.primaryActionHeight),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            draftPointText = TextFieldValue("• ", selection = TextRange(2))
+                                                            isAddingDraftPoint = true
+                                                        },
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .fillMaxHeight(),
+                                                        shape = FlatSquareShape,
+                                                        border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border),
+                                                        colors = ButtonDefaults.outlinedButtonColors(
+                                                            containerColor = colors.surface,
+                                                            contentColor = colors.textPrimary
+                                                        )
+                                                    ) {
+                                                        Text("+ Add prayer point", style = typography.button, color = colors.textPrimary)
+                                                    }
+                                                }
+                                                HorizontalDivider(thickness = PrayerSpacing.hairlineWidth, color = colors.paperFeintRule)
+                                                Spacer(modifier = Modifier.height(PrayerSpacing.large))
+                                            }
                                         }
                                     }
                                 }
@@ -1204,7 +1385,11 @@ fun JournalScreen(
                         onClick = {
                             val target = entity
                             entityForContextActions = null
-                            onAddForEntity(target)
+                            selectedEntity = target
+                            localPoints = getPointsForEntity(target.id)
+                            draftPointText = TextFieldValue("• ", selection = TextRange(2))
+                            isAddingDraftPoint = true
+                            journalBackStack.push(JournalView.ENTITY_DETAIL)
                         },
                         modifier = Modifier
                             .fillMaxWidth()

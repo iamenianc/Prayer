@@ -90,6 +90,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - Material Container Transform (`300ms`, Emphasized Decelerate) to Entity Detail view.
    - **Date Separation**: Entries are grouped and separated by date of entry with day and month written out in full English words (e.g., *"Friday, 11 September 2026"*) in subtle, unflashy typography (`typography.marginStatus` / `colors.inkMuted`).
    - Click once to edit body, status, or thanksgiving note (titles are omitted).
+   - **Inline Prayer Point Capture in Active Record View**: When viewing saved prayer points for an active record, clicking `+ Add prayer point` creates an editable draft point directly on the fine-ruled canvas below the list of existing points rather than navigating away to the dedicated capture screen. The draft point displays a `[ DRAFT ]` status pill in the 37.52dp margin track, autofocuses the text input, supports multiline auto-bullet entry via `splitIntoDotpoints`, and provides inline Cancel and Save Point actions that commit immediately to SQLite and update the view without context switching. Pressing Back while drafting safely cancels the draft without popping the active record view.
    - Permanent cascading deletion with stark planar confirmation dialog.
    - Answered prayers displayed with Celadon coloring and subtle strikethrough.
 

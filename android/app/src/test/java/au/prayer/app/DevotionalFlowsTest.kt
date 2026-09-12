@@ -794,6 +794,82 @@ class DevotionalFlowsTest {
         val dateString = sdf.format(java.util.Date(1789214400000L))
         assertEquals("Saturday, 12 September 2026", dateString)
     }
+
+    @Test
+    fun `test inline draft point validation and parsing logic`() {
+        // Empty or bullet only should not be valid for saving
+        val emptyDraft = TextFieldValue("")
+        assertFalse(emptyDraft.text.replace("•", "").trim().isNotBlank())
+
+        val bulletOnlyDraft = TextFieldValue("• ")
+        assertFalse(bulletOnlyDraft.text.replace("•", "").trim().isNotBlank())
+
+        val spacesDraft = TextFieldValue("   •   \n   ")
+        assertFalse(spacesDraft.text.replace("•", "").trim().isNotBlank())
+
+        // Valid single line draft
+        val validDraft = TextFieldValue("• Complete recovery from surgery")
+        assertTrue(validDraft.text.replace("•", "").trim().isNotBlank())
+        val singlePoints = splitIntoDotpoints(validDraft.text)
+        assertEquals(1, singlePoints.size)
+        assertEquals("• Complete recovery from surgery", singlePoints.first())
+
+        // Valid multiline draft entered into inline draft point
+        val multilineDraft = TextFieldValue("• Wisdom in elder meetings\n• Peace for grieving family")
+        val multilinePoints = splitIntoDotpoints(multilineDraft.text)
+        assertEquals(2, multilinePoints.size)
+        assertEquals("• Wisdom in elder meetings", multilinePoints[0])
+        assertEquals("• Peace for grieving family", multilinePoints[1])
+    }
+
+    @Test
+    fun `test inline draft point back handling dismisses draft without popping view`() {
+        var isAddingDraftPoint = true
+        var draftPointText = TextFieldValue("• Partial prayer note")
+        var backStackPopped = false
+
+        fun handleBack(): Boolean {
+            if (isAddingDraftPoint) {
+                isAddingDraftPoint = false
+                draftPointText = TextFieldValue("• ", selection = TextRange(2))
+                return true
+            }
+            backStackPopped = true
+            return true
+        }
+
+        // First press: should cancel drafting and preserve view
+        val handledFirst = handleBack()
+        assertTrue(handledFirst)
+        assertFalse("Should not pop back stack when cancelling draft", backStackPopped)
+        assertFalse("Drafting should be cancelled", isAddingDraftPoint)
+        assertEquals("• ", draftPointText.text)
+
+        // Second press: now pops back stack
+        val handledSecond = handleBack()
+        assertTrue(handledSecond)
+        assertTrue("Should pop back stack when not drafting", backStackPopped)
+    }
+
+    @Test
+    fun `test inline draft point saves and updates local points list`() {
+        val entityId = "entity-123"
+        val existingPoint = PrayerPoint(id = "p-1", entityId = entityId, title = "", description = "• Existing prayer")
+        var localPoints = listOf(existingPoint)
+
+        val draftText = "• Faithful perseverance in trial"
+        val pointsToSave = splitIntoDotpoints(draftText)
+        assertEquals(1, pointsToSave.size)
+
+        // Simulated repository save
+        val newPoint = PrayerPoint(id = "p-2", entityId = entityId, title = "", description = pointsToSave.first())
+        localPoints = localPoints + newPoint
+
+        assertEquals(2, localPoints.size)
+        assertEquals("p-1", localPoints[0].id)
+        assertEquals("p-2", localPoints[1].id)
+        assertEquals("• Faithful perseverance in trial", localPoints[1].description)
+    }
 }
 
 

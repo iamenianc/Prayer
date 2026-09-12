@@ -267,7 +267,7 @@ graph TD
             HOME["HomeScreen.kt<br/>(Frontispiece Canvas)"]
             SANCTUARY["SanctuaryPrayerScreen.kt<br/>(Buttonless Contemplation, 30/40/30 Zones, Baseline-Synchronized Ruled Lines & Collapsed Prompts)"]
             LOG["LogPrayerScreen.kt<br/>(Lined Notepad Canvas, Drafting Text Zoom & Assistant)"]
-            JOURNAL["JournalScreen.kt<br/>(Relational Vault, Edit Point Text Zoom, Bottom-Anchored Point Action, Ribbon & Collapsed Prompts)"]
+            JOURNAL["JournalScreen.kt<br/>(Relational Vault, Inline Editable Draft Point, Edit Point Text Zoom, Ribbon & Collapsed Prompts)"]
             SETTINGS["SettingsScreen.kt<br/>(Folio Preferences & Binding)"]
             LIBRARY["LibraryScreen.kt<br/>(Theological Catalog & Bookshelf)"]
             READER["VolumeReaderScreen.kt<br/>(Immersive Folio Reader, Dynamic Baseline Rules & Pinch-to-Zoom)"]
@@ -397,6 +397,29 @@ sequenceDiagram
     Main->>Repo: savePrayerPoints(entityId, points)
     Repo-->>Main: List<PrayerPoint> (each with distinct ID & ACTIVE status)
     Main-->>Believer: Quiet Celadon Autosave Pulse + Batch Undo Toast
+```
+
+### 6.3 Active Record Inline Draft Point Flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Believer as Believer (User)
+    participant Journal as JournalScreen (ENTITY_DETAIL)
+    participant Repo as PrayerRepository
+    participant DB as SQLite / SQLCipher
+
+    Believer->>Journal: Views saved points for active record
+    Believer->>Journal: Taps "+ Add prayer point"
+    Journal->>Journal: Sets isAddingDraftPoint = true, autofocuses draft input
+    Journal-->>Believer: Renders inline draft row with [ DRAFT ] margin pill
+    Believer->>Journal: Types petition & taps "Save Point"
+    Journal->>Journal: splitIntoDotpoints(text)
+    Journal->>Repo: savePrayerPoints(entityId, points)
+    Repo->>DB: INSERT into TABLE_POINTS
+    DB-->>Repo: Saved PrayerPoints
+    Repo-->>Journal: Returns saved points
+    Journal->>Journal: Refreshes localPoints & clears draft state
+    Journal-->>Believer: Displays newly committed point below list
 ```
 
 ---

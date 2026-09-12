@@ -473,6 +473,9 @@ class MainActivity : ComponentActivity() {
                                             preselectedEntity = entity
                                             backStack.push(ScreenState.LOG_PRAYER)
                                         },
+                                        onSavePrayerPoints = { _, _ ->
+                                            refreshEntities()
+                                        },
                                         onTogglePinEntity = { id, isPinned ->
                                             repository.toggleEntityPinned(id, isPinned)
                                             prayerTopics = repository.getContemplativeTopics(blendHistoric = appConfig.blendHistoricPrayers)
