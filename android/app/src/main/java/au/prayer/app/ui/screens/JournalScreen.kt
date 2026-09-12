@@ -389,7 +389,7 @@ fun JournalScreen(
                 when (view) {
                     JournalView.OVERVIEW -> {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            val pinnedEntities = entities.filter { it.isPinned }
+                            val pinnedEntities = entities.filter { it.isPinned && it.rootCode != RootCode.NOTES }
                             if (pinnedEntities.isNotEmpty()) {
                                 item(key = "header_pinned_focus") {
                                     Surface(
@@ -487,7 +487,7 @@ fun JournalScreen(
                                 }
                             }
 
-                            RootCode.values().forEach { root ->
+                            RootCode.entries.filter { it != RootCode.NOTES }.forEach { root ->
                                 item(key = "header_${root.name}") {
                                     val isExpanded = expandedRoots[root] ?: true
                                     Surface(
@@ -568,6 +568,7 @@ fun JournalScreen(
                                                             RootCode.MISSION_PARTNERS -> "+ Add mission partner"
                                                             RootCode.GENERAL -> "+ Add topic"
                                                             RootCode.HISTORIC -> ""
+                                                            RootCode.NOTES -> ""
                                                         },
                                                         style = typography.button,
                                                         color = colors.leatherActive

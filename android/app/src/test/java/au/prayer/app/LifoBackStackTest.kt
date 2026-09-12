@@ -163,4 +163,21 @@ class LifoBackStackTest {
         assertEquals(1, stack.size)
         assertFalse(stack.canPop)
     }
+
+    @Test
+    fun `test notes back stack navigation flow`() {
+        val stack = LifoBackStack(ScreenState.HOME)
+        assertEquals(ScreenState.HOME, stack.current)
+
+        // Navigate Home -> Notes
+        stack.push(ScreenState.NOTES)
+        assertEquals(ScreenState.NOTES, stack.current)
+        assertEquals(2, stack.size)
+
+        // Exit Notes: returns to Home
+        assertTrue(stack.pop())
+        assertEquals(ScreenState.HOME, stack.current)
+        assertEquals(1, stack.size)
+        assertFalse(stack.canPop)
+    }
 }

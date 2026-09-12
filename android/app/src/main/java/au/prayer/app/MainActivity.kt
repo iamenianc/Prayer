@@ -43,7 +43,8 @@ enum class ScreenState {
     LOG_PRAYER,
     JOURNAL,
     LIBRARY,
-    VOLUME_READER
+    VOLUME_READER,
+    NOTES
 }
 
 class MainActivity : ComponentActivity() {
@@ -160,8 +161,8 @@ class MainActivity : ComponentActivity() {
                                                         slideOutVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) { it / 8 }
                                             )
                                     }
-                                    // Transitioning from Home to Journal, Add Prayer Points, or Library: slide in from right with fade
-                                    initialState == ScreenState.HOME && (targetState == ScreenState.JOURNAL || targetState == ScreenState.LOG_PRAYER || targetState == ScreenState.LIBRARY) -> {
+                                    // Transitioning from Home to Journal, Add Prayer Points, Library, or Notes: slide in from right with fade
+                                    initialState == ScreenState.HOME && (targetState == ScreenState.JOURNAL || targetState == ScreenState.LOG_PRAYER || targetState == ScreenState.LIBRARY || targetState == ScreenState.NOTES) -> {
                                         (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> width } +
                                                 fadeIn(animationSpec = tween(300)))
                                             .togetherWith(
@@ -169,8 +170,8 @@ class MainActivity : ComponentActivity() {
                                                         fadeOut(animationSpec = tween(200))
                                             )
                                     }
-                                    // Returning from Journal, Add Prayer Points, or Library to Home: slide in from left with fade
-                                    (initialState == ScreenState.JOURNAL || initialState == ScreenState.LOG_PRAYER || initialState == ScreenState.LIBRARY) && targetState == ScreenState.HOME -> {
+                                    // Returning from Journal, Add Prayer Points, Library, or Notes to Home: slide in from left with fade
+                                    (initialState == ScreenState.JOURNAL || initialState == ScreenState.LOG_PRAYER || initialState == ScreenState.LIBRARY || initialState == ScreenState.NOTES) && targetState == ScreenState.HOME -> {
                                         (slideInHorizontally(animationSpec = tween(320, easing = FastOutSlowInEasing)) { width -> -width / 3 } +
                                                 fadeIn(animationSpec = tween(300)))
                                             .togetherWith(
@@ -238,6 +239,9 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onOpenLibrary = {
                                             backStack.push(ScreenState.LIBRARY)
+                                        },
+                                        onOpenNotes = {
+                                            backStack.push(ScreenState.NOTES)
                                         },
                                         hasPinnedPrayers = allEntities.any { it.isPinned },
                                         onRibbonClick = {
@@ -510,6 +514,21 @@ class MainActivity : ComponentActivity() {
                                         typography = typography,
                                         repository = repository,
                                         onBack = { backStack.pop() }
+                                    )
+                                }
+
+                                ScreenState.NOTES -> {
+                                    NotesScreen(
+                                        colors = colors,
+                                        typography = typography,
+                                        repository = repository,
+                                        apiClient = apiClient,
+                                        onBackToHome = { backStack.pop() },
+                                        onShowMessage = { msg ->
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(msg)
+                                            }
+                                        }
                                     )
                                 }
                             }

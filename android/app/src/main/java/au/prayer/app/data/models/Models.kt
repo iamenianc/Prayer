@@ -8,7 +8,8 @@ enum class RootCode(val displayTitle: String, val sortOrder: Int) {
     GROUPS("Groups", 2),
     MISSION_PARTNERS("Mission Partners", 3),
     GENERAL("General", 4),
-    HISTORIC("Historic", 5)
+    HISTORIC("Historic", 5),
+    NOTES("Notes", 6)
 }
 
 enum class PrayerStatus {

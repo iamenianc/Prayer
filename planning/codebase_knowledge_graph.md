@@ -41,7 +41,7 @@ graph TD
 
     subgraph Android_Client ["3. Native Android Client (android/)"]
         MAIN["MainActivity.kt<br/>(Lifecycle, Privacy Shield & Routing)"]
-        UI_SCREENS["ui/screens/<br/>(Home, Sanctuary, Log, Journal, Settings, Library, VolumeReader)"]
+        UI_SCREENS["ui/screens/<br/>(Home, Sanctuary, Log, Journal, Notes, Settings, Library, VolumeReader)"]
         UI_COMPONENTS["ui/components/<br/>(LinedNotepad, SilkMarkerRibbon, ClosedFolioShield, VaultBackupDialogs)"]
 
         UI_GESTURES["ui/gestures/<br/>(TouchGestureModifier, LIFO)"]
@@ -92,14 +92,14 @@ erDiagram
     APP_CONFIG ||--|| CLIENT_ENVIRONMENT : "configures"
 
     ROOT_CATEGORY {
-        string code PK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC"
-        string displayTitle "People | Groups | Mission Partners | General | Historic"
-        int sortOrder "1 | 2 | 3 | 4 | 5"
+        string code PK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC | NOTES"
+        string displayTitle "People | Groups | Mission Partners | General | Historic | Notes"
+        int sortOrder "1 | 2 | 3 | 4 | 5 | 6"
     }
 
     INDIVIDUAL_ENTITY {
         string id PK "UUID"
-        string rootCode FK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC"
+        string rootCode FK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC | NOTES"
         string displayName "Individual name or collective title"
         string contextDescription "Relational / vocational background"
         boolean isPreloadedHistoric "Flag for preloaded collects/creeds"
@@ -271,6 +271,7 @@ graph TD
             SETTINGS["SettingsScreen.kt<br/>(Folio Preferences & Binding)"]
             LIBRARY["LibraryScreen.kt<br/>(Theological Catalog & Bookshelf)"]
             READER["VolumeReaderScreen.kt<br/>(Immersive Folio Reader, Dynamic Baseline Rules & Pinch-to-Zoom)"]
+            NOTES["NotesScreen.kt<br/>(Date-Entitled Daily Reflections, Ruled Notepad, Pinch-to-Zoom & Collapsed AI Prompts)"]
         end
 
         subgraph Components_Theme ["Components, Theme & Gestures"]
@@ -306,6 +307,7 @@ graph TD
     MAIN --> JOURNAL
     MAIN --> LIBRARY
     MAIN --> READER
+    MAIN --> NOTES
     MAIN --> SHIELD
     
     HOME --> THEME
@@ -326,6 +328,11 @@ graph TD
     READER --> GESTURES
     READER --> THEME
     READER --> RIBBON
+    NOTES --> THEME
+    NOTES --> NOTEPAD
+    NOTES --> RIBBON
+    NOTES --> API_CLIENT
+    NOTES --> GESTURES
 
     MAIN --> REPO
     LOG --> REPO
@@ -333,6 +340,7 @@ graph TD
     SANCTUARY --> REPO
     LIBRARY --> REPO
     READER --> REPO
+    NOTES --> REPO
 
     REPO --> DB_HELPER
     REPO --> MODELS

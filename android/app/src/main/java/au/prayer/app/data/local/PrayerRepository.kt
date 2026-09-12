@@ -284,6 +284,70 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         return TargetContextData(entity, active, answered)
     }
 
+    // --- Notes Operations ---
+
+    fun getNotesEntities(): List<IndividualEntity> {
+        val list = mutableListOf<IndividualEntity>()
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_ENTITIES,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_ROOT} = ?",
+            arrayOf(RootCode.NOTES.name),
+            null,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_PINNED} DESC, ${PrayerDatabaseHelper.COL_ENTITY_CREATED} DESC"
+        )
+        cursor.use {
+            while (it.moveToNext()) {
+                list.add(cursorToEntity(it))
+            }
+        }
+        return list
+    }
+
+    fun getOrCreateTodayNoteEntity(formattedDate: String): IndividualEntity {
+        val cursor = db.query(
+            PrayerDatabaseHelper.TABLE_ENTITIES,
+            null,
+            "${PrayerDatabaseHelper.COL_ENTITY_ROOT} = ? AND ${PrayerDatabaseHelper.COL_ENTITY_NAME} = ?",
+            arrayOf(RootCode.NOTES.name, formattedDate),
+            null,
+            null,
+            null
+        )
+        val existing = cursor.use {
+            if (it.moveToNext()) cursorToEntity(it) else null
+        }
+        if (existing != null) {
+            return existing
+        }
+        return createEntity(
+            rootCode = RootCode.NOTES,
+            displayName = formattedDate,
+            contextDescription = ""
+        )
+    }
+
+    fun getNoteText(entityId: String): String {
+        val points = getPointsForEntity(entityId)
+        return points.joinToString("\n") { it.description }
+    }
+
+    fun saveNoteText(entityId: String, text: String): PrayerPoint {
+        val points = getPointsForEntity(entityId)
+        return if (points.isNotEmpty()) {
+            val first = points.first()
+            updatePrayerPoint(first.id, first.title, text, first.status, first.answeredTestimony)
+            for (i in 1 until points.size) {
+                deletePrayerPoint(points[i].id)
+            }
+            first.copy(description = text)
+        } else {
+            savePrayerPoint(entityId, "", text, PrayerStatus.ACTIVE)
+        }
+    }
+
+
 
     fun getHistoricEntities(): List<IndividualEntity> {
         val list = mutableListOf<IndividualEntity>()
@@ -311,6 +375,7 @@ class PrayerRepository(private val dbHelper: PrayerDatabaseHelper) {
         val userEntityQuery = """
             SELECT e.* FROM ${PrayerDatabaseHelper.TABLE_ENTITIES} e
             WHERE e.${PrayerDatabaseHelper.COL_ENTITY_HISTORIC} = 0
+            AND e.${PrayerDatabaseHelper.COL_ENTITY_ROOT} != 'NOTES'
             AND EXISTS (
                 SELECT 1 FROM ${PrayerDatabaseHelper.TABLE_POINTS} p 
                 WHERE p.${PrayerDatabaseHelper.COL_POINT_ENTITY_ID} = e.${PrayerDatabaseHelper.COL_ENTITY_ID} 

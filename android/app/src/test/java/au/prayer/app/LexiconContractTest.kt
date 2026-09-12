@@ -43,7 +43,8 @@ class LexiconContractTest {
         "Clarifying question",
         "Skip to prayer points",
         "Review prayer points",
-        "Thanksgiving note"
+        "Thanksgiving note",
+        "Notes"
     )
 
     @Test

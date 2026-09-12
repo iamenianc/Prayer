@@ -50,6 +50,7 @@ fun HomeScreen(
     onAddPrayerPoints: () -> Unit,
     onLogPrayerPoints: () -> Unit = onAddPrayerPoints,
     onOpenLibrary: () -> Unit = {},
+    onOpenNotes: () -> Unit = {},
     hasPinnedPrayers: Boolean = false,
     onRibbonClick: () -> Unit = onStartPraying,
     isInitialLaunch: Boolean = false,
@@ -124,6 +125,17 @@ fun HomeScreen(
         targetValue = if (isVisible) 0f else 16f,
         animationSpec = tween(durationMillis = 350, delayMillis = if (isInitialLaunch) 580 else 280, easing = FastOutSlowInEasing),
         label = "Action4TranslationY"
+    )
+
+    val action5Alpha by animateFloatAsState(
+        targetValue = if (isVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 350, delayMillis = if (isInitialLaunch) 640 else 340, easing = FastOutSlowInEasing),
+        label = "Action5Alpha"
+    )
+    val action5TranslationY by animateFloatAsState(
+        targetValue = if (isVisible) 0f else 16f,
+        animationSpec = tween(durationMillis = 350, delayMillis = if (isInitialLaunch) 640 else 340, easing = FastOutSlowInEasing),
+        label = "Action5TranslationY"
     )
 
     val coverAlpha by animateFloatAsState(
@@ -257,7 +269,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .weight(1f)
                             .padding(bottom = PrayerSpacing.small),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Pathway 1: Start praying (Devotional Gateway - Elevated Sanctuary Plate)
@@ -441,6 +453,55 @@ fun HomeScreen(
                                     )
                                     Text(
                                         text = "Library",
+                                        style = typography.homeAction,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                                Text(
+                                    text = "›",
+                                    fontFamily = FontFamily.Serif,
+                                    fontSize = 18.sp,
+                                    color = colors.inkMuted.copy(alpha = 0.50f)
+                                )
+                            }
+                        }
+
+                        // Pathway 5: Notes (Daily Reflections & Study Notes - Stationery Plate)
+                        Surface(
+                            onClick = onOpenNotes,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .graphicsLayer {
+                                    alpha = action5Alpha
+                                    translationY = action5TranslationY
+                                },
+                            shape = FlatSquareShape,
+                            color = colors.surface,
+                            contentColor = colors.textPrimary,
+                            tonalElevation = PrayerSpacing.elevationSubtle,
+                            shadowElevation = PrayerSpacing.elevationSubtle,
+                            border = BorderStroke(PrayerSpacing.hairlineWidth, colors.border)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = PrayerSpacing.large),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(PrayerSpacing.medium)
+                                ) {
+                                    Text(
+                                        text = "✎",
+                                        fontFamily = FontFamily.Serif,
+                                        fontSize = 16.sp,
+                                        color = colors.leatherActive.copy(alpha = 0.75f)
+                                    )
+                                    Text(
+                                        text = "Notes",
                                         style = typography.homeAction,
                                         color = colors.textPrimary
                                     )

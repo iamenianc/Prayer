@@ -464,7 +464,7 @@ fun LogPrayerScreen(
                                         onDismissRequest = { isRootDropdownExpanded = false },
                                         modifier = Modifier.background(colors.surfaceElevated)
                                     ) {
-                                        RootCode.entries.filter { it != RootCode.HISTORIC }.forEach { root ->
+                                        RootCode.entries.filter { it != RootCode.HISTORIC && it != RootCode.NOTES }.forEach { root ->
                                             DropdownMenuItem(
                                                 text = {
                                                     Text(

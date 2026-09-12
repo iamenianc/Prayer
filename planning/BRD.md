@@ -13,7 +13,7 @@
 ### 1.1 Vision & Value Proposition
 Deliver an intimate, distraction-free, mobile-first prayer companion (*Pray Without Ceasing*) that cleanly separates the contemplative act of prayer from the administrative task of organizing prayer points. 
 
-The application is grounded in **Modern Leatherbound Craft (The Modern Folio)**: capturing the emotional gravity, physical warmth, and timeless romance of a handcrafted leatherbound notebook with fine ruled paper (such as a Midori Traveler's Notebook, Leuchtturm1917, or Smythson devotional journal), translated into contemporary, vector-crisp Android design. It opens to a serene frontispiece offering four tactile pathways—**Start praying**, **Open Journal**, **Add prayer points**, and **Library**—grounded in historic Reformed theology and supported by an ambient, non-conversational background suggestion engine providing read-only prompts (strictly unlabelled in the UI) when viewing past prayer points.
+The application is grounded in **Modern Leatherbound Craft (The Modern Folio)**: capturing the emotional gravity, physical warmth, and timeless romance of a handcrafted leatherbound notebook with fine ruled paper (such as a Midori Traveler's Notebook, Leuchtturm1917, or Smythson devotional journal), translated into contemporary, vector-crisp Android design. It opens to a serene frontispiece offering five tactile pathways—**Start praying**, **Open Journal**, **Add prayer points**, **Library**, and **Notes**—grounded in historic Reformed theology and supported by an ambient, non-conversational background suggestion engine providing read-only prompts (strictly unlabelled in the UI) when viewing past prayer points.
 
 ### 1.2 Problem Statement
 Many believers struggle with consistency, distraction, and cognitive overload during prayer. Traditional note-taking apps lack prayer lifecycles, while commercial spiritual apps often introduce gamification (streaks, badges, confetti) and commercialized community feeds that compromise privacy and reverence. Furthermore, when entering prayer, users are often greeted with complex dashboards, task checklists, and dark/light mode flashing that trigger administrative fatigue rather than contemplative focus.
@@ -40,7 +40,7 @@ Many believers struggle with consistency, distraction, and cognitive overload du
    - Opens to a serene book frontispiece framed in the active leather casing (`leatherActive`), centering a 720dp warm cream vellum sheet with classical double-hairline bookplate framing.
    - Initial cold start features a zero-flash warm vellum native splash (`Theme.Prayer` and Android 12+ debossed monogram) and a serene, non-blocking folio opening revelation (~600ms).
    - Inscription presents tracked capitals *"PRAY WITHOUT CEASING"*, printer's fleuron `❧`, and Scripture epigraph (1 Thessalonians 5:16–18).
-   - Presents four contiguous tactile bookplate actions: elevated sanctuary gateway (*Start praying*), directory records (*Open Journal*), direct capture notepad (*Add prayer points*), and the theological vault (*Library*).
+   - Presents five contiguous tactile bookplate actions: elevated sanctuary gateway (*Start praying*), directory records (*Open Journal*), direct capture notepad (*Add prayer points*), the theological vault (*Library*), and daily reflections & study notes (*Notes*).
 
 2. **The Five Foundational Roots (`People`, `Groups`, `Mission Partners`, `General`, `Historic`)**:
    - **`People`**: Exclusively and strictly specific, distinct individual human relationships (e.g., spouse, parent, child, a named friend/neighbor, and personal prayer points under *Me*—including personal health, job trials, or sanctification situated within a workplace or hospital).
@@ -119,6 +119,13 @@ Many believers struggle with consistency, distraction, and cognitive overload du
     - **Structure & Navigation**: 8 Principal Divisions, 52 analytical outline summaries, and 52 reflowed sections (99 paragraphs).
     - **Standalone Structured Asset**: Stored as `res/raw/library_calvin_prayer.json` with typed deserialization (`kotlinx.serialization`).
     - **Analog Reading Experience**: Cream vellum writing canvas, baseline-locked feint rules (`28sp`), Literary Serif typography, Table of Contents quick-jump navigation, and persistent Silk Ribbon reading progress tracking.
+
+13. **Daily Reflections & Study Notes Pathway (`NotesScreen`)**:
+    - Houses freeform study notes and daily reflections titled by day and date (e.g., *"Friday, 11 September 2026"*).
+    - **Zero-Friction Access**: Dedicated 5th tactile bookplate on `HomeScreen` below Library, leading to a date-sorted directory with prominent `+ Today's Note` quick creation.
+    - **Freeform Ruled Notepad**: Standard text entry without forced bullet formatting on newlines; baseline-locked dynamic ruling rules synchronized to Literary Serif typography with pinch-to-zoom magnification (`0.75f` to `2.5f`).
+    - **Contemplative AI Assistance**: Collapsed-by-default prayer prompt suggestions card (`❧ Prompts for Prayer ❧`), offering contemplative Praise, Thank, and Ask God suggestions derived from the reflection text, backed by persistent SQLite caching and background refresh.
+    - **Sanctuary Isolation**: Strictly excluded from the contemplative intercession queue traversal, ensuring personal journal reflections never intrude upon devotional prayer sessions.
 
 ---
 

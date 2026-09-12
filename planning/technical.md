@@ -29,7 +29,7 @@ erDiagram
     PRAYER_POINT ||--o{ JOURNAL_UPDATE : "chronicles"
 
     ROOT_CATEGORY {
-        string code PK "PEOPLE | GROUPS | GENERAL | MISSION_PARTNERS"
+        string code PK "PEOPLE | GROUPS | MISSION_PARTNERS | GENERAL | HISTORIC | NOTES"
         string display_title
         int sort_order
     }
@@ -111,8 +111,16 @@ erDiagram
   - **Loader & Memory Cache**: `au.prayer.app.data.models.LibraryContent.kt` lazy singleton. Deserialized volume occupies ~400 KB heap memory, safely uncollected during reading.
   - **Reading Persistence**: `ReadingProgress` tracks `lastSectionNumber`, `lastScrollOffset`, and `updatedAt` for seamless restoration across app lifecycles.
 
-
-
+- **Daily Reflections & Study Notes Architecture (`NotesScreen`, `RootCode.NOTES`)**:
+  - **Entity Representation**: Date-entitled entries are stored in `TABLE_ENTITIES` with `rootCode = RootCode.NOTES` (sort order 6) and display names formatted as `"[Day of week], [d] [MMMM] [yyyy]"` (e.g. `"Friday, 11 September 2026"`).
+  - **Note Text Persistence**: Note bodies are persisted in `TABLE_POINTS` associated 1:1 with the date entity, storing the full text in `description` and `"Note"` in `title` (`status = PrayerStatus.ACTIVE`).
+  - **Repository Methods**:
+    - `getNotesEntities()`: Retrieves all entities under `RootCode.NOTES`, ordered by created timestamp descending.
+    - `getOrCreateTodayNoteEntity()`: Checks for an existing note matching today's formatted title; if not found, creates an `IndividualEntity(rootCode = RootCode.NOTES, displayName = "[Today's Date]")`.
+    - `getNoteText(entityId)`: Retrieves the note body string from `TABLE_POINTS`.
+    - `saveNoteText(entityId, text)`: Atomically updates or inserts the note body record in `TABLE_POINTS`.
+  - **Sanctuary Isolation Invariant**: `PrayerRepository.getContemplativeTopics()` explicitly filters out `RootCode.NOTES` (`userEntityQuery = "... WHERE root_code != 'NOTES' AND is_preloaded_historic = 0 ..."`), ensuring daily notes and study reflections never enter the devotional intercession queue.
+  - **AI Prompt Integration & Persistent Cache**: Notes content triggers asynchronous suggest requests via `PrayerApiClient.getSuggestions(...)` with `root = "NOTES"`, mapping non-empty lines to `RecordedPoint` items. Prompts are grouped into *Praise God*, *Thank God*, and *Ask God*, cached in `TABLE_SUGGESTION_CACHE` (`suggestion_cache`), and collapsed by default under the `❧ Prompts for Prayer ❧` divider.
 
 - **Client Configuration & Preferences Schema (`APP_CONFIG`)**:
   - Encrypted key-value or single-row table in SQLite storing local preferences:

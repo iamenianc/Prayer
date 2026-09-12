@@ -19,9 +19,9 @@ The core design philosophy is **Modern Leatherbound Craft (The Modern Folio)**:
 
 ---
 
-## 2. Core Information Architecture & The Four Primary Pathways
+## 2. Core Information Architecture & The Five Primary Pathways
 
-The application is strictly organized around four primary functional pathways radiating from the Frontispiece Home Screen:
+The application is strictly organized around five primary functional pathways radiating from the Frontispiece Home Screen:
 
 ```
                           ┌──────────────────────────┐
@@ -29,24 +29,25 @@ The application is strictly organized around four primary functional pathways ra
                           │   (PRAY WITHOUT CEASING) │
                           └─────────────┬────────────┘
                                         │
-           ┌────────────────────────────┼────────────────────────────┬────────────────────────────┐
-           ▼                            ▼                            ▼                            ▼
-  [ Start praying ]            [ Open Journal ]             [ Add prayer points ]        [ Library ]
-         │                              │                            │                            │
-         ▼                              ▼                            ▼                            ▼
-┌──────────────────┐           ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
-│  DEVOTIONAL      │           │  JOURNAL         │         │  PRAYER POINT    │         │  THEOLOGICAL     │
-│  SANCTUARY       │◄─────────►│  DIRECTORY       │◄───────►│  CAPTURE         │         │  LIBRARY         │
-│  (Anti-Neglect   │ (Swipe L) │  (People, Groups,│ (Add to │  (Lined Notepad  │         │  (Bookshelf &    │
-│   Queue, 30/40/30│           │   General, Miss.)│  Entity)│   Direct Entry)  │         │   Catalog)       │
-│   Zoning)        │           └────────┬─────────┘         └────────┬─────────┘         └────────┬─────────┘
-└──────────────────┘                    │                            │                            │
-                                        ▼                            ▼                            ▼
-                               ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
-                               │  ENTITY DETAIL & │         │  COMMITTAL &     │         │  VOLUME READER   │
-                               │  POINT EDITOR    │         │  ASYNC TITLING   │         │  (Calvin 52 Sec, │
-                               └──────────────────┘         └──────────────────┘         │   TOC, Feint R.) │
-                                                                                         └──────────────────┘
+           ┌────────────────────────────┼────────────────────────────┬────────────────────────────┬────────────────────────────┐
+           ▼                            ▼                            ▼                            ▼                            ▼
+  [ Start praying ]            [ Open Journal ]             [ Add prayer points ]        [ Library ]                  [ Notes ]
+         │                              │                            │                            │                            │
+         ▼                              ▼                            ▼                            ▼                            ▼
+┌──────────────────┐           ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+│  DEVOTIONAL      │           │  JOURNAL         │         │  PRAYER POINT    │         │  THEOLOGICAL     │         │  DAILY NOTES     │
+│  SANCTUARY       │◄─────────►│  DIRECTORY       │◄───────►│  CAPTURE         │         │  LIBRARY         │         │  & REFLECTIONS   │
+│  (Anti-Neglect   │ (Swipe L) │  (People, Groups,│ (Add to │  (Lined Notepad  │         │  (Bookshelf &    │         │  (Freeform Rule, │
+│   Queue, 30/40/30│           │   General, Miss.)│  Entity)│   Direct Entry)  │         │   Catalog)       │         │   Date Titled)   │
+│   Zoning)        │           └────────┬─────────┘         └────────┬─────────┘         └────────┬─────────┘         └────────┬─────────┘
+└──────────────────┘                    │                            │                            │                            │
+                                        ▼                            ▼                            ▼                            ▼
+                               ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐         ┌──────────────────┐
+                               │  ENTITY DETAIL & │         │  COMMITTAL &     │         │  VOLUME READER   │         │  NOTE DETAIL &   │
+                               │  POINT EDITOR    │         │  ASYNC TITLING   │         │  (Calvin 52 Sec, │         │  AI PROMPTS      │
+                               └──────────────────┘         └──────────────────┘         │   TOC, Feint R.) │         │  (Praise/Thank/  │
+                                                                                         └──────────────────┘         │   Ask God)       │
+                                                                                                                      └──────────────────┘
 ```
 
 ### 2.0 Frontispiece Home Screen & Launch Experience (`HomeScreen`)
@@ -63,7 +64,8 @@ The application is strictly organized around four primary functional pathways ra
   - **"Open Journal"** (Spiritual Records Directory): Refined stationery card with 0.75dp hairline border (`colors.border`) and ledger navigation glyph `›`.
   - **"Add prayer points"** (Direct Lined Notepad Capture): Matching stationery card with 0.75dp hairline border and bullet/pen prompt.
   - **"Library"** (Theological Vault): Matching stationery card with 0.75dp hairline border, printer's fleuron `❧`, and subtitle `"Classical treatises & historic devotionals"`.
-  - Standardized 56dp–62dp heights and 12dp gutters for effortless thumb reach on Samsung Galaxy Flip and standard handhelds.
+  - **"Notes"** (Daily Reflections & Study Vault): Matching stationery card with 0.75dp hairline border, pen glyph `✎`, and subtitle `"Daily reflections & study notes"`.
+  - Ergonomically spaced with 10dp vertical gutters to ensure effortless thumb reach across all five actions on Samsung Galaxy Flip and standard handhelds.
 
 ### 2.1 Pathway 1: Devotional Prayer (`SanctuaryPrayerScreen`)
 - **Entry**: Tapping **"Start praying"** on Home.
@@ -123,6 +125,23 @@ The application is strictly organized around four primary functional pathways ra
     - Subtle floating zoom pill (e.g., `125% • Reset`) appears during gestures and auto-dismisses after 1.5s; tap immediately resets to 100%.
     - Top ledger bar displays a discreet reset trigger (`125% ↺`) whenever viewing at a non-default zoom level.
     - Zoom scale is persisted across sections and reading sessions in local configuration.
+
+### 2.5 Pathway 5: Daily Reflections & Study Notes (`NotesScreen`)
+- **Entry**: Tapping **"Notes"** on Home.
+- **Directory & Quick-Add**:
+  - Displays a chronological directory of daily reflection and study notes entitled by day and date (e.g., *"Friday, 11 September 2026"*).
+  - Elevated tactile card `+ Today's Note` at the top of the directory automatically finds or creates the current date's entry.
+  - Pinning support via the Silk Marker Ribbon (`SilkMarkerRibbon`), hoisting pinned notes to the top of the directory under a dedicated Pinned Focus header.
+- **Standard Notepad Drafting**:
+  - Functions as a natural ruled notepad canvas: freeform typing with standard carriage returns (no forced bullets on Enter).
+  - Feint rules dynamically lock to typographic baselines with multi-touch pinch-to-zoom (`0.75f` to `2.5f`), floating zoom pill, and top bar reset trigger (`${percent}% ↺`).
+  - Autosaves quietly to SQLite on back navigation or text change debounce.
+- **Contemplative AI Prayer Prompts**:
+  - Collapsed by default under a quiet reverent fleuron divider (`❧   Prompts for Prayer   ❧` with *Tap to view prompts*), honoring quiet contemplation.
+  - Analyzes the reflection or study note content to generate contemplative prompts categorized under **Praise God**, **Thank God**, and **Ask God** (`typography.categoryLedgerHeader`, `colors.leatherPrimary`).
+  - Cached persistently in SQLite (`suggestion_cache`) for instantaneous display on revisit with silent background refresh.
+- **Queue Isolation**:
+  - Notes (`RootCode.NOTES`) are strictly excluded from the Sanctuary prayer queue traversal (`getContemplativeTopics`), preserving devotional prayer integrity while keeping personal reflections safely archived.
 
 ---
 

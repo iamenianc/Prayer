@@ -368,13 +368,14 @@ class DevotionalFlowsTest {
 
     @Test
     fun `test journal subject addition per sphere labels and routing`() {
-        RootCode.entries.filter { it != RootCode.HISTORIC }.forEach { root ->
+        RootCode.entries.filter { it != RootCode.HISTORIC && it != RootCode.NOTES }.forEach { root ->
             val label = when (root) {
                 RootCode.PEOPLE -> "+ Add person"
                 RootCode.GROUPS -> "+ Add group"
                 RootCode.MISSION_PARTNERS -> "+ Add mission partner"
                 RootCode.GENERAL -> "+ Add topic"
                 RootCode.HISTORIC -> ""
+                RootCode.NOTES -> ""
             }
             assertTrue("Label should start with + Add", label.startsWith("+ Add "))
             assertFalse("Label must not contain clinical or forbidden terms", label.contains("target") || label.contains("entity") || label.contains("ticket"))
